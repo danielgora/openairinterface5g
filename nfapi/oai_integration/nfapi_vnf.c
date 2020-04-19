@@ -462,6 +462,7 @@ int phy_rach_indication(struct nfapi_vnf_p7_config *config, nfapi_rach_indicatio
     }
     if(index == -1){
       LOG_E(MAC,"phy_rach_indication : num of rach reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.rach_ind[index] = *ind;
@@ -528,6 +529,7 @@ int phy_harq_indication(struct nfapi_vnf_p7_config *config, nfapi_harq_indicatio
     }
     if(index == -1){
       LOG_E(MAC,"phy_harq_indication : num of harq reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.harq_ind[index] = *ind;
@@ -568,6 +570,7 @@ int phy_crc_indication(struct nfapi_vnf_p7_config *config, nfapi_crc_indication_
     }
     if(index == -1){
       LOG_E(MAC,"phy_crc_indication : num of crc reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.crc_ind[index] = *ind;
@@ -634,6 +637,7 @@ int phy_rx_indication(struct nfapi_vnf_p7_config *config, nfapi_rx_indication_t 
     }
     if(index == -1){
       LOG_E(MAC,"phy_rx_indication : num of rx reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.rx_ind[index] = *ind;
@@ -716,6 +720,7 @@ int phy_sr_indication(struct nfapi_vnf_p7_config *config, nfapi_sr_indication_t 
     }
     if(index == -1){
       LOG_E(MAC,"phy_sr_indication : num of sr reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.sr_ind[index] = *ind;
@@ -768,6 +773,7 @@ int phy_cqi_indication(struct nfapi_vnf_p7_config *config, nfapi_cqi_indication_
     }
     if(index == -1){
       LOG_E(MAC,"phy_cqi_indication : num of cqi reach max \n");
+      pthread_mutex_unlock(&eNB->UL_INFO_mutex);
       return 0;
     }
     UL_RCC_INFO.cqi_ind[index] = *ind;

@@ -158,7 +158,7 @@ void ue_init_mac(module_id_t module_idP) {
 
   if(NFAPI_MODE==NFAPI_UE_STUB_PNF) {
     pthread_mutex_init(&UE_mac_inst[module_idP].UL_INFO_mutex,NULL);
-    UE_mac_inst[module_idP].UE_mode[0] = INACTIVE;
+    UE_mac_inst[module_idP].UE_mode[0] = PRACH_INACTIVE;
     UE_mac_inst[module_idP].first_ULSCH_Tx =0;
     UE_mac_inst[module_idP].SI_Decoded = 0;
     next_ra_frame = 0;

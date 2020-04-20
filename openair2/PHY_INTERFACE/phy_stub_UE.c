@@ -731,7 +731,7 @@ void dl_config_req_UE_MAC_dci(int sfn,
   } else if (rnti_type == 2) {
     if (rnti == 0xFFFF) { /* SI-RNTI */
       for (int ue_id = 0; ue_id < num_ue; ue_id++) {
-        if (UE_mac_inst[ue_id].UE_mode[0] == NOT_SYNCHED)
+        if (UE_mac_inst[ue_id].UE_mode[0] == NOT_SYNCHED || UE_mac_inst[ue_id].UE_mode[0] == INACTIVE)
           continue;
 
         ue_decode_si(ue_id, 0, sfn, 0,

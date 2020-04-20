@@ -65,6 +65,24 @@
 
 extern double cpuf;
 
+#include "common/utils/telnetsrv/telnetsrv.h"
+#include "common/utils/load_module_shlib.h"
+int ue_enable_cmd(char *s, int debug, telnet_printfunc_t prnt)
+{
+  const int ue = atoi(s);
+  LOG_W(MAC, "set UE %d UE_mode NOT_SYNCHED\n", ue);
+  UE_mac_inst[ue].UE_mode[0] = NOT_SYNCHED;
+  return 0;
+}
+telnetshell_cmddef_t ue_status_cmdarray[] = {
+   {"ue", "any number >=0", ue_enable_cmd},
+   {"","",NULL},
+};
+telnetshell_vardef_t ue_status_vardef[] = {
+  {"", 0, NULL}
+};
+
+
 
 #define FRAME_PERIOD    100000000ULL
 #define DAQ_PERIOD      66667ULL
@@ -978,6 +996,10 @@ static void *UE_phy_stub_single_thread_rxn_txnp4(void *arg)
     LOG_E( MAC, "[SCHED][UE] rx_tx_thread_data *rtd: NULL pointer\n" );
     exit_fun("nothing to add");
   }
+
+  add_telnetcmd_func_t addcmd = (add_telnetcmd_func_t)get_shlibmodule_fptr("telnetsrv", TELNET_ADDCMD_FNAME);
+  if (addcmd)
+    addcmd("enable", ue_status_vardef, ue_status_cmdarray);
 
   UE_rxtx_proc_t *proc = rtd->proc;
   // settings for nfapi-L2-emulator mode

@@ -2701,7 +2701,7 @@ do_RRCConnectionSetup(
   }
 
   if (carrier->sib1->tdd_Config == NULL) { // FDD
-    physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_ConfigIndex = 5+(ue_context_pP->local_uid%10);  // Isr = 5 (every 10 subframes, offset=2+UE_id mod3)
+    physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_ConfigIndex = (ue_context_pP->local_uid%5);  // Isr = 5 (every 10 subframes, offset=2+UE_id mod3)
   } else {
     switch (carrier->sib1->tdd_Config->subframeAssignment) {
       case 1:

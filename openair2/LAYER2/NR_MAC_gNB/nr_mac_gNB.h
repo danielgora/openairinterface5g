@@ -346,7 +346,6 @@ typedef struct nr_csi_report {
   CRI_SSBRI_RSRP_bitlen_t CSI_report_bitlen[MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG];
 } nr_csi_report_t;
 
-
 //! fixme : need to enhace for the multiple TB CQI report
 
 

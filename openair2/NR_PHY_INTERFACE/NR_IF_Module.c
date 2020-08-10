@@ -281,6 +281,13 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_
         // tpc (power control)
         sched_ctrl->tpc1 = nr_get_tpc(target_snrx10,uci_pdu->ul_cqi,30);
 
+        if( (uci_pdu->pduBitmap>>1) & 0x01){
+          if ( uci_pdu->sr->sr_indication && !(uci_pdu->sr->sr_confidence_level)) {
+            sched_ctrl->sr_req.nr_of_srs =1;
+            sched_ctrl->sr_req.ul_SR[0] = 1;
+          }
+	}
+
         if( (uci_pdu->pduBitmap>>1) & 0x01)
           nr_rx_acknack(NULL,uci_pdu,NULL,UL_info,sched_ctrl,stats);
 

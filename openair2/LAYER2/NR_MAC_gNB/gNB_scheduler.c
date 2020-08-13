@@ -111,21 +111,80 @@ int get_diff_rsrp(uint8_t index, int strongest_rsrp) {
     return MIN_RSRP_VALUE;
 }
 
-int checkTargetSSBInFirst64TCIStates_pdschConfig(int ssb_index_t) {
-  //Need to implement once configuration is received
-  return 0;
+int checkTargetSSBInFirst64TCIStates_pdschConfig(int ssb_index_t, int Mod_idP, int UE_id) {
+  NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
+  NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id] ;
+  int nb_tci_states = secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.count;
+  NR_TCI_State_t *tci =NULL;
+  int i;
+
+  for(i=0; i<nb_tci_states && i<64; i++) {
+    tci = (NR_TCI_State_t *)secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.array[i];
+
+    if(tci != NULL) {
+      if(tci->qcl_Type1.referenceSignal.present == NR_QCL_Info__referenceSignal_PR_ssb) {
+        if(tci->qcl_Type1.referenceSignal.choice.ssb == ssb_index_t)
+          return tci->tci_StateId;  // returned TCI state ID
+      }
+      // if type2 is configured
+      else if(tci->qcl_Type2 != NULL && tci->qcl_Type2->referenceSignal.present == NR_QCL_Info__referenceSignal_PR_ssb) {
+        if(tci->qcl_Type2->referenceSignal.choice.ssb == ssb_index_t)
+          return tci->tci_StateId; // returned TCI state ID
+      } else LOG_I(MAC,"SSB index is not found in first 64 TCI states of TCI_statestoAddModList[%d]", i);
+    }
+  }
+
+  // tci state not identified in first 64 TCI States of PDSCH Config
+  return -1;
 }
 
-int checkTargetSSBInTCIStates_pdcchConfig(int ssb_index_t) {
-  //Need to implement once configuration is received
-  return 0;
+int checkTargetSSBInTCIStates_pdcchConfig(int ssb_index_t, int Mod_idP, int UE_id) {
+  NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
+  NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id] ;
+  int nb_tci_states = secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.count;
+  NR_TCI_State_t *tci =NULL;
+  NR_TCI_StateId_t *tci_id = NULL;
+  int bwp_id = 1;
+  NR_BWP_Downlink_t *bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_id-1];
+  NR_ControlResourceSet_t *coreset = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[bwp_id-1];
+  int i;
+  int flag = 0;
+  int tci_stateID = -1;
+
+  for(i=0; i<nb_tci_states && i<128; i++) {
+    tci = (NR_TCI_State_t *)secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.array[i];
+
+    if(tci != NULL && tci->qcl_Type1.referenceSignal.present == NR_QCL_Info__referenceSignal_PR_ssb) {
+      if(tci->qcl_Type1.referenceSignal.choice.ssb == ssb_index_t) {
+        flag = 1;
+        tci_stateID = tci->tci_StateId;
+        break;
+      } else if(tci->qcl_Type2 != NULL && tci->qcl_Type2->referenceSignal.present == NR_QCL_Info__referenceSignal_PR_ssb) {
+        flag = 1;
+        tci_stateID = tci->tci_StateId;
+        break;
+      }
+    }
+
+    if(flag != 0 && tci_stateID != -1 && coreset != NULL) {
+      for(i=0; i<64 && i<coreset->tci_StatesPDCCH_ToAddList->list.count; i++) {
+        tci_id = coreset->tci_StatesPDCCH_ToAddList->list.array[i];
+
+        if(tci_id != NULL && *tci_id == tci_stateID)
+          return tci_stateID;
+      }
+    }
+  }
+
+  // Need to implement once configuration is received
+  return -1;
 }
 
 int ssb_index_sorted[MAX_NUM_SSB] = {0};
 int ssb_rsrp_sorted[MAX_NUM_SSB] = {0};
 //Sorts ssb_index and ssb_rsrp array data and keeps in ssb_index_sorted and
 //ssb_rsrp_sorted respectively
-int ssb_rsrp_sort(int *ssb_index, int *ssb_rsrp) {
+void ssb_rsrp_sort(int *ssb_index, int *ssb_rsrp) {
   int i, j;
 
   for(i = 0; *(ssb_index+i) != 0; i++) {
@@ -291,7 +350,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
     The length of the field is 7 bits
      */
     if(sched_ctrl->UE_mac_ce_ctrl.pdcch_state_ind.coresetId == 0) {
-      int tci_state_id = checkTargetSSBInFirst64TCIStates_pdschConfig(ssb_index[target_ssb_beam_index]);
+      int tci_state_id = checkTargetSSBInFirst64TCIStates_pdschConfig(ssb_index[target_ssb_beam_index], Mod_idP, UE_id);
 
       if( tci_state_id != -1)
         sched_ctrl->UE_mac_ce_ctrl.pdcch_state_ind.tciStateId = tci_state_id;
@@ -301,7 +360,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
         int flag = 0;
 
         for(i =0; ssb_index_sorted[i]!=0; i++) {
-          tci_state_id = checkTargetSSBInFirst64TCIStates_pdschConfig(ssb_index_sorted[i]);
+          tci_state_id = checkTargetSSBInFirst64TCIStates_pdschConfig(ssb_index_sorted[i], Mod_idP, UE_id) ;
 
           if(tci_state_id != -1 && ssb_rsrp_sorted[i] > ssb_rsrp[curr_ssb_beam_index] && ssb_rsrp_sorted[i] - ssb_rsrp[curr_ssb_beam_index] > L1_RSRP_HYSTERIS) {
             sched_ctrl->UE_mac_ce_ctrl.pdcch_state_ind.tciStateId = tci_state_id;
@@ -315,7 +374,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
         }
       }
     } else {
-      int tci_state_id = checkTargetSSBInTCIStates_pdcchConfig(ssb_index[target_ssb_beam_index]);
+      int tci_state_id = checkTargetSSBInTCIStates_pdcchConfig(ssb_index[target_ssb_beam_index], Mod_idP, UE_id);
 
       if (tci_state_id !=-1)
         sched_ctrl->UE_mac_ce_ctrl.pdcch_state_ind.tciStateId = tci_state_id;
@@ -325,7 +384,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
         int flag = 0;
 
         for(i =0; ssb_index_sorted[i]!=0; i++) {
-          tci_state_id = checkTargetSSBInTCIStates_pdcchConfig(ssb_index_sorted[i]);
+          tci_state_id = checkTargetSSBInTCIStates_pdcchConfig(ssb_index_sorted[i], Mod_idP, UE_id);
 
           if( tci_state_id != -1 && ssb_rsrp_sorted[i] > ssb_rsrp[curr_ssb_beam_index] && ssb_rsrp_sorted[i] - ssb_rsrp[curr_ssb_beam_index] > L1_RSRP_HYSTERIS) {
             sched_ctrl->UE_mac_ce_ctrl.pdcch_state_ind.tciStateId = tci_state_id;
@@ -375,40 +434,32 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
     }//tci_presentInDCI
   }//is-triggering_beam_switch
 }//tci handling
-
-void clear_nr_nfapi_information(gNB_MAC_INST * gNB,
+void clear_nr_nfapi_information(gNB_MAC_INST *gNB,
                                 int CC_idP,
                                 frame_t frameP,
-                                sub_frame_t slotP){
-
+                                sub_frame_t slotP) {
   nfapi_nr_dl_tti_request_t    *DL_req = &gNB->DL_req[0];
   nfapi_nr_ul_tti_request_t    *UL_tti_req = &gNB->UL_tti_req[0];
   nfapi_nr_ul_dci_request_t    *UL_dci_req = &gNB->UL_dci_req[0];
   nfapi_nr_tx_data_request_t   *TX_req = &gNB->TX_req[0];
-
   gNB->pdu_index[CC_idP] = 0;
 
   if (nfapi_mode==0 || nfapi_mode == 1) { // monolithic or PNF
-
     DL_req[CC_idP].SFN                                   = frameP;
     DL_req[CC_idP].Slot                                  = slotP;
     DL_req[CC_idP].dl_tti_request_body.nPDUs             = 0;
     DL_req[CC_idP].dl_tti_request_body.nGroup            = 0;
     //DL_req[CC_idP].dl_tti_request_body.transmission_power_pcfich           = 6000;
-
     UL_dci_req[CC_idP].SFN                         = frameP;
     UL_dci_req[CC_idP].Slot                        = slotP;
     UL_dci_req[CC_idP].numPdus                     = 0;
-
     UL_tti_req[CC_idP].SFN                         = frameP;
     UL_tti_req[CC_idP].Slot                        = slotP;
     UL_tti_req[CC_idP].n_pdus                      = 0;
     UL_tti_req[CC_idP].n_ulsch                     = 0;
     UL_tti_req[CC_idP].n_ulcch                     = 0;
     UL_tti_req[CC_idP].n_group                     = 0;
-
     TX_req[CC_idP].Number_of_PDUs                  = 0;
-
   }
 }
 /*
@@ -571,8 +622,6 @@ void schedule_nr_SRS(module_id_t module_idP, frame_t frameP, sub_frame_t subfram
   }
 }
 */
-
-
 /*
 void copy_nr_ulreq(module_id_t module_idP, frame_t frameP, sub_frame_t slotP)
 {
@@ -625,7 +674,6 @@ void nr_schedule_pusch(int Mod_idP,
   }
 }
 
-
 void nr_schedule_pucch(int Mod_idP,
                        int UE_id,
                        int nr_ulmix_slots,
@@ -642,7 +690,6 @@ void nr_schedule_pucch(int Mod_idP,
   int bwp_id=1;
   NR_BWP_Uplink_t *ubwp=secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[bwp_id-1];
   nfapi_nr_ul_tti_request_t *UL_tti_req = &RC.nrmac[Mod_idP]->UL_tti_req[0];
-
   NR_sched_pucch *curr_pucch;
 
   for (int k=0; k<nr_ulmix_slots; k++) {
@@ -683,7 +730,6 @@ void nr_schedule_pucch(int Mod_idP,
 bool is_xlsch_in_slot(uint64_t bitmap, sub_frame_t slot) {
   return (bitmap >> slot) & 0x01;
 }
-
 void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
                                frame_t frame,
                                sub_frame_t slot){
@@ -706,7 +752,6 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
 
   start_meas(&RC.nrmac[module_idP]->eNB_scheduler);
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ULSCH_SCHEDULER,VCD_FUNCTION_IN);
-
   pdcp_run(&ctxt);
   /* send tick to RLC and RRC every ms */
   if ((slot & ((1 << *scc->ssbSubcarrierSpacing) - 1)) == 0) {
@@ -794,6 +839,5 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
     nr_schedule_pucch(module_idP, UE_id, nr_ulmix_slots, frame, slot);
 
   stop_meas(&RC.nrmac[module_idP]->eNB_scheduler);
-  
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ULSCH_SCHEDULER,VCD_FUNCTION_OUT);
 }

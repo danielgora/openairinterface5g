@@ -328,7 +328,8 @@ unsigned short fill_rar(const module_id_t module_idP,
 			const frame_t frameP,
 			uint8_t * const dlsch_buffer,
 			const uint16_t N_RB_UL,
-			const uint8_t input_buffer_length);
+			const uint8_t input_buffer_length,
+			uint8_t msg3_ra_flag);
 
 #if (LTE_RRC_VERSION >= MAKE_VERSION(14, 0, 0))
 unsigned short fill_rar_br(eNB_MAC_INST * eNB,

@@ -4000,14 +4000,16 @@ void ulsch_scheduler_pre_processor_fairRR(module_id_t module_idP,
     for ( ulsch_ue_num = 0; ulsch_ue_num < ulsch_ue_select[CC_id].ue_num; ulsch_ue_num++ ) {
       UE_id = ulsch_ue_select[CC_id].list[ulsch_ue_num].UE_id;
 
-      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_MSG3) {
-        first_rb[CC_id] += 3;
+      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_PRACH) {
+        first_rb[CC_id] = ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb+ulsch_ue_select[CC_id].list[ulsch_ue_num].nb_rb;
         ue_num_temp--;
         continue;
       }
 
-      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_PRACH) {
-        first_rb[CC_id] = ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb+ulsch_ue_select[CC_id].list[ulsch_ue_num].nb_rb;
+      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_MSG3) {
+        if(ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb >= first_rb[CC_id]){
+          first_rb[CC_id] = ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb+ulsch_ue_select[CC_id].list[ulsch_ue_num].nb_rb;
+        }
         ue_num_temp--;
         continue;
       }
@@ -4288,14 +4290,29 @@ schedule_ulsch_fairRR(module_id_t module_idP, frame_t frameP,
     cc = &mac->common_channels[CC_id];
     frame_parms= &RC.eNB[module_idP][CC_id]->frame_parms;
 
+    //PRACH
+    if (is_prach_subframe(frame_parms,sched_frame,sched_subframe)==1) {
+      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].ue_priority = SCH_UL_PRACH;
+      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].start_rb = get_prach_prb_offset(
+            frame_parms,
+            frame_parms->prach_config_common.prach_ConfigInfo.prach_ConfigIndex,
+            frame_parms->prach_config_common.prach_ConfigInfo.prach_FreqOffset,
+            0,//tdd_mapindex
+            frameP); //Nf --> shouldn't it be sched_frame ???
+      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].nb_rb = 6;
+      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].UE_id = -1;
+      ulsch_ue_select[CC_id].ue_num++;
+    }
     // output of scheduling, the UE numbers in RBs, where it is in the code???
     // check if RA (Msg3) is active in this subframeP, if so skip the PRBs used for Msg3
     // Msg3 is using 1 PRB so we need to increase first_rb accordingly
     // not sure about the break (can there be more than 1 active RA procedure?)
     for (i=0; i<NB_RA_PROC_MAX; i++) {
-      if ((cc->ra[i].state == WAITMSG3) &&(cc->ra[i].Msg3_subframe == sched_subframe)) {
+      if ((cc->ra[i].state == WAITMSG3) &&
+          (cc->ra[i].Msg3_frame == sched_frame) &&
+          (cc->ra[i].Msg3_subframe == sched_subframe)) {
         ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].ue_priority = SCH_UL_MSG3;
-
+#if 0
         if (cc->tdd_Config == NULL) {
           if(frame_parms->N_RB_UL == 25) {
             ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].start_rb = 1;
@@ -4321,27 +4338,16 @@ schedule_ulsch_fairRR(module_id_t module_idP, frame_t frameP,
             ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].start_rb+=1;
           }
         }
-
-        ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].nb_rb = 3;
+#endif
+        ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].start_rb = cc->ra[i].msg3_first_rb;
+        ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].nb_rb = cc->ra[i].msg3_nb_rb;
         ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].UE_id = -1;
         ulsch_ue_select[CC_id].ue_num++;
-        break;
+        //break;
       }
     }
 
-    //PRACH
-    if (is_prach_subframe(frame_parms,sched_frame,sched_subframe)==1) {
-      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].ue_priority = SCH_UL_PRACH;
-      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].start_rb = get_prach_prb_offset(
-            frame_parms,
-            frame_parms->prach_config_common.prach_ConfigInfo.prach_ConfigIndex,
-            frame_parms->prach_config_common.prach_ConfigInfo.prach_FreqOffset,
-            0,//tdd_mapindex
-            frameP); //Nf --> shouldn't it be sched_frame ???
-      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].nb_rb = 6;
-      ulsch_ue_select[CC_id].list[ulsch_ue_select[CC_id].ue_num].UE_id = -1;
-      ulsch_ue_select[CC_id].ue_num++;
-    }
+
   }
 
   schedule_ulsch_rnti_fairRR(module_idP, frameP, subframeP, sched_subframe,ulsch_ue_select);
@@ -4474,18 +4480,19 @@ void schedule_ulsch_rnti_fairRR(module_id_t   module_idP,
         }
       }
 
-      //MSG3
-      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_MSG3) {
-        first_rb[CC_id] += 3;
-        continue;
-      }
-
       //PRACH
       if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_PRACH) {
         first_rb[CC_id] = ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb+ulsch_ue_select[CC_id].list[ulsch_ue_num].nb_rb;
         continue;
       }
 
+      //MSG3
+      if (ulsch_ue_select[CC_id].list[ulsch_ue_num].ue_priority == SCH_UL_MSG3) {
+        if(ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb >= first_rb[CC_id]){
+          first_rb[CC_id] = ulsch_ue_select[CC_id].list[ulsch_ue_num].start_rb+ulsch_ue_select[CC_id].list[ulsch_ue_num].nb_rb;
+        }
+        continue;
+      }
       UE_template   = &UE_list->UE_template[CC_id][UE_id];
       UE_sched_ctrl = &UE_list->UE_sched_ctrl[UE_id];
       harq_pid      = subframe2harqpid(cc,sched_frame,sched_subframeP);

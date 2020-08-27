@@ -266,6 +266,8 @@ void generate_Msg2(module_id_t module_idP,
     LOG_E(MAC, "to_prb failed\n");
     return;
   }
+  RA_t *ra_temp;
+  uint8_t msg3_ra_flag = 0;
 #if (LTE_RRC_VERSION >= MAKE_VERSION(14, 0, 0))
   int             rmax = 0;
   int             rep = 0;
@@ -584,7 +586,19 @@ void generate_Msg2(module_id_t module_idP,
               "Frame %d, Subframe %d: Setting Msg3 reception for Frame %d Subframe %d\n",
               frameP, subframeP, ra->Msg3_frame,
               ra->Msg3_subframe);
-        fill_rar(module_idP, CC_idP, ra, frameP, cc[CC_idP].RAR_pdu.payload, N_RB_DL, 7);
+        for (uint8_t i = 0; i < NB_RA_PROC_MAX; i++) {
+          ra_temp = (RA_t *) & cc[CC_idP].ra[i];
+          if((ra_temp != ra) && (ra_temp->state == WAITMSG3)){
+            if((ra->Msg3_frame == ra_temp->Msg3_frame) && (ra->Msg3_subframe == ra_temp->Msg3_subframe)){
+              LOG_E(PHY,"Msg3 sf_sfn repeated %d.%d  msg2 frame %d subframe %d rnti %x  ra_temp->msg3_first_rb %d\n",
+                         ra->Msg3_frame,ra->Msg3_subframe,ra->Msg2_frame, ra->Msg2_subframe,ra->rnti,ra_temp->msg3_first_rb);
+              if(ra_temp->msg3_first_rb < 6){
+                msg3_ra_flag = 1;
+              }
+            }
+          }
+        }
+        fill_rar(module_idP, CC_idP, ra, frameP, cc[CC_idP].RAR_pdu.payload, N_RB_DL, 7, msg3_ra_flag);
         add_msg3(module_idP, CC_idP, ra, frameP, subframeP);
         ra->state = WAITMSG3;
         ra->msg3_wait_time = 1;

@@ -27,7 +27,7 @@
  * @ingroup _mac
 
  */
-
+#include "PHY/LTE_TRANSPORT/transport_common_proto.h"
 #include "mac.h"
 #include "mac_proto.h"
 #include "mac_extern.h"
@@ -53,7 +53,8 @@ fill_rar(const module_id_t module_idP,
 	 RA_t * ra,
 	 const frame_t frameP,
 	 uint8_t * const dlsch_buffer,
-	 const uint16_t N_RB_UL, const uint8_t input_buffer_length)
+	 const uint16_t N_RB_UL, const uint8_t input_buffer_length,
+	 uint8_t msg3_ra_flag)
 //------------------------------------------------------------------------------
 {
 
@@ -76,6 +77,7 @@ fill_rar(const module_id_t module_idP,
     rar[0] = (uint8_t) (ra->timing_offset >> 4);	// 7 MSBs of timing advance
     rar[1] = (uint8_t) (ra->timing_offset << 4) & 0xf0;	// 4 LSBs of timing advance
     COMMON_channels_t *cc = &RC.mac[module_idP]->common_channels[CC_id];
+    if(msg3_ra_flag  == 0){
     if(N_RB_UL == 25){
       ra->msg3_first_rb = 1;
     }else{
@@ -85,10 +87,15 @@ fill_rar(const module_id_t module_idP,
         ra->msg3_first_rb = 2;
       }
     }
-    if(cc->tdd_Config){
-      if(cc->tdd_Config->subframeAssignment==2){
-        ra->msg3_first_rb+=1;
-      }
+    }else{
+      LTE_DL_FRAME_PARMS *frame_parms ;
+      frame_parms= &RC.eNB[module_idP][CC_id]->frame_parms;
+      ra->msg3_first_rb = 6+get_prach_prb_offset(
+                            frame_parms,
+                            frame_parms->prach_config_common.prach_ConfigInfo.prach_ConfigIndex,
+                            frame_parms->prach_config_common.prach_ConfigInfo.prach_FreqOffset,
+                            0,//tdd_mapindex
+                            frameP);
     }
     ra->msg3_nb_rb = 3;
     uint16_t rballoc = mac_computeRIV(N_RB_UL, ra->msg3_first_rb, ra->msg3_nb_rb);	// first PRB only for UL Grant

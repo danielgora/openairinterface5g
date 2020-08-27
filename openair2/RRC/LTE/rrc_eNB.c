@@ -7640,7 +7640,7 @@ rrc_eNB_generate_RRCConnectionSetup(
 	}
       }
     }
-
+      }
     break;
   default :
     LOG_W(RRC, "Unknown node type %d\n", RC.rrc[ctxt_pP->module_id]->node_type);		
@@ -7669,7 +7669,7 @@ rrc_eNB_generate_RRCConnectionSetup(
 
   /* init timers */
   ue_context_pP->ue_context.ue_rrc_inactivity_timer = 0;
-  }
+
 }
 
 void setup_ngran_CU(eNB_RRC_INST *rrc) {

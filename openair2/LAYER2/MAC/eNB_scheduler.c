@@ -742,6 +742,23 @@ void update_ue_timers(module_id_t module_idP,frame_t frameP, sub_frame_t subfram
   uint8_t           volte_ul_cycle[MAX_NUM_CCs];
   uint8_t           volte_ul_buffersize[MAX_NUM_CCs];
 
+
+  RA_t *ra;
+  for (CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
+    for(uint8_t ra_i = 0; ra_i < NB_RA_PROC_MAX; ra_i++) {
+      ra = (RA_t *) & eNB->common_channels[CC_id].ra[ra_i];
+      if((ra->state == WAITMSG3) && (ra->msg3_wait_time > 0)){
+        ra->msg3_wait_time++;
+        if(ra->msg3_wait_time > 15){
+          LOG_E(MAC,"update_ue_timers ra_index %d rnti %x wait msg3 timeout release ra\n",ra_i,ra->rnti);
+          fill_nfapi_rnti_release(module_idP, ra->rnti);
+          cancel_ra_proc(module_idP, CC_id, frameP, ra->rnti);
+          ra->msg3_wait_time = 0;
+        }
+      }
+    }
+  }
+
   for (CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
     volte_ul_cycle[CC_id] = eNB->volte_ul_cycle[CC_id];
     if (volte_ul_cycle[CC_id] != 0){

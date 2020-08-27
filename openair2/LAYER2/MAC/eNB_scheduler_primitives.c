@@ -4773,8 +4773,8 @@ extract_harq(module_id_t mod_idP,
                     cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
                   }else{
                     if(sched_ctl->round[CC_idP][harq_pid][TB1] == 8){
-                      cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
                       fill_nfapi_rnti_release(mod_idP, ra[ra_i].rnti);
+                      cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
                       LOG_E(MAC,"CRNTI Reconfiguration NACK round reach max release UE %x\n",ra[ra_i].rnti);
                     }
                   }
@@ -4870,8 +4870,8 @@ extract_harq(module_id_t mod_idP,
                 cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
               }else{
                 if(sched_ctl->round[CC_idP][harq_pid][select_tb] == 8){
-                  cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
                   fill_nfapi_rnti_release(mod_idP, ra[ra_i].rnti);
+                  cancel_ra_proc(mod_idP, CC_idP, frameP, ra[ra_i].rnti);
                   LOG_E(MAC,"CRNTI Reconfiguration NACK round reach max release UE %x\n",ra[ra_i].rnti);
                 }
               }

@@ -535,8 +535,8 @@ void generate_Msg2(module_id_t module_idP,
       if (!CCE_allocation_infeasible(module_idP, CC_idP, 0, subframeP,
                                      dl_config_pdu->dci_dl_pdu.dci_dl_pdu_rel8.aggregation_level, ra->RA_rnti)) {
         LOG_D(MAC,
-              "Frame %d: Subframe %d : Adding common DCI for RA_RNTI %x\n",
-              frameP, subframeP, ra->RA_rnti);
+              "Frame %d: Subframe %d : Adding common DCI for RA_RNTI %x rnti %x\n",
+              frameP, subframeP, ra->RA_rnti, ra->rnti);
         dl_req_body->number_dci++;
         dl_req_body->number_pdu++;
         dl_config_pdu = &dl_req_body->dl_config_pdu_list[dl_req_body->number_pdu];
@@ -587,6 +587,7 @@ void generate_Msg2(module_id_t module_idP,
         fill_rar(module_idP, CC_idP, ra, frameP, cc[CC_idP].RAR_pdu.payload, N_RB_DL, 7);
         add_msg3(module_idP, CC_idP, ra, frameP, subframeP);
         ra->state = WAITMSG3;
+        ra->msg3_wait_time = 1;
         LOG_D(MAC,"[eNB %d][RAPROC] Frame %d, Subframe %d: state:WAITMSG3\n", module_idP, frameP, subframeP);
         T(T_ENB_MAC_UE_DL_RAR_PDU_WITH_DATA, T_INT(module_idP),
           T_INT(CC_idP), T_INT(ra->RA_rnti), T_INT(frameP),
@@ -1536,6 +1537,7 @@ initiate_ra_proc(module_id_t module_idP,
       ra[i].Msg4_delay_cnt=0;
       ra[i].timing_offset = timing_offset;
       ra[i].preamble_subframe = subframeP;
+      ra[i].msg3_wait_time = 0;
 #if (LTE_RRC_VERSION >= MAKE_VERSION(14, 0, 0))
       ra[i].rach_resource_type = rach_resource_type;
       ra[i].msg2_mpdcch_repetition_cnt = 0;

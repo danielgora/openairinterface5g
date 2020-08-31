@@ -121,7 +121,7 @@ extern double cpuf;
 #ifndef NO_RAT_NR
   #define DURATION_RX_TO_TX           (NR_UE_CAPABILITY_SLOT_RX_TO_TX)  /* for NR this will certainly depends to such UE capability which is not yet defined */
 #else
-  #define DURATION_RX_TO_TX           (4)   /* For LTE, this duration is fixed to 4 and it is linked to LTE standard for both modes FDD/TDD */
+  #define DURATION_RX_TO_TX           (6)   /* For LTE, this duration is fixed to 4 and it is linked to LTE standard for both modes FDD/TDD */
 #endif
 
 #define FRAME_PERIOD    100000000ULL
@@ -364,8 +364,6 @@ static void UE_synch(void *arg) {
 }
 
 void processSlotTX( PHY_VARS_NR_UE *UE, UE_nr_rxtx_proc_t *proc) {
-
-
   fapi_nr_config_request_t *cfg = &UE->nrUE_config;
   int tx_slot_type = nr_ue_slot_select(cfg, proc->frame_tx, proc->nr_tti_tx);
   uint8_t gNB_id = 0;
@@ -728,7 +726,7 @@ void *UE_thread(void *arg) {
 
     for (int i=0; i<UE->frame_parms.nb_antennas_tx; i++)
       txp[i] = (void *)&UE->common_vars.txdata[i][UE->frame_parms.get_samples_slot_timestamp(
-               ((curMsg->proc.nr_tti_rx + DURATION_RX_TO_TX)%nb_slot_frame),&UE->frame_parms,0)];
+               ((curMsg->proc.nr_tti_rx + DURATION_RX_TO_TX -2)%nb_slot_frame),&UE->frame_parms,0)];
 
     int readBlockSize, writeBlockSize;
 
@@ -754,7 +752,7 @@ void *UE_thread(void *arg) {
                  UE->rfdevice.trx_write_func(&UE->rfdevice,
                      timestamp+
                      UE->frame_parms.get_samples_slot_timestamp(slot_nr,
-                     &UE->frame_parms,DURATION_RX_TO_TX) - firstSymSamp -
+                     &UE->frame_parms,DURATION_RX_TO_TX -2) - firstSymSamp -
                      openair0_cfg[0].tx_sample_advance,
                      txp,
                      writeBlockSize,
@@ -821,6 +819,7 @@ void *UE_thread(void *arg) {
 
       pushNotifiedFIFO_nothreadSafe(&freeBlocks,res);
     }
+
   } // while !oai_exit
 
   return NULL;

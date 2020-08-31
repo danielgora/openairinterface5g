@@ -475,7 +475,6 @@ rx_sdu(const module_id_t enb_mod_idP,
                   old_UE_id);
 
             UE_id = old_UE_id;
-            current_rnti = old_rnti;
             /* Clear timer */
             UE_scheduling_control = &(UE_list->UE_sched_ctrl[UE_id]);
             UE_template_ptr = &(UE_list->UE_template[CC_idP][UE_id]);
@@ -499,6 +498,7 @@ rx_sdu(const module_id_t enb_mod_idP,
                            CC_idP,
                            frameP,
                            current_rnti);
+            current_rnti = old_rnti;
           } else {
             /* TODO: if the UE did random access (followed by a MAC uplink with
              * CRNTI) because none of its scheduling request was granted, then

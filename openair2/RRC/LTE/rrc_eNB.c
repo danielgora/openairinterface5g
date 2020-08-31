@@ -9856,7 +9856,11 @@ void *rrc_enb_process_itti_msg(void *notUsed) {
           /* in the target eNB */
           }else{
 
-            if(ue_context_p->ue_context.handover_info->state == HO_FORWARDING){
+            if((ue_context_p->ue_context.handover_info->state == HO_COMPLETE)
+              || (ue_context_p->ue_context.handover_info->state == HO_FORWARDING)
+              || (ue_context_p->ue_context.handover_info->state == HO_CONFIGURED)
+              || (ue_context_p->ue_context.handover_info->state == HO_END_MARKER)
+              || (ue_context_p->ue_context.handover_info->state == HO_FORWARDING_COMPLETE)){
                 ue_context_p->ue_context.handover_info->state = HO_RELEASE;
             }else{
                 free(ue_context_p->ue_context.handover_info);

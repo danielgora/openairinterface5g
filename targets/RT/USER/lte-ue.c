@@ -1335,31 +1335,6 @@ static void *UE_phy_stub_single_thread_rxn_txnp4(void *arg)
         UL_INFO->sr_ind.sr_indication_body.number_of_srs = 0;
       }
 
-
-      // Free UL_INFO messages
-      if(UL_INFO->crc_ind.crc_indication_body.crc_pdu_list != NULL){
-      free(UL_INFO->crc_ind.crc_indication_body.crc_pdu_list);
-      UL_INFO->crc_ind.crc_indication_body.crc_pdu_list = NULL;
-      }
-      if(UL_INFO->rx_ind.rx_indication_body.rx_pdu_list != NULL){
-      free(UL_INFO->rx_ind.rx_indication_body.rx_pdu_list);
-      UL_INFO->rx_ind.rx_indication_body.rx_pdu_list = NULL;
-      }
-      if(UL_INFO->harq_ind.harq_indication_body.harq_pdu_list !=NULL){
-      free(UL_INFO->harq_ind.harq_indication_body.harq_pdu_list);
-      UL_INFO->harq_ind.harq_indication_body.harq_pdu_list = NULL;
-      }
-      if(UL_INFO->sr_ind.sr_indication_body.sr_pdu_list!=NULL){
-      free(UL_INFO->sr_ind.sr_indication_body.sr_pdu_list);
-      UL_INFO->sr_ind.sr_indication_body.sr_pdu_list = NULL;
-      }
-      free(UL_INFO->cqi_ind.cqi_indication_body.cqi_pdu_list);
-      UL_INFO->cqi_ind.cqi_indication_body.cqi_pdu_list = NULL;
-      free(UL_INFO->cqi_ind.cqi_indication_body.cqi_raw_pdu_list);
-      UL_INFO->cqi_ind.cqi_indication_body.cqi_raw_pdu_list = NULL;
-      free(UL_INFO);
-      UL_INFO = NULL;
-
       // De-allocate memory of nfapi requests copies before next subframe round
       if(dl_config_req!=NULL) {
         if(dl_config_req->vendor_extension!=NULL) {

@@ -217,11 +217,11 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
   //NR_COMMON_channels_t *cc = RC.nrmac[Mod_idP]->common_channels;
   NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id];
   NR_BWP_Downlink_t *bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_id-1];
-  NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
+  //NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
   //bwp indicator
   int n_dl_bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count;
-  uint8_t nb_ssb_resources_inEachSet = sched_ctrl->CSI_report[UE_id][cqi_idx].choice.ssb_cri_report.nr_ssbri_cri;
-  uint8_t nb_resource_sets = sched_ctrl->nr_of_csi_report[UE_id];
+  uint8_t nb_ssb_resources_inEachSet = 0;
+  uint8_t nb_resource_sets = UE_list->csi_report_template[UE_id][cqi_idx].nb_of_csi_ssb_report;
   //uint8_t bitlen_ssbri = log (nb_resource_sets)/log (2);
   //uint8_t max_rsrp_reported = -1;
   int better_rsrp_reported = -140-(-0); /*minimum_measured_RSRP_value - minimum_differntail_RSRP_value*///considering the minimum RSRP value as better RSRP initially
@@ -244,16 +244,17 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
 
   //for all reported SSB
   for (idx = 0; idx < nb_resource_sets; idx++) {
+    nb_ssb_resources_inEachSet = sched_ctrl->CSI_report[idx].choice.ssb_cri_report.nr_ssbri_cri;
     //if group based beam Reporting is disabled
-    if(NR_CSI_ReportConfig__groupBasedBeamReporting_PR_disabled ==
-        csi_MeasConfig->csi_ReportConfigToAddModList->list.array[0]->groupBasedBeamReporting.present ) {
+    /*if(NR_CSI_ReportConfig__groupBasedBeamReporting_PR_disabled ==
+        csi_MeasConfig->csi_ReportConfigToAddModList->list.array[0]->groupBasedBeamReporting.present ) {*/
       //extracting the ssb indexes
-      for (ssb_idx = 0; ssb_idx <= nb_ssb_resources_inEachSet; ssb_idx++) {
-        ssb_index[idx * nb_resource_sets + ssb_idx] = sched_ctrl->CSI_report[UE_id][idx].choice.ssb_cri_report.CRI_SSBRI[ssb_idx];
+      for (ssb_idx = 0; ssb_idx < nb_ssb_resources_inEachSet; ssb_idx++) {
+        ssb_index[idx * nb_resource_sets + ssb_idx] = sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI[ssb_idx];
       }
 
       //if strongest measured RSRP is configured
-      strongest_ssb_rsrp = get_measured_rsrp(sched_ctrl->CSI_report[UE_id][idx].choice.ssb_cri_report.RSRP);
+      strongest_ssb_rsrp = get_measured_rsrp(sched_ctrl->CSI_report[idx].choice.ssb_cri_report.RSRP);
       ssb_rsrp[idx * nb_resource_sets] = strongest_ssb_rsrp;
 
       //if current ssb rsrp is greater than better rsrp
@@ -263,7 +264,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
       }
 
       for(diff_rsrp_idx =1; diff_rsrp_idx < nb_ssb_resources_inEachSet; diff_rsrp_idx++) {
-        ssb_rsrp[idx * nb_resource_sets + diff_rsrp_idx] = get_diff_rsrp(sched_ctrl->CSI_report[UE_id][idx].choice.ssb_cri_report.diff_RSRP[diff_rsrp_idx], strongest_ssb_rsrp);
+        ssb_rsrp[idx * nb_resource_sets + diff_rsrp_idx] = get_diff_rsrp(sched_ctrl->CSI_report[idx].choice.ssb_cri_report.diff_RSRP[diff_rsrp_idx], strongest_ssb_rsrp);
 
         //if current reported rsrp is greater than better rsrp
         if(ssb_rsrp[idx * nb_resource_sets + diff_rsrp_idx] > better_rsrp_reported) {
@@ -271,7 +272,8 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
           target_ssb_beam_index = idx * nb_resource_sets + diff_rsrp_idx;
         }
       }
-    }
+#if 0
+      //}
     //if group based beam reporting is enabled
     else if (NR_CSI_ReportConfig__groupBasedBeamReporting_PR_disabled !=
              csi_MeasConfig->csi_ReportConfigToAddModList->list.array[0]->groupBasedBeamReporting.present ) {
@@ -296,6 +298,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
         target_ssb_beam_index = idx * nb_resource_sets + 1;
       }
     }
+#endif
   }
 
   if(ssb_index[target_ssb_beam_index] != ssb_index[curr_ssb_beam_index] && ssb_rsrp[target_ssb_beam_index] > ssb_rsrp[curr_ssb_beam_index]) {
@@ -407,6 +410,7 @@ void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_c
     }//tci_presentInDCI
   }//is-triggering_beam_switch
 }//tci handling
+
 void clear_nr_nfapi_information(gNB_MAC_INST *gNB,
                                 int CC_idP,
                                 frame_t frameP,
@@ -623,12 +627,38 @@ void copy_nr_ulreq(module_id_t module_idP, frame_t frameP, sub_frame_t slotP)
   }
 }
 */
+
+uint16_t get_csi_bitlen(int Mod_idP,
+		    int UE_id,
+		    NR_UE_list_t *UE_list,
+		    frame_t frame,
+		    sub_frame_t slot,
+		    NR_SubcarrierSpacing_t scs) {
+  uint8_t csi_report_id =0;
+  uint16_t csi_bitlen =0;
+  CRI_SSBRI_RSRP_bitlen_t * CSI_report_bitlen = NULL; //This might need to be moodif for Aperiodic CSI-RS measurements
+
+  NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
+  for (csi_report_id = 0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++){
+    CSI_report_bitlen = &(UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen[0]); //This might need to be moodif for Aperiodic CSI-RS measurements
+    long periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
+    if (((NR_SubcarrierSpacing_kHz30 == scs) && (((((frame & 0xf)+1)*20 + slot) & periodicity) == periodicity))
+       ||((NR_SubcarrierSpacing_kHz120 == scs)&&(((((frame & 0xf)+1)*80 + slot) & periodicity) == periodicity)))
+      csi_bitlen+= ((CSI_report_bitlen->cri_ssbri_bitlen * CSI_report_bitlen->nb_ssbri_cri) +
+	               CSI_report_bitlen->rsrp_bitlen +(CSI_report_bitlen->diff_rsrp_bitlen * 
+		       (CSI_report_bitlen->nb_ssbri_cri -1 )) *UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report);
+  }
+  
+  return csi_bitlen;
+}
+
 void nr_schedule_pucch(int Mod_idP,
                        int UE_id,
                        frame_t frameP,
                        sub_frame_t slotP) {
   uint16_t O_uci;
   uint16_t O_ack;
+  uint16_t O_csi;
   uint8_t SR_flag = 0; // no SR in PUCCH implemented for now
   NR_ServingCellConfigCommon_t *scc = RC.nrmac[Mod_idP]->common_channels->ServingCellConfigCommon;
   NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
@@ -655,13 +685,15 @@ void nr_schedule_pucch(int Mod_idP,
       memset(pucch_pdu,0,sizeof(nfapi_nr_pucch_pdu_t));
       UL_tti_req->n_pdus+=1;
       O_ack = curr_pucch->dai_c;
-      O_uci = O_ack+8; // for now we are just sending acknacks in pucch
+      O_csi = get_csi_bitlen(Mod_idP, UE_id, UE_list, frameP, slotP, ubwp->bwp_Common->genericParameters.subcarrierSpacing);
+      O_uci = O_ack+O_csi; // for now we are just sending acknacks in pucch
       LOG_I(MAC, "Scheduling pucch reception for frame %d slot %d\n", frameP, slotP);
       nr_configure_pucch(pucch_pdu,
                          scc,
                          ubwp,
                          curr_pucch->resource_indicator,
                          O_uci,
+			 O_csi,
                          O_ack,
                          SR_flag);
       curr_pucch->dai_c = 0;
@@ -790,7 +822,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
       ue_sched_ctl->current_harq_pid = slot_txP % num_slots_per_tdd;
       nr_update_pucch_scheduling(module_idP, UE_id, frame_txP, slot_txP, num_slots_per_tdd,&pucch_sched);
       //TCI handling function
-      tci_handling(module_idP, UE_id, CC_id, &ue_sched_ctl, frame_rxP, slot_rxP);
+      tci_handling(module_idP, UE_id, CC_id, ue_sched_ctl, frame_rxP, slot_rxP);
       nr_schedule_uss_dlsch_phytest(module_idP, frame_txP, slot_txP, &UE_list->UE_sched_ctrl[UE_id].sched_pucch[pucch_sched], NULL);
       // resetting ta flag
       gNB->ta_len = 0;

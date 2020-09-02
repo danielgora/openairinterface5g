@@ -415,7 +415,7 @@ void phy_procedures_gNB_uespec_RX(PHY_VARS_gNB *gNB, int frame_rx, int slot_rx) 
           pucch->active = 0;
 	  break;
 	case 2:
-
+/*
           num_ucis = gNB->UL_INFO.uci_ind.num_ucis;
           gNB->UL_INFO.uci_ind.uci_list = &gNB->uci_pdu_list[0];
           gNB->UL_INFO.uci_ind.sfn = frame_rx;
@@ -430,7 +430,7 @@ void phy_procedures_gNB_uespec_RX(PHY_VARS_gNB *gNB, int frame_rx, int slot_rx) 
                            pucch_pdu);
 
           gNB->UL_INFO.uci_ind.num_ucis += 1;
-          pucch->active = 0;
+          pucch->active = 0;*/
 	  break;
 
         default:

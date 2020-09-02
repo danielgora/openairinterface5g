@@ -545,6 +545,7 @@ void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
 			NR_BWP_Uplink_t *bwp,
                         uint8_t pucch_resource,
                         uint16_t O_uci,
+			uint16_t O_csi,
                         uint16_t O_ack,
                         uint8_t SR_flag) {
 
@@ -560,7 +561,7 @@ void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
   int res_found = 0;
 
   pucch_pdu->bit_len_harq = O_ack;
-  pucch_pdu->bit_len_csi_part1 = O_uci-O_ack;
+  pucch_pdu->bit_len_csi_part1 = O_csi;
 
   if (bwp) { // This is not the InitialBWP
 

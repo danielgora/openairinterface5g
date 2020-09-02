@@ -3801,9 +3801,16 @@ void ulsch_scheduler_pre_ue_select_fairRR(
         hi_dci0_pdu   = &HI_DCI0_req->hi_dci0_pdu_list[HI_DCI0_req->number_of_dci+HI_DCI0_req->number_of_hi];
         format_flag = 2;
 
-        aggregation = get_aggregation(get_bw_index(module_idP, CC_id),
+        if (mac_eNB_get_rrc_status(module_idP, rnti) == RRC_HO_EXECUTION) {
+          aggregation = 4;
+      
+          if(get_aggregation(get_bw_index(module_idP, CC_id),UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],format0)>4)
+            aggregation = get_aggregation(get_bw_index(module_idP, CC_id),UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],format0);
+        }else {
+          aggregation = get_aggregation(get_bw_index(module_idP, CC_id),
                                       UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],
                                       format0);
+        }
         if (CCE_allocation_infeasible(module_idP,CC_id,format_flag,subframeP,aggregation,rnti) == 1) {
           cc_id_flag[CC_id] = 1;
           continue;
@@ -3898,9 +3905,17 @@ void ulsch_scheduler_pre_ue_select_fairRR(
       hi_dci0_pdu   = &HI_DCI0_req->hi_dci0_pdu_list[HI_DCI0_req->number_of_dci+HI_DCI0_req->number_of_hi];
       format_flag = 2;
 
-      aggregation = get_aggregation(get_bw_index(module_idP, CC_id),
+      if (mac_eNB_get_rrc_status(module_idP, rnti) == RRC_HO_EXECUTION) {
+        aggregation = 4;
+
+        if(get_aggregation(get_bw_index(module_idP, CC_id),UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],format0)>4)
+          aggregation = get_aggregation(get_bw_index(module_idP, CC_id),UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],format0);
+      }else {
+
+        aggregation = get_aggregation(get_bw_index(module_idP, CC_id),
                                     UE_list->UE_sched_ctrl[UE_id].dl_cqi[CC_id],
                                     format0);
+      }
       if (CCE_allocation_infeasible(module_idP,CC_id,format_flag,subframeP,aggregation,rnti) == 1) {
         cc_id_flag[CC_id] = 1;
         continue;

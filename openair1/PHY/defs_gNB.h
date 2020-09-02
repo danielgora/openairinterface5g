@@ -167,6 +167,12 @@ typedef struct {
   int16_t sqrt_rho_a;
   /// amplitude of PDSCH (compared to RS) in symbols containing pilots
   int16_t sqrt_rho_b;
+  /// for maintaining multi threads for encoding
+  tpool_t *threadPool;
+  /// number of encoding threads
+  int nbEncode;
+  /// fifo to store the thread result
+  notifiedFIFO_t respEncode;
 } NR_gNB_DLSCH_t;
 
 typedef struct {
@@ -830,6 +836,26 @@ typedef struct LDPCDecode_s {
   int Tbslbrm;
   int decodeIterations;
 } ldpcDecode_t;
+
+typedef struct LDPCEncode_s {
+  PHY_VARS_gNB *gNB;
+  NR_DL_gNB_HARQ_t *dlsch_harq;
+  encoder_implemparams_t impp;
+  NR_gNB_DLSCH_t *dlsch;
+  int dlsch_id;
+  int harq_pid;
+  int Z;
+  int rvIndex;
+  int F;
+  int Ilbrm;
+  int Tbslbrm;
+  int mod_order;
+  int r_offset;
+  int nrOfLayers;
+  int G;
+  int BG;
+  int Kb;
+} ldpcEncode_t;
 
 struct ldpcReqId {
   uint16_t rnti;

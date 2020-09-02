@@ -612,7 +612,7 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
     E = nr_get_E(G, harq_process->C, Qm, n_layers, r);
 
     union ldpcReqUnion id = {.s={ulsch->rnti,frame,nr_tti_rx,0,0}};
-    notifiedFIFO_elt_t *req=newNotifiedFIFO_elt(sizeof(ldpcDecode_t), id.p, phy_vars_gNB->respDecode, nr_processULSegment);
+    notifiedFIFO_elt_t *req=newNotifiedFIFO_elt(sizeof(ldpcDecode_t), 0, phy_vars_gNB->respDecode, nr_processULSegment);
     ldpcDecode_t * rdata=(ldpcDecode_t *) NotifiedFifoData(req);
 
     rdata->gNB = phy_vars_gNB;

@@ -531,6 +531,7 @@ void init_nr_transport(PHY_VARS_gNB *gNB) {
 
     for (j=0; j<2; j++) {
       gNB->dlsch[i][j] = new_gNB_dlsch(fp,1,16,NSOFT,0,grid_size);
+      gNB->dlsch[i][j]->threadPool = gNB->threadPool;
       AssertFatal(gNB->dlsch[i][j]!=NULL,"Can't initialize dlsch %d \n", i);
     }
   }

@@ -160,6 +160,11 @@ uint8_t nr_generate_pdsch(NR_gNB_DLSCH_t *dlsch,
 		    dlsch_interleaving_stats,
 		    dlsch_segmentation_stats);
   stop_meas(dlsch_encoding_stats);
+  while (dlsch->nbEncode > 0) {
+    notifiedFIFO_elt_t *req=pullTpool(&dlsch->respEncode, dlsch->threadPool);
+    dlsch->nbEncode--;
+    delNotifiedFIFO_elt(req);
+  }
 #ifdef DEBUG_DLSCH
   printf("PDSCH encoding:\nPayload:\n");
   for (int i=0; i<harq->B>>7; i++) {

@@ -2715,23 +2715,23 @@ do_RRCConnectionSetup(
   physicalConfigDedicated2->antennaInfo->choice.explicitValue.ue_TransmitAntennaSelection.choice.release = 0;
   // SchedulingRequestConfig
   physicalConfigDedicated2->schedulingRequestConfig->present = LTE_SchedulingRequestConfig_PR_setup;
-  int sr_base=carrier->sib2->radioResourceConfigCommon.pucch_ConfigCommon.n1PUCCH_AN-1;
+
   if (carrier->sib1->tdd_Config == NULL) {
-    physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/10;//ue_context_pP->local_uid;
+    physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 71 - ue_context_pP->local_uid/10;//ue_context_pP->local_uid;
   } else {
     switch (carrier->sib1->tdd_Config->subframeAssignment) {
       case 1:
         switch(frame_parms->N_RB_UL) {
           case 25:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 15 - ue_context_pP->local_uid/4;
             break;
 
           case 50:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 31 - ue_context_pP->local_uid/4;
             break;
 
           case 100:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 63 - ue_context_pP->local_uid/4;
             break;
         }
 
@@ -2740,15 +2740,15 @@ do_RRCConnectionSetup(
       case 2:
         switch(frame_parms->N_RB_UL) {
           case 25:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 15 - ue_context_pP->local_uid/4;
             break;
 
           case 50:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 31 - ue_context_pP->local_uid/4;
             break;
 
           case 100:
-            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = sr_base - ue_context_pP->local_uid/4;
+            physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 63 - ue_context_pP->local_uid/4;
             break;
         }
 
@@ -2758,11 +2758,6 @@ do_RRCConnectionSetup(
         physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex = 71 - ue_context_pP->local_uid/10;//ue_context_pP->local_uid;
         break;
     }
-  }
-  if(!((physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex >= 0) && (physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex < carrier->sib2->radioResourceConfigCommon.pucch_ConfigCommon.n1PUCCH_AN))) {
-    LOG_E(RRC, "illegal sr_PUCCH_ResourceIndex %ld n1PUCCH_AN %ld ue_context_pP->local_uid %d\n",
-          physicalConfigDedicated2->schedulingRequestConfig->choice.setup.sr_PUCCH_ResourceIndex, carrier->sib2->radioResourceConfigCommon.pucch_ConfigCommon.n1PUCCH_AN, ue_context_pP->local_uid);
-    return -1;
   }
 
   if (carrier->sib1->tdd_Config == NULL) { // FDD

@@ -923,7 +923,7 @@ rrc_eNB_process_S1AP_DOWNLINK_NAS(
       ue_initial_id,
       eNB_ue_s1ap_id);
     itti_send_msg_to_task (TASK_S1AP, instance, msg_fail_p);
-    free(S1AP_DOWNLINK_NAS (msg_p).nas_pdu.buffer);
+    //free(S1AP_DOWNLINK_NAS (msg_p).nas_pdu.buffer);
     return (-1);
   } else {
     PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt, instance, ENB_FLAG_YES, ue_context_p->ue_context.rnti, 0, 0);

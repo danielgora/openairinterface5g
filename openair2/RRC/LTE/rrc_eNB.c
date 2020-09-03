@@ -1671,7 +1671,7 @@ rrc_eNB_generate_RRCConnectionReestablishment(
     /* Activate reject timer, if RRCComplete not received after 10 frames, reject UE */
     RC.mac[module_id]->UE_list.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer = 1;
     /* Reject UE after 10 frames, LTE_RRCConnectionReestablishmentReject is triggered */
-    RC.mac[module_id]->UE_list.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer_thres = 100;
+    RC.mac[module_id]->UE_list.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer_thres = 1000;
   } else {
     LOG_E(RRC, PROTOCOL_RRC_CTXT_UE_FMT" Generating LTE_RRCConnectionReestablishment without UE_id(MAC) rnti %x\n",
           PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),

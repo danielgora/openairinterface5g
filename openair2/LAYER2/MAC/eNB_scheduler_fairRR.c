@@ -394,6 +394,7 @@ void select_ul_ue_candidate(
   int UE_id_idx;
   rnti_t                         rnti;
   uint8_t ulsch_ue_max_num[MAX_NUM_CCs];
+  uint8_t ulsch_ue_max_num_volte[MAX_NUM_CCs];
   uint8_t cc_id_flag[MAX_NUM_CCs]={0};
   int rrc_status;
   int tdd_sfa;
@@ -402,6 +403,11 @@ void select_ul_ue_candidate(
     
   for (CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
     ulsch_ue_max_num[CC_id] =RC.rrc[module_idP]->configuration.radioresourceconfig[CC_id].ue_multiple_max;
+    if(eNB->volte_ul_cycle[CC_id] != 0){
+      ulsch_ue_max_num_volte[CC_id] = (uint16_t)(ulsch_ue_max_num[CC_id] / 2);
+    }else{
+      ulsch_ue_max_num_volte[CC_id]  = 0;
+    }
   }
   for(i=0;i<MAX_UE_MULTIPLEX;i++){
     ul_ue_candidate[i]=-1;
@@ -496,17 +502,8 @@ void select_ul_ue_candidate(
     if (UE_list->UE_sched_ctrl[UE_id].ul_out_of_sync == 1)
       continue;
 
-    if ( (index_volte >= ulsch_ue_max_num[CC_id]) || (cc_id_flag[CC_id] == 1) ) {
-      cc_id_flag[CC_id] = 1;
-      ret = cc_id_end(cc_id_flag);
-
-      if ( ret == 0 ) {
-        continue;
-      }
-
-      if ( ret == 1 ) {
-        return;
-      }
+    if (index_volte >= ulsch_ue_max_num_volte[CC_id]) {
+      continue;
     }
 
     int bytes_to_schedule = UE_list->UE_template[CC_id][UE_id].estimated_ul_buffer - UE_list->UE_template[CC_id][UE_id].scheduled_ul_bytes;
@@ -518,7 +515,7 @@ void select_ul_ue_candidate(
 
     UE_sched_ctl = &UE_list->UE_sched_ctrl[UE_id];
     if ((UE_sched_ctl->volte_configured == TRUE) 
-      && (index_volte < ulsch_ue_max_num[CC_id])
+      && (index_volte < ulsch_ue_max_num_volte[CC_id])
       && (UE_sched_ctl->ul_periodic_timer_exp_flag == TRUE) )
     {
       volte_lcg = UE_sched_ctl->volte_lcg;
@@ -548,7 +545,7 @@ void select_ul_ue_candidate(
     if (UE_list->UE_sched_ctrl[UE_id].ul_out_of_sync == 1)
       continue;
 
-    if ( (index >= ulsch_ue_max_num[CC_id]) || (cc_id_flag[CC_id] == 1) ) {
+    if ( ((index+ index_volte) >= ulsch_ue_max_num[CC_id]) || (cc_id_flag[CC_id] == 1) ) {
       cc_id_flag[CC_id] = 1;
       ret = cc_id_end(cc_id_flag);
 

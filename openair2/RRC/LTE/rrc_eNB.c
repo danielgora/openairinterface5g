@@ -9120,7 +9120,7 @@ rrc_eNB_decode_dcch(
 
           for (i = 0; i < ue_context_p->ue_context.nb_of_e_rabs; i++) {
             ue_context_p->ue_context.e_rab[i].status = E_RAB_STATUS_NEW;
-            ue_context_p->ue_context.e_rab[i].param.e_rab_id = 1+i;
+            ue_context_p->ue_context.e_rab[i].param.e_rab_id = 5+i; // LW set to first value, allowed value 5..15, value : x+5
             ue_context_p->ue_context.e_rab[i].param.qos.qci=9;
           }
 

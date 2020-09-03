@@ -688,6 +688,7 @@ void nr_schedule_pucch(int Mod_idP,
       O_csi = get_csi_bitlen(Mod_idP, UE_id, UE_list, frameP, slotP, ubwp->bwp_Common->genericParameters.subcarrierSpacing);
       O_uci = O_ack+O_csi; // for now we are just sending acknacks in pucch
       LOG_I(MAC, "Scheduling pucch reception for frame %d slot %d\n", frameP, slotP);
+      LOG_I(MAC, "UCI: Harq bitlen %d csi_report bitlen %d uci bitlen %d \n", O_ack, O_csi, O_uci);
       nr_configure_pucch(pucch_pdu,
                          scc,
                          ubwp,

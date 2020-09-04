@@ -185,13 +185,13 @@ void rrc_eNB_send_GTPV1U_ENB_DELETE_TUNNEL_REQ(
   MSC_LOG_TX_MESSAGE(MSC_RRC_ENB, MSC_GTPU_ENB, NULL, 0,
                      "0 GTPV1U_ENB_DELETE_TUNNEL_REQ rnti %x ",
                      ue_context_pP->ue_context.eNB_ue_s1ap_id);
-
+  rb_id_t gtp_ebi;
   MessageDef *msg = itti_alloc_new_message(TASK_RRC_ENB, GTPV1U_ENB_DELETE_TUNNEL_REQ);
   memset(&GTPV1U_ENB_DELETE_TUNNEL_REQ(msg), 0, sizeof(GTPV1U_ENB_DELETE_TUNNEL_REQ(msg)));
   GTPV1U_ENB_DELETE_TUNNEL_REQ(msg).rnti = ue_context_pP->ue_context.rnti;
   GTPV1U_ENB_DELETE_TUNNEL_REQ(msg).num_erab = ue_context_pP->ue_context.nb_of_e_rabs;
   for (int e_rab = 0; e_rab < ue_context_pP->ue_context.nb_of_e_rabs; e_rab++) {
-    const rb_id_t gtp_ebi = ue_context_pP->ue_context.enb_gtp_ebi[e_rab];
+    gtp_ebi = ue_context_pP->ue_context.enb_gtp_ebi[e_rab];
     GTPV1U_ENB_DELETE_TUNNEL_REQ(msg).eps_bearer_id[e_rab] = gtp_ebi;
   }
   itti_send_msg_to_task(TASK_GTPV1_U, ENB_MODULE_ID_TO_INSTANCE(enb_mod_idP), msg);

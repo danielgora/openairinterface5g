@@ -313,7 +313,7 @@ rx_sdu(const module_id_t enb_mod_idP,
           RA_id,
           ul_cqi);
     first_rb = ra->msg3_first_rb;
-
+    ra->msg3_wait_time = 0;
     if (sduP == NULL) { // we've got an error on Msg3
       LOG_D(MAC, "[eNB %d] CC_id %d,frame %d subframe %d RA %d ULSCH in error in round %d/%d rnti %x\n",
             enb_mod_idP,
@@ -357,6 +357,7 @@ rx_sdu(const module_id_t enb_mod_idP,
                            &ra->Msg3_subframe);
           // prepare handling of retransmission
           add_msg3(enb_mod_idP, CC_idP, ra, frameP, subframeP);
+          ra->msg3_wait_time = 1;
         }
       }
 
@@ -465,7 +466,6 @@ rx_sdu(const module_id_t enb_mod_idP,
                   old_rnti,
                   old_UE_id);
             UE_id = old_UE_id;
-            current_rnti = old_rnti;
             /* Clear timer */
             UE_scheduling_control = &UE_info->UE_sched_ctrl[UE_id];
             UE_template_ptr = &UE_info->UE_template[CC_idP][UE_id];
@@ -489,6 +489,7 @@ rx_sdu(const module_id_t enb_mod_idP,
                            CC_idP,
                            frameP,
                            current_rnti);
+            current_rnti = old_rnti;
           } else {
             /* TODO: if the UE did random access (followed by a MAC uplink with
              * CRNTI) because none of its scheduling request was granted, then

@@ -1603,7 +1603,7 @@ rrc_eNB_generate_RRCConnectionReestablishment(
     /* Activate reject timer, if RRCComplete not received after 10 frames, reject UE */
     RC.mac[module_id]->UE_info.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer = 1;
     /* Reject UE after 10 frames, LTE_RRCConnectionReestablishmentReject is triggered */
-    RC.mac[module_id]->UE_info.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer_thres = 100;
+    RC.mac[module_id]->UE_info.UE_sched_ctrl[UE_id].ue_reestablishment_reject_timer_thres = 1000;
   } else {
     LOG_E(RRC, PROTOCOL_RRC_CTXT_UE_FMT" Generating LTE_RRCConnectionReestablishment without UE_id(MAC) rnti %x\n",
           PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
@@ -7677,6 +7677,7 @@ rrc_eNB_generate_RRCConnectionSetup(
       /* init timers */
       ue_context_pP->ue_context.ue_rrc_inactivity_timer = 0;
   }
+
 }
 
 void setup_ngran_CU(eNB_RRC_INST *rrc) {
@@ -10231,7 +10232,11 @@ void *rrc_enb_process_itti_msg(void *notUsed) {
           /* in the target eNB */
           }else{
 
-            if(ue_context_p->ue_context.handover_info->state == HO_FORWARDING){
+            if((ue_context_p->ue_context.handover_info->state == HO_COMPLETE)
+              || (ue_context_p->ue_context.handover_info->state == HO_FORWARDING)
+              || (ue_context_p->ue_context.handover_info->state == HO_CONFIGURED)
+              || (ue_context_p->ue_context.handover_info->state == HO_END_MARKER)
+              || (ue_context_p->ue_context.handover_info->state == HO_FORWARDING_COMPLETE)){
                 ue_context_p->ue_context.handover_info->state = HO_RELEASE;
             }else{
                 free(ue_context_p->ue_context.handover_info);

@@ -273,6 +273,8 @@ void generate_Msg2(module_id_t module_idP,
     LOG_E(MAC, "to_prb failed\n");
     return;
   }
+  RA_t *ra_temp;
+  uint8_t msg3_ra_flag = 0;
   int             rmax = 0;
   int             rep = 0;
   int             reps = 0;
@@ -545,8 +547,8 @@ void generate_Msg2(module_id_t module_idP,
       if (!CCE_allocation_infeasible(module_idP, CC_idP, 0, subframeP,
                                      dl_config_pdu->dci_dl_pdu.dci_dl_pdu_rel8.aggregation_level, ra->RA_rnti)) {
         LOG_D(MAC,
-              "Frame %d: Subframe %d : Adding common DCI for RA_RNTI %x\n",
-              frameP, subframeP, ra->RA_rnti);
+              "Frame %d: Subframe %d : Adding common DCI for RA_RNTI %x rnti %x\n",
+              frameP, subframeP, ra->RA_rnti, ra->rnti);
         dl_req_body->number_dci++;
         dl_req_body->number_pdu++;
         dl_config_pdu = &dl_req_body->dl_config_pdu_list[dl_req_body->number_pdu];
@@ -594,9 +596,22 @@ void generate_Msg2(module_id_t module_idP,
               "Frame %d, Subframe %d: Setting Msg3 reception for Frame %d Subframe %d\n",
               frameP, subframeP, ra->Msg3_frame,
               ra->Msg3_subframe);
-        fill_rar(module_idP, CC_idP, ra, frameP, cc[CC_idP].RAR_pdu.payload, N_RB_DL, 7);
+        for (uint8_t i = 0; i < NB_RA_PROC_MAX; i++) {
+          ra_temp = (RA_t *) & cc[CC_idP].ra[i];
+          if((ra_temp != ra) && (ra_temp->state == WAITMSG3)){
+            if((ra->Msg3_frame == ra_temp->Msg3_frame) && (ra->Msg3_subframe == ra_temp->Msg3_subframe)){
+              LOG_E(PHY,"Msg3 sf_sfn repeated %d.%d  msg2 frame %d subframe %d rnti %x  ra_temp->msg3_first_rb %d\n",
+                         ra->Msg3_frame,ra->Msg3_subframe,ra->Msg2_frame, ra->Msg2_subframe,ra->rnti,ra_temp->msg3_first_rb);
+              if(ra_temp->msg3_first_rb < 6){
+                msg3_ra_flag = 1;
+              }
+            }
+          }
+        }
+        fill_rar(module_idP, CC_idP, ra, frameP, cc[CC_idP].RAR_pdu.payload, N_RB_DL, 7, msg3_ra_flag);
         add_msg3(module_idP, CC_idP, ra, frameP, subframeP);
         ra->state = WAITMSG3;
+        ra->msg3_wait_time = 1;
         LOG_D(MAC,"[eNB %d][RAPROC] Frame %d, Subframe %d: state:WAITMSG3\n", module_idP, frameP, subframeP);
         T(T_ENB_MAC_UE_DL_RAR_PDU_WITH_DATA, T_INT(module_idP),
           T_INT(CC_idP), T_INT(ra->RA_rnti), T_INT(frameP),
@@ -1495,6 +1510,7 @@ initiate_ra_proc(module_id_t module_idP,
       ra[i].Msg4_delay_cnt=0;
       ra[i].timing_offset = timing_offset;
       ra[i].preamble_subframe = subframeP;
+      ra[i].msg3_wait_time = 0;
       ra[i].rach_resource_type = rach_resource_type;
       ra[i].msg2_mpdcch_repetition_cnt = 0;
       ra[i].msg4_mpdcch_repetition_cnt = 0;

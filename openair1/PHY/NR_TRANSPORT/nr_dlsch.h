@@ -69,7 +69,8 @@ void nr_fill_dlsch(PHY_VARS_gNB *gNB,
                    nfapi_nr_dl_tti_pdsch_pdu *pdsch_pdu,
                    unsigned char *sdu); 
 
-uint8_t nr_generate_pdsch(NR_gNB_DLSCH_t *dlsch,
+uint8_t nr_generate_pdsch(PHY_VARS_gNB *gNB,
+                          NR_gNB_DLSCH_t *dlsch,
                           uint32_t ***pdsch_dmrs,
                           int32_t** txdataF,
                           int16_t amp,
@@ -98,7 +99,7 @@ void clean_gNB_ulsch(NR_gNB_ULSCH_t *ulsch);
 
 int16_t find_nr_dlsch(uint16_t rnti, PHY_VARS_gNB *gNB,find_type_t type);
 
-int nr_dlsch_encoding(unsigned char *a,int frame,
+int nr_dlsch_encoding(PHY_VARS_gNB *gNB, unsigned char *a,int frame,
 		      uint8_t slot,
 		      NR_gNB_DLSCH_t *dlsch,
 		      NR_DL_FRAME_PARMS* frame_parms,

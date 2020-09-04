@@ -109,7 +109,8 @@ void nr_pdsch_codeword_scrambling_optim(uint8_t *in,
 }
 
 
-uint8_t nr_generate_pdsch(NR_gNB_DLSCH_t *dlsch,
+uint8_t nr_generate_pdsch(PHY_VARS_gNB *gNB,
+                          NR_gNB_DLSCH_t *dlsch,
                           uint32_t ***pdsch_dmrs,
                           int32_t** txdataF,
                           int16_t amp,
@@ -155,14 +156,14 @@ uint8_t nr_generate_pdsch(NR_gNB_DLSCH_t *dlsch,
   /// CRC, coding, interleaving and rate matching
   AssertFatal(harq->pdu!=NULL,"harq->pdu is null\n");
   start_meas(dlsch_encoding_stats);
-  nr_dlsch_encoding(harq->pdu, frame, slot, dlsch, frame_parms,tinput,tprep,tparity,toutput,
+  nr_dlsch_encoding(gNB, harq->pdu, frame, slot, dlsch, frame_parms,tinput,tprep,tparity,toutput,
 		    dlsch_rate_matching_stats,
 		    dlsch_interleaving_stats,
 		    dlsch_segmentation_stats);
   stop_meas(dlsch_encoding_stats);
-  while (dlsch->nbEncode > 0) {
-    notifiedFIFO_elt_t *req=pullTpool(&dlsch->respEncode, dlsch->threadPool);
-    dlsch->nbEncode--;
+  while (gNB->nbEncode > 0) {
+    notifiedFIFO_elt_t *req=pullTpool(gNB->respEncode, gNB->threadPool);
+    gNB->nbEncode--;
     delNotifiedFIFO_elt(req);
   }
 #ifdef DEBUG_DLSCH

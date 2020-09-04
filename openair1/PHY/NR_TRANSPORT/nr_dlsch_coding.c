@@ -330,7 +330,6 @@ int nr_processDLSegment(void* args) {
   int j = impp.macro_num;
   int E;
   int r;
-  int Nl = 4;
 
   nrLDPC_encoder(dlsch_harq->c,dlsch_harq->d,Z,Kb,Kr,BG,&impp);
 
@@ -359,10 +358,6 @@ int nr_processDLSegment(void* args) {
 	  F,
 	  Kr-F-2*(Z),
 	  mod_order);
-
-    // for tbslbrm calculation according to 5.4.2.1 of 38.212
-    if (nrOfLayers < Nl)
-      Nl = nrOfLayers;
 
     nr_rate_matching_ldpc(Ilbrm,
                           Tbslbrm,
@@ -393,14 +388,15 @@ int nr_processDLSegment(void* args) {
       write_output("enc_output.m","enc",dlsch_harq->f,G,1,4);
 #endif
 
-  VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ENCODING, VCD_FUNCTION_OUT);
-
   r_offset += E;
 
   }
+  VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ENCODING, VCD_FUNCTION_OUT);
+
 }
 
-int nr_dlsch_encoding(unsigned char *a,
+int nr_dlsch_encoding(PHY_VARS_gNB *gNB,
+                      unsigned char *a,
                       int frame,
                       uint8_t slot,
                       NR_gNB_DLSCH_t *dlsch,
@@ -516,15 +512,20 @@ int nr_dlsch_encoding(unsigned char *a,
     F = dlsch->harq_processes[harq_pid]->F;
 
     Kr = dlsch->harq_processes[harq_pid]->K;
+
+    if (rel15->nrOfLayers < Nl)
+      Nl = rel15->nrOfLayers;
+
+    Tbslbrm = nr_compute_tbslbrm(rel15->mcsTable[0],nb_rb,Nl,dlsch->harq_processes[harq_pid]->C);
 #ifdef DEBUG_DLSCH_CODING
     uint16_t Kr_bytes;
     Kr_bytes = Kr>>3;
 #endif
-    dlsch->nbEncode = 0;
+    gNB->nbEncode = 0;
 
     //printf("segment Z %d k %d Kr %d BG %d C %d\n", *Zc,dlsch->harq_processes[harq_pid]->K,Kr,BG,dlsch->harq_processes[harq_pid]->C);
     for(int j=0;j<(dlsch->harq_processes[harq_pid]->C/8+1);j++) {
-      notifiedFIFO_elt_t *req=newNotifiedFIFO_elt(sizeof(ldpcDecode_t), 0, &dlsch->respEncode, nr_processDLSegment);
+      notifiedFIFO_elt_t *req=newNotifiedFIFO_elt(sizeof(ldpcEncode_t), 0, gNB->respEncode, nr_processDLSegment);
       ldpcEncode_t *rdata = (ldpcEncode_t *) NotifiedFifoData(req);
 
       rdata->impp.n_segments=dlsch->harq_processes[harq_pid]->C;
@@ -544,16 +545,15 @@ int nr_dlsch_encoding(unsigned char *a,
       rdata->mod_order = mod_order;
       rdata->nrOfLayers = rel15->nrOfLayers;
       rdata->Kb = Kb;
+      rdata->G = G;
       for (int cj=0; cj<j*8; cj++) {
         r_offset += nr_get_E(G, dlsch->harq_processes[harq_pid]->C, mod_order, rel15->nrOfLayers, r);
       }
       rdata->r_offset = r_offset;
-      pushTpool(dlsch->threadPool,req);
-      dlsch->nbEncode++;
-      LOG_D(PHY,"Added a block to encode, in pipe: %d\n",dlsch->nbEncode);
+      pushTpool(gNB->threadPool,req);
+      gNB->nbEncode++;
+      LOG_D(PHY,"Added a block to encode, in pipe: %d\n",gNB->nbEncode);
     }
-
-    return;
 
   } else {
     F = dlsch->harq_processes[harq_pid]->F;
@@ -625,6 +625,7 @@ int nr_dlsch_encoding(unsigned char *a,
 
       r_offset += E;
     }
+  VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ENCODING, VCD_FUNCTION_OUT);
   }
 
   return 0;

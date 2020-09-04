@@ -167,12 +167,6 @@ typedef struct {
   int16_t sqrt_rho_a;
   /// amplitude of PDSCH (compared to RS) in symbols containing pilots
   int16_t sqrt_rho_b;
-  /// for maintaining multi threads for encoding
-  tpool_t *threadPool;
-  /// number of encoding threads
-  int nbEncode;
-  /// fifo to store the thread result
-  notifiedFIFO_t respEncode;
 } NR_gNB_DLSCH_t;
 
 typedef struct {
@@ -810,8 +804,10 @@ typedef struct PHY_VARS_gNB_s {
   time_stats_t ulsch_freq_offset_estimation_stats;
   */
   notifiedFIFO_t *respDecode;
+  notifiedFIFO_t *respEncode;
   tpool_t *threadPool;
   int nbDecode;
+  int nbEncode;
 
 } PHY_VARS_gNB;
 

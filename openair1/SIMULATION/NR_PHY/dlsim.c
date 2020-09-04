@@ -467,6 +467,11 @@ int main(int argc, char **argv)
   gNB_RRC_INST rrc;
   memset((void*)&rrc,0,sizeof(rrc));
 
+  gNB->threadPool = (tpool_t*)malloc(sizeof(tpool_t));
+  gNB->respEncode = (notifiedFIFO_t*) malloc(sizeof(notifiedFIFO_t));
+  char tp_param[] = "-1,-1,-1";
+  initTpool(tp_param, gNB->threadPool, true);
+  initNotifiedFIFO(gNB->respEncode);
   /*
   // read in SCGroupConfig
   AssertFatal(scg_fd != NULL,"no reconfig.raw file\n");

@@ -194,7 +194,8 @@ void phy_procedures_gNB_TX(PHY_VARS_gNB *gNB,
   for (int i=0; i<gNB->num_pdsch_rnti[slot]; i++) {
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_GENERATE_DLSCH,1);
     LOG_D(PHY, "PDSCH generation started (%d) in frame %d.%d\n", gNB->num_pdsch_rnti[slot],frame,slot);
-    nr_generate_pdsch(gNB->dlsch[i][0],
+    nr_generate_pdsch(gNB,
+                      gNB->dlsch[i][0],
                       gNB->nr_gold_pdsch_dmrs[slot],
                       gNB->common_vars.txdataF,
                       AMP, frame, slot, fp, 0,

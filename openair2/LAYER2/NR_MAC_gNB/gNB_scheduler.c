@@ -633,17 +633,17 @@ uint16_t get_csi_bitlen(int Mod_idP,
 		    NR_UE_list_t *UE_list,
 		    frame_t frame,
 		    sub_frame_t slot,
-		    NR_SubcarrierSpacing_t scs) {
+		    uint8_t n_of_slots) {
   uint8_t csi_report_id =0;
   uint16_t csi_bitlen =0;
-  CRI_SSBRI_RSRP_bitlen_t * CSI_report_bitlen = NULL; //This might need to be moodif for Aperiodic CSI-RS measurements
+  long periodicity;
+  CRI_SSBRI_RSRP_bitlen_t * CSI_report_bitlen = NULL; 
 
   NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
   for (csi_report_id = 0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++){
     CSI_report_bitlen = &(UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen[0]); //This might need to be moodif for Aperiodic CSI-RS measurements
-    long periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
-    if (((NR_SubcarrierSpacing_kHz30 == scs) && (((((frame & 0xf)+1)*20 + slot) & periodicity) == periodicity))
-       ||((NR_SubcarrierSpacing_kHz120 == scs)&&(((((frame & 0xf)+1)*80 + slot) & periodicity) == periodicity)))
+    periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
+    if (((n_of_slots*frame + slot - UE_list->csi_report_template[UE_id][csi_report_id].offset)%periodicity)==0)
       csi_bitlen+= ((CSI_report_bitlen->cri_ssbri_bitlen * CSI_report_bitlen->nb_ssbri_cri) +
 	               CSI_report_bitlen->rsrp_bitlen +(CSI_report_bitlen->diff_rsrp_bitlen * 
 		       (CSI_report_bitlen->nb_ssbri_cri -1 )) *UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report);
@@ -685,7 +685,7 @@ void nr_schedule_pucch(int Mod_idP,
       memset(pucch_pdu,0,sizeof(nfapi_nr_pucch_pdu_t));
       UL_tti_req->n_pdus+=1;
       O_ack = curr_pucch->dai_c;
-      O_csi = get_csi_bitlen(Mod_idP, UE_id, UE_list, frameP, slotP, ubwp->bwp_Common->genericParameters.subcarrierSpacing);
+      O_csi = get_csi_bitlen(Mod_idP, UE_id, UE_list, frameP, slotP, slots_per_frame[*scc->ssbSubcarrierSpacing]);
       O_uci = O_ack+O_csi; // for now we are just sending acknacks in pucch
       LOG_I(MAC, "Scheduling pucch reception for frame %d slot %d\n", frameP, slotP);
       LOG_I(MAC, "UCI: Harq bitlen %d csi_report bitlen %d uci bitlen %d \n", O_ack, O_csi, O_uci);

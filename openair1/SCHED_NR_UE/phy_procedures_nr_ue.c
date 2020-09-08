@@ -3999,6 +3999,59 @@ void *UE_thread_slot1_dl_processing(void *arg) {
 }
 #endif
 
+int is_ssb_in_slot(fapi_nr_config_request_t *config, int frame, int slot, NR_DL_FRAME_PARMS *fp)
+{
+  int mu = fp->numerology_index;
+  //uint8_t half_frame_index = fp->half_frame_bit;
+  //uint8_t i_ssb = fp->ssb_index;
+  uint8_t Lmax = fp->Lmax;
+
+  if (!(frame%(1<<(config->ssb_table.ssb_period-1)))){
+
+    if(Lmax <= 8) {
+      if(slot <=3 && (((config->ssb_table.ssb_mask_list[0].ssb_mask << 2*slot)&0x80000000) == 0x80000000 || ((config->ssb_table.ssb_mask_list[0].ssb_mask << (2*slot +1))&0x80000000) == 0x80000000))
+      return 1;
+      else return 0;
+
+    }
+    else if(Lmax == 64) {
+      if (mu == NR_MU_3){
+
+        if (slot>=0 && slot <= 7){
+          if(((config->ssb_table.ssb_mask_list[0].ssb_mask << 2*slot)&0x80000000) == 0x80000000 || ((config->ssb_table.ssb_mask_list[0].ssb_mask << (2*slot +1))&0x80000000) == 0x80000000)
+          return 1;
+          else return 0;
+        }
+      else if (slot>=10 && slot <=17){
+         if(((config->ssb_table.ssb_mask_list[0].ssb_mask << 2*(slot-2))&0x80000000) == 0x80000000 || ((config->ssb_table.ssb_mask_list[0].ssb_mask << (2*(slot-2) +1))&0x80000000) == 0x80000000)
+         return 1;
+         else return 0;
+        }  
+      else if (slot>=20 && slot <=27){
+         if(((config->ssb_table.ssb_mask_list[1].ssb_mask << 2*(slot-20))&0x80000000) == 0x80000000 || ((config->ssb_table.ssb_mask_list[1].ssb_mask << (2*(slot-20) +1))&0x80000000) == 0x80000000)
+         return 1;
+         else return 0;
+      }  
+      else if (slot>=30 && slot <=37){
+         if(((config->ssb_table.ssb_mask_list[1].ssb_mask << 2*(slot-22))&0x80000000) == 0x80000000 || ((config->ssb_table.ssb_mask_list[1].ssb_mask << (2*(slot-22) +1))&0x80000000) == 0x80000000)
+         return 1;
+         else return 0;
+       } 
+      else return 0; 
+
+    }
+
+
+    else if (mu == NR_MU_4) {
+         AssertFatal(0==1, "not implemented for mu =  %d yet\n", mu);
+    }
+    else AssertFatal(0==1, "Invalid numerology index %d for the synchronization block\n", mu);
+   }
+   else AssertFatal(0==1, "Invalid Lmax %d for the synchronization block\n", Lmax);  
+  }
+  else return 0;
+
+}
 
 int is_pbch_in_slot(fapi_nr_config_request_t *config, int frame, int slot, NR_DL_FRAME_PARMS *fp)  {
 

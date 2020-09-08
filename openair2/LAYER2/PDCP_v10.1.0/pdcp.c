@@ -403,9 +403,7 @@ boolean_t pdcp_data_req(
             for (UE_id = 0; UE_id < MAX_MOBILES_PER_ENB; UE_id++) {
               if (RC.mac[ctxt_pP->module_id]->UE_list.active[UE_id] == TRUE) {
                 if (RC.mac[ctxt_pP->module_id]->UE_list.UE_template[RC.mac[ctxt_pP->module_id]->UE_list.pCC_id[UE_id]][UE_id].rnti == ctxt_pP->rnti) {
-                    pthread_mutex_lock(&(RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_lock));
                     RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_cnt++;
-                    pthread_mutex_unlock(&(RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_lock));
                     break;
                 }
               }
@@ -473,9 +471,7 @@ boolean_t pdcp_data_req(
             for (UE_id = 0; UE_id < MAX_MOBILES_PER_ENB; UE_id++) {
               if (RC.mac[ctxt_pP->module_id]->UE_list.active[UE_id] == TRUE) {
                 if (RC.mac[ctxt_pP->module_id]->UE_list.UE_template[RC.mac[ctxt_pP->module_id]->UE_list.pCC_id[UE_id]][UE_id].rnti == ctxt_pP->rnti) {
-                    pthread_mutex_lock(&(RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_lock));
                     RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_cnt++;
-                    pthread_mutex_unlock(&(RC.mac[ctxt_pP->module_id]->UE_list.UE_sched_ctrl[UE_id].rlc_out_of_resources_lock));
                     break;
                 }
               }

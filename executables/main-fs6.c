@@ -769,11 +769,7 @@ void rcvFs6DL(uint8_t *bufferZone, int nbBlocks, PHY_VARS_eNB *eNB, int frame, i
         int curUE=hDLUE(bufPtr)->UE_id;
         LTE_eNB_DLSCH_t *dlsch0 = eNB->dlsch[curUE][0];
         LTE_DL_eNB_HARQ_t *dlsch_harq=dlsch0->harq_processes[hDLUE(bufPtr)->harq_pid];
-#ifdef PHY_TX_THREAD
         dlsch0->active[subframe] = 1;
-#else
-        dlsch0->active = 1;
-#endif
         dlsch0->harq_ids[frame%2][subframe]=hDLUE(bufPtr)->harq_pid;
         dlsch0->rnti=hDLUE(bufPtr)->rnti;
         dlsch0->sqrt_rho_a=hDLUE(bufPtr)->sqrt_rho_a;
@@ -894,11 +890,7 @@ void phy_procedures_eNB_TX_fromsplit(uint8_t *bufferZone, int nbBlocks, PHY_VARS
     LTE_eNB_DLSCH_t *dlsch0 = eNB->dlsch[UE_id][0];
 
     if ( dlsch0 && dlsch0->rnti>0 ) {
-#ifdef PHY_TX_THREAD
       dlsch0->active[subframe] = 0;
-#else
-      dlsch0->active = 0;
-#endif
     }
   }
 
@@ -955,11 +947,7 @@ void phy_procedures_eNB_TX_fromsplit(uint8_t *bufferZone, int nbBlocks, PHY_VARS
     LTE_eNB_DLSCH_t *dlsch1 = eNB->dlsch[UE_id][1];
 
     if ((dlsch0)&&(dlsch0->rnti>0)&&
-#ifdef PHY_TX_THREAD
         (dlsch0->active[subframe] == 1)
-#else
-        (dlsch0->active == 1)
-#endif
        ) {
       uint64_t sum=0;
 
@@ -1267,11 +1255,7 @@ void phy_procedures_eNB_TX_tosplit(uint8_t *bufferZone, PHY_VARS_eNB *eNB, L1_rx
     LTE_eNB_DLSCH_t *dlsch0 = eNB->dlsch[UE_id][0];
 
     if ((dlsch0)&&(dlsch0->rnti>0)&&
-#ifdef PHY_TX_THREAD
         (dlsch0->active[subframe] == 1)
-#else
-        (dlsch0->active == 1)
-#endif
        ) {
       // get harq_pid
       int harq_pid = dlsch0->harq_ids[frame%2][subframe];
@@ -1319,11 +1303,7 @@ void phy_procedures_eNB_TX_tosplit(uint8_t *bufferZone, PHY_VARS_eNB *eNB, L1_rx
         }
       }
     } else if ((dlsch0)&&(dlsch0->rnti>0)&&
-#ifdef PHY_TX_THREAD
                (dlsch0->active[subframe] == 0)
-#else
-               (dlsch0->active == 0)
-#endif
               ) {
       // clear subframe TX flag since UE is not scheduled for PDSCH in this subframe (so that we don't look for PUCCH later)
       //dlsch0->subframe_tx[subframe]=0;

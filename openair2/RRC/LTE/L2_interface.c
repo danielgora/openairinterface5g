@@ -335,10 +335,17 @@ mac_rrc_data_ind(
       rrc_eNB_decode_ccch(&ctxt, Srb_info, CC_id);
     }*/
     if (sdu_lenP > 0)  {
-      if (rrc_eNB_decode_ccch(&ctxt, sduP, sdu_lenP, CC_id) == -1) {
-        LOG_E(RRC, "rrc_eNB_decode_ccch failed\n");
-        return -2;
-      }
+      MessageDef *message_p;
+      message_p = itti_alloc_new_message (TASK_MAC_ENB, RRC_MAC_CCCH_DATA_IND);
+      RRC_MAC_CCCH_DATA_IND (message_p).frame = frameP;
+      RRC_MAC_CCCH_DATA_IND (message_p).sub_frame = sub_frameP;
+      RRC_MAC_CCCH_DATA_IND (message_p).enb_index = module_idP;
+      RRC_MAC_CCCH_DATA_IND (message_p).CC_id = CC_id;
+      RRC_MAC_CCCH_DATA_IND (message_p).rnti = rntiP;
+      RRC_MAC_CCCH_DATA_IND (message_p).sdu_size = sdu_lenP;
+      memset (RRC_MAC_CCCH_DATA_IND (message_p).sdu, 0, CCCH_SDU_SIZE);
+      memcpy (RRC_MAC_CCCH_DATA_IND (message_p).sdu, sduP, sdu_lenP);
+      itti_send_msg_to_task (TASK_RRC_ENB, ctxt.instance, message_p);
     }
   }
 

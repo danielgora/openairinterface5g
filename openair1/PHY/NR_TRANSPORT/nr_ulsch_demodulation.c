@@ -273,17 +273,17 @@ void nr_ulsch_extract_rbs_single(int32_t **rxdataF,
       //
       //rxF[ ((start_re + re)*2)      % (frame_parms->ofdm_symbol_size*2)]);
       if (start_re + nb_re_pusch < frame_parms->ofdm_symbol_size) {
-        memcpy1((void*)rxF_ext,
+        memcpy((void*)rxF_ext,
                 (void*)&rxF[start_re*2],
                 nb_re_pusch*sizeof(int32_t));
       } else {
 	int neg_length = frame_parms->ofdm_symbol_size-start_re;
 	int pos_length = nb_re_pusch-neg_length;
 
-	memcpy1((void*)rxF_ext,(void*)&rxF[start_re*2],neg_length*sizeof(int32_t));
-	memcpy1((void*)&rxF_ext[2*neg_length],(void*)rxF,pos_length*sizeof(int32_t));
+	memcpy((void*)rxF_ext,(void*)&rxF[start_re*2],neg_length*sizeof(int32_t));
+	memcpy((void*)&rxF_ext[2*neg_length],(void*)rxF,pos_length*sizeof(int32_t));
       }
-      memcpy1((void*)ul_ch0_ext,(void*)ul_ch0,nb_re_pusch*sizeof(int32_t));
+      memcpy((void*)ul_ch0_ext,(void*)ul_ch0,nb_re_pusch*sizeof(int32_t));
     }
     else {
       for (re = 0; re < nb_re_pusch; re++) {

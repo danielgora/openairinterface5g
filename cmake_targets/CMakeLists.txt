@@ -2951,6 +2951,7 @@ else (CUDA_FOUND)
     add_executable(ldpctest  
        ${PHY_NR_CODINGIF}
        ${OPENAIR1_DIR}/PHY/CODING/TESTBENCH/ldpctest.c
+       ${OPENAIR_DIR}/common/utils/utils.c
        ${T_SOURCE}
        ${SHLIB_LOADER_SOURCES}
        )

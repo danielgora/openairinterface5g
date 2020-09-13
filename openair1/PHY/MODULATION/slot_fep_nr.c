@@ -472,11 +472,11 @@ int nr_slot_fep_ul(NR_DL_FRAME_PARMS *frame_parms,
     rxdata_offset = slot_offset + nb_prefix_samples0 + (symbol * (frame_parms->ofdm_symbol_size + nb_prefix_samples)) - SOFFSET;
 
   if(sample_offset>rxdata_offset) {
-    memcpy1((void *)tmp_dft_in,
+    memcpy((void *)tmp_dft_in,
            (void *) &rxdata[frame_parms->samples_per_frame-sample_offset+rxdata_offset],
            (sample_offset-rxdata_offset)*sizeof(int));
 
-    memcpy1((void *)&tmp_dft_in[sample_offset-rxdata_offset],
+    memcpy((void *)&tmp_dft_in[sample_offset-rxdata_offset],
            (void *) &rxdata[0],
            (frame_parms->ofdm_symbol_size-sample_offset+rxdata_offset)*sizeof(int));
 

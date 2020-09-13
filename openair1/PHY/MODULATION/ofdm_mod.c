@@ -193,7 +193,7 @@ void PHY_ofdm_mod(int *input,                       /// pointer to complex input
         /*for (j=0; j<fftsize ; j++) {
           output_ptr[j] = temp_ptr[j];
         }*/
-        memcpy1((void*)output_ptr,(void*)temp_ptr,fftsize<<2);
+        memcpy((void*)output_ptr,(void*)temp_ptr,fftsize<<2);
       }
 
       j=fftsize;

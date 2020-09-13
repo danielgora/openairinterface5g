@@ -56,7 +56,7 @@ void nr_ulsch_qpsk_llr(int32_t *rxdataF_comp,
     rxF++;
     llr32++;
     }*/
-  memcpy1((void*)llr32,(void*)rxF,nb_re<<2);
+  memcpy((void*)llr32,(void*)rxF,nb_re<<2);
 }
 
 //----------------------------------------------------------------------------------------------

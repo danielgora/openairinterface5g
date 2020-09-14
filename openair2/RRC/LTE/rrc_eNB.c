@@ -750,7 +750,7 @@ rrc_eNB_ue_context_stmsi_exist(
 {
   struct rrc_eNB_ue_context_s        *ue_context_p = NULL;
   RB_FOREACH(ue_context_p, rrc_ue_tree_s, &(RC.rrc[ctxt_pP->module_id]->rrc_ue_head)) {
-    LOG_I(RRC,"checking for UE S-TMSI %x, mme %x (%p): rnti %x",
+    LOG_D(RRC,"checking for UE S-TMSI %x, mme %x (%p): rnti %x",
           m_tmsiP, mme_codeP, ue_context_p,
           ue_context_p->ue_context.rnti);
 

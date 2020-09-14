@@ -806,10 +806,6 @@ void update_ue_timers(module_id_t module_idP,frame_t frameP, sub_frame_t subfram
               UE_scheduling_control->ret_cnt[CC_id],
               UE_scheduling_control->aperiodic_ri_received[CC_id]
         );
-        
-        pthread_mutex_lock(&(UE_scheduling_control->rlc_out_of_resources_lock));
-        UE_scheduling_control->rlc_out_of_resources_cnt = 0;
-        pthread_mutex_unlock(&(UE_scheduling_control->rlc_out_of_resources_lock));
       }
 
       RC.eNB[module_idP][CC_id]->pusch_stats_bsr[UE_id][(frameP * 10) + subframeP] = -63;

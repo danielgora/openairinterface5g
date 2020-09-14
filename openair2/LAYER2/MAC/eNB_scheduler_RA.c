@@ -1237,19 +1237,64 @@ generate_Msg4(module_id_t module_idP,
           }
         }     // CCE Allocation feasible
       } else {
-        LOG_I(MAC,
-              "eNB %d][RAPROC] CC_id %d Frame %d, subframeP %d: Delaying Msg4 for RRC Piggyback (RNTI %x)\n",
-              module_idP, CC_idP, frameP, subframeP, ra->rnti);
-        ra->Msg4_subframe ++;
         ra->Msg4_delay_cnt++;
+        if (ra->Msg4_delay_cnt==10){
+          fill_nfapi_rnti_release(module_idP, ra->rnti);
+          put_UE_in_freelist(module_idP,ra->rnti,0);
+          cancel_ra_proc(module_idP, CC_idP, frameP, ra->rnti);
+        }else{
 
-        if (ra->Msg4_delay_cnt==10) cancel_ra_proc(module_idP, CC_idP, frameP, ra->rnti);
+          if(mac->common_channels[CC_idP].tdd_Config != NULL) {
+            switch(mac->common_channels[CC_idP].tdd_Config->subframeAssignment) {
+              case 1:
+                if((ra->Msg4_subframe == 0) || (ra->Msg4_subframe == 5)){
+                  ra->Msg4_subframe = ra->Msg4_subframe+4;
+                }
+                else if((ra->Msg4_subframe == 4) || (ra->Msg4_subframe == 9))
+                {
+                  if(ra->Msg4_subframe == 9){
+                    ra->Msg4_frame++;
+                    ra->Msg4_frame&=1023;
+                  }
+                  ra->Msg4_subframe = (ra->Msg4_subframe+1)%10;
+                }
+                break;
 
-        if (ra->Msg4_subframe == 10) {
-          ra->Msg4_frame++;
-          ra->Msg4_frame&=1023;
-          ra->Msg4_subframe = 0;
+              case 2:
+                  if((ra->Msg4_subframe == 0) || (ra->Msg4_subframe == 5)){
+                    ra->Msg4_subframe = ra->Msg4_subframe+3;
+                  }
+                  else if((ra->Msg4_subframe == 3) || (ra->Msg4_subframe == 8))
+                  {
+                    ra->Msg4_subframe = ra->Msg4_subframe+1;
+                  }
+                  else if((ra->Msg4_subframe == 4) || (ra->Msg4_subframe == 9))
+                  {
+                    if(ra->Msg4_subframe == 9){
+                      ra->Msg4_frame++;
+                      ra->Msg4_frame&=1023;
+                    }
+                    ra->Msg4_subframe = (ra->Msg4_subframe+1)%10;
+                  }
+                break;
+
+              default:
+                printf("%s:%d: TODO\n", __FILE__, __LINE__);
+                abort();
+                // TODO need to be complete for other tdd configs.
+            }
+          } else {
+            ra->Msg4_subframe ++;
+            if (ra->Msg4_subframe == 10) {
+              ra->Msg4_frame++;
+              ra->Msg4_frame&=1023;
+              ra->Msg4_subframe = 0;
+            }
+          }
         }
+        LOG_I(MAC,
+              "eNB %d][RAPROC] CC_id %d Frame %d, subframeP %d: Delaying Msg4 for RRC Piggyback (RNTI %x) Msg4 frame %d subframe %d\n",
+              module_idP, CC_idP, frameP, subframeP, ra->rnti, ra->Msg4_frame, ra->Msg4_subframe);
       }
     }     // msg4 frame/subframe
   }       // else rach_resource_type

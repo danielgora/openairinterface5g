@@ -94,8 +94,19 @@ void rescale_up_int16buff(int size,int16_t *input, int factor){
 }
 
 void rescale_up_newint16buff(int size,int16_t *input, int16_t *output,int factor){
-	for (int i=0;i<(size*2);i=i+1){
-		output[i]=(input[i]*factor);
+	switch (size) {
+	  case 128:
+		for(int j=0; j<256; j++) {
+		  output[j]=input[j]*factor;
+		}	  
+	  break;
+	  default:
+	for (int i=0;i<size;i=i+1){
+		output[2*i]=(input[2*i]*factor);
+		output[2*i+1]=(input[2*i+1]*factor);
+	}
+	  break;
+
 	}
 }
 

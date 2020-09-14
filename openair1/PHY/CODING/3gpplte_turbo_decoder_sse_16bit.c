@@ -1869,7 +1869,7 @@ break;
         }else if (correct_bit_security_BC95G == 3)
         {
           printf("Try to recovery security complete BC95G\n");
-
+          decoded_bytes[3] = decoded_bytes[3] + 0x08;
           // the first case, didn't change anything
           oldcrc&=0x00ffffff;
           crc = 0;
@@ -1901,8 +1901,8 @@ break;
           }
           decoded_bytes[11] = decoded_bytes[11] - 0x08;
 
-          // Add 14th byte for 00001000 (0x08)
-          decoded_bytes[3] = decoded_bytes[3] + 0x08;
+          // Add 17th byte for 00001000 (0x08)
+          decoded_bytes[17] = decoded_bytes[17] + 0x08;
           //oldcrc&=0x00ffffff;
           crc = 0;
           crc = crc24a(&decoded_bytes[F>>3],
@@ -1915,12 +1915,12 @@ break;
           {
             return iteration_cnt;
           }
-          decoded_bytes[3] = decoded_bytes[3] - 0x08;       
+          decoded_bytes[17] = decoded_bytes[17] - 0x08;       
 
 
-          // Add 7th & 14th byte for 00001000 (0x08)
+          // Add 7th & 17th byte for 00001000 (0x08)
           decoded_bytes[11] = decoded_bytes[11] + 0x08;
-          decoded_bytes[3] = decoded_bytes[3] + 0x08;
+          decoded_bytes[17] = decoded_bytes[17] + 0x08;
           //oldcrc&=0x00ffffff;
           crc = 0;
           crc = crc24a(&decoded_bytes[F>>3],
@@ -1933,7 +1933,7 @@ break;
           {
             return iteration_cnt;
           }
-          decoded_bytes[3] = decoded_bytes[3] - 0x08;
+          decoded_bytes[17] = decoded_bytes[17] - 0x08;
           decoded_bytes[11] = decoded_bytes[11] - 0x08;                   
           break;  
         }

@@ -447,14 +447,21 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
   ulsch_in_slot_bitmap = &RC.nrmac[module_idP]->UE_list.UE_sched_ctrl[UE_id].ulsch_in_slot_bitmap;  // static bitmap signaling which slot in a tdd period contains ulsch
 
   // hardcoding dlsch to be in slot 1
-  if (!(slot%num_slots_per_tdd)) {
-    if(slot==0) {
-      *dlsch_in_slot_bitmap = 0x02;
-      *ulsch_in_slot_bitmap = 0x100;
+  if (get_softmodem_params()->phy_test) {
+    if (slot==0) {
+      *dlsch_in_slot_bitmap = 0x1FC3E; // 1 to 6 & 10 to 16
+      *ulsch_in_slot_bitmap = 0xC0300; // 8,9,18,19
     }
-    else {
-      *dlsch_in_slot_bitmap = 0x00;
-      *ulsch_in_slot_bitmap = 0x00;
+  } else {
+    if (!(slot%num_slots_per_tdd)) {
+      if(slot==0) {
+        *dlsch_in_slot_bitmap = 0x02;
+        *ulsch_in_slot_bitmap = 0x100;
+      }
+      else {
+        *dlsch_in_slot_bitmap = 0x00;
+        *ulsch_in_slot_bitmap = 0x00;
+      }
     }
   }
 

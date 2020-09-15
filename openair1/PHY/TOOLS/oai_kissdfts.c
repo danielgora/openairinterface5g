@@ -60,10 +60,8 @@ int dfts_autoinit(void)
   for (int i=0; i<IDFT_SIZE_IDXTABLESIZE ; i++) {
   	  ifftcfg[i]=kiss_fft_alloc(ifftsizes[i],1,NULL,NULL);
   }
-#ifdef FIXED_POINT
   tmpbuff=malloc(98304*2*sizeof(int16_t));
   olddfts_autoinit();
-#endif
   return 0;
 }
 
@@ -88,9 +86,10 @@ void convert_floattoshort(int size,float *input,short *output,int factor){
 
 
 void rescale_up_int16buff(int size,int16_t *input, int factor){
+
 	for (int i=0;i<(size*2);i=i+1){
 		input[i]=(input[i]*factor);
-	}
+  }
 }
 
 void rescale_up_newint16buff(int size,int16_t *input, int16_t *output,int factor){

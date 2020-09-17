@@ -55,6 +55,8 @@
 //#include "openair1/SIMULATION/NR_PHY/nr_dummy_functions.c"
 #include "openair2/LAYER2/NR_MAC_UE/mac_proto.h"
 #include "openair2/LAYER2/NR_MAC_gNB/mac_proto.h"
+#include "common/utils/threadPool/thread-pool.h"
+
 #define inMicroS(a) (((double)(a))/(cpu_freq_GHz*1000.0))
 #include "SIMULATION/LTE_PHY/common_sim.h"
 
@@ -494,6 +496,11 @@ int main(int argc, char **argv)
   RC.gNB = (PHY_VARS_gNB **) malloc(sizeof(PHY_VARS_gNB *));
   RC.gNB[0] = calloc(1,sizeof(PHY_VARS_gNB));
   gNB = RC.gNB[0];
+  gNB->threadPool = (tpool_t*)malloc(sizeof(tpool_t));
+  gNB->respDecode = (notifiedFIFO_t*) malloc(sizeof(notifiedFIFO_t));
+  char tp_param[] = "n";
+  initTpool(tp_param, gNB->threadPool, true);
+  initNotifiedFIFO(gNB->respDecode);
   //gNB_config = &gNB->gNB_config;
 
   //memset((void *)&gNB->UL_INFO,0,sizeof(gNB->UL_INFO));
@@ -764,6 +771,17 @@ int main(int argc, char **argv)
     int n_errors[4] = {0,0,0,0};;
     int round_trials[4]={0,0,0,0};
     uint32_t errors_scrambling[4] = {0,0,0,0};
+    reset_meas(&gNB->phy_proc_rx);
+    reset_meas(&gNB->rx_pusch_stats);
+    reset_meas(&gNB->ulsch_decoding_stats);
+    reset_meas(&gNB->ulsch_deinterleaving_stats);
+    reset_meas(&gNB->ulsch_rate_unmatching_stats);
+    reset_meas(&gNB->ulsch_ldpc_decoding_stats);
+    reset_meas(&gNB->ulsch_unscrambling_stats);
+    reset_meas(&gNB->ulsch_channel_estimation_stats);
+    reset_meas(&gNB->ulsch_llr_stats);
+    reset_meas(&gNB->ulsch_channel_compensation_stats);
+    reset_meas(&gNB->ulsch_rbs_extraction_stats);
 
     clear_pusch_stats(gNB);
     for (trial = 0; trial < n_trials; trial++) {
@@ -777,19 +795,6 @@ int main(int argc, char **argv)
       ulsch_ue[0]->harq_processes[harq_pid]->round = round;
       gNB->ulsch[0][0]->harq_processes[harq_pid]->round = round;
       rv_index = nr_rv_round_map[round];
-      reset_meas(&gNB->phy_proc_rx);
-      reset_meas(&gNB->rx_pusch_stats);
-      reset_meas(&gNB->ulsch_decoding_stats);
-      reset_meas(&gNB->ulsch_deinterleaving_stats);
-      reset_meas(&gNB->ulsch_rate_unmatching_stats);
-      reset_meas(&gNB->ulsch_ldpc_decoding_stats);
-      reset_meas(&gNB->ulsch_unscrambling_stats);
-      reset_meas(&gNB->ulsch_channel_estimation_stats);
-      reset_meas(&gNB->ulsch_ptrs_processing_stats);
-      reset_meas(&gNB->ulsch_llr_stats);
-      reset_meas(&gNB->ulsch_mrc_stats);
-      reset_meas(&gNB->ulsch_channel_compensation_stats);
-      reset_meas(&gNB->ulsch_rbs_extraction_stats);
 
       UE_proc.nr_tti_tx = slot;
       UE_proc.frame_tx = frame;
@@ -1123,9 +1128,9 @@ int main(int argc, char **argv)
       printStatIndent2(&gNB->ulsch_llr_stats,"ULSCH llr computation");
       printStatIndent(&gNB->ulsch_unscrambling_stats,"ULSCH unscrambling");
       printStatIndent(&gNB->ulsch_decoding_stats,"ULSCH total decoding time");
-      printStatIndent2(&gNB->ulsch_deinterleaving_stats,"ULSCH deinterleaving");
-      printStatIndent2(&gNB->ulsch_rate_unmatching_stats,"ULSCH rate matching rx");
-      printStatIndent2(&gNB->ulsch_ldpc_decoding_stats,"ULSCH ldpc decoding");
+      //printStatIndent2(&gNB->ulsch_deinterleaving_stats,"ULSCH deinterleaving");
+      //printStatIndent2(&gNB->ulsch_rate_unmatching_stats,"ULSCH rate matching rx");
+      //printStatIndent2(&gNB->ulsch_ldpc_decoding_stats,"ULSCH ldpc decoding");
       printf("\n");
     }
 

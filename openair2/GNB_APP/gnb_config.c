@@ -801,11 +801,12 @@ int RCconfig_NR_S1(MessageDef *msg_p, uint32_t i) {
 	    paramdef_t SCTPParams[]  = GNBSCTPPARAMS_DESC;
 	    paramdef_t NETParams[]  =  GNBNETPARAMS_DESC;
 	    char aprefix[MAX_OPTNAME_SIZE*2 + 8];
+	    sprintf(aprefix, "%s.[%i]", GNB_CONFIG_STRING_GNB_LIST, k);
 	    
 	    S1AP_REGISTER_ENB_REQ (msg_p).eNB_id = gnb_id;
       
 	    if (strcmp(*(GNBParamList.paramarray[k][GNB_CELL_TYPE_IDX].strptr), "CELL_MACRO_GNB") == 0) {
-	      S1AP_REGISTER_ENB_REQ (msg_p).cell_type = CELL_MACRO_ENB;
+	      S1AP_REGISTER_ENB_REQ (msg_p).cell_type = CELL_MACRO_GNB;
 	    } else  if (strcmp(*(GNBParamList.paramarray[k][GNB_CELL_TYPE_IDX].strptr), "CELL_HOME_GNB") == 0) {
 	      S1AP_REGISTER_ENB_REQ (msg_p).cell_type = CELL_HOME_ENB;
 	    } else {

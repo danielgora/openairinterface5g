@@ -381,43 +381,31 @@ int create_gNB_tasks(uint32_t gnb_nb) {
   }
 
   if (gnb_nb > 0) {
-    /* Last task to create, others task must be ready before its start */
-    /*if (itti_create_task (TASK_GNB_APP, gNB_app_task, NULL) < 0) {
-      LOG_E(GNB_APP, "Create task for gNB APP failed\n");
-      return -1;
-    }*/
     if(itti_create_task(TASK_SCTP, sctp_eNB_task, NULL) < 0){
     	LOG_E(SCTP, "Create task for SCTP failed\n");
     	return -1;
     }
     if (is_x2ap_enabled()) {
-    	if(itti_create_task(TASK_X2AP, x2ap_task, NULL) < 0){
-    		LOG_E(X2AP, "Create task for X2AP failed\n");
-    	}
+      if(itti_create_task(TASK_X2AP, x2ap_task, NULL) < 0){
+        LOG_E(X2AP, "Create task for X2AP failed\n");
+      }
     }
     else {
-    	LOG_I(X2AP, "X2AP is disabled.\n");
+      LOG_I(X2AP, "X2AP is disabled.\n");
     }
   }
 
   if (EPC_MODE_ENABLED && (get_softmodem_params()->phy_test==0 && get_softmodem_params()->do_ra==0)) {
     if (gnb_nb > 0) {
-      /*if (itti_create_task (TASK_SCTP, sctp_eNB_task, NULL) < 0) {
-        LOG_E(SCTP, "Create task for SCTP failed\n");
-        return -1;
-      }
-
-      if (itti_create_task (TASK_S1AP, s1ap_eNB_task, NULL) < 0) {
-        LOG_E(S1AP, "Create task for S1AP failed\n");
-        return -1;
-      }*/
-
-
       if(!emulate_rf){
         if (itti_create_task (TASK_UDP, udp_eNB_task, NULL) < 0) {
           LOG_E(UDP_, "Create task for UDP failed\n");
           return -1;
         }
+      }
+      if (itti_create_task (TASK_S1AP, s1ap_eNB_task, NULL) < 0) {
+        LOG_E(S1AP, "Create task for S1AP failed\n");
+        return -1;
       }
 
       if (itti_create_task (TASK_GTPV1_U, &gtpv1u_gNB_task, NULL) < 0) {
@@ -430,8 +418,8 @@ int create_gNB_tasks(uint32_t gnb_nb) {
 
   if (gnb_nb > 0) {
     if (itti_create_task (TASK_GNB_APP, gNB_app_task, NULL) < 0) {
-		  LOG_E(GNB_APP, "Create task for gNB APP failed\n");
-		  return -1;
+      LOG_E(GNB_APP, "Create task for gNB APP failed\n");
+      return -1;
 	}
     LOG_I(NR_RRC,"Creating NR RRC gNB Task\n");
 

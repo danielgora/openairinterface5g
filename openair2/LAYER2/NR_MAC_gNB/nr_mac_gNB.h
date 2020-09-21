@@ -337,6 +337,14 @@ typedef struct {
   NR_CellGroupConfig_t *secondaryCellGroup[MAX_MOBILES_PER_GNB];
 } NR_UE_list_t;
 
+/*! \brif struct used to store DCI information for scheduling*/
+typedef struct dci_mac_pdus {
+  int num_dci_pdus;
+  int dci_formats[MAX_DCI_CORESET];
+  int rnti_types[MAX_DCI_CORESET];
+  dci_pdu_rel15_t dci_pdu_rel15[MAX_DCI_CORESET];
+} dci_mac_pdus_t;
+
 /*! \brief top level eNB MAC structure */
 typedef struct gNB_MAC_INST_s {
   /// Ethernet parameters for northbound midhaul interface
@@ -401,6 +409,8 @@ typedef struct gNB_MAC_INST_s {
   time_stats_t schedule_pch;
   /// CCE lists
   int cce_list[MAX_NUM_BWP][MAX_NUM_CORESET][MAX_NUM_CCE];
+  /// DCI information
+  dci_mac_pdus_t dci_pdus;
 } gNB_MAC_INST;
 
 #endif /*__LAYER2_NR_MAC_GNB_H__ */

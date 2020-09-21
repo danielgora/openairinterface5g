@@ -217,7 +217,8 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                        int ss_type,
                        NR_SearchSpace_t *ss,
                        NR_ServingCellConfigCommon_t *scc,
-                       NR_BWP_Downlink_t *bwp);
+                       NR_BWP_Downlink_t *bwp,
+                       bool doCCEAlloc);
 
 void fill_dci_pdu_rel15(NR_ServingCellConfigCommon_t *scc,
                         NR_CellGroupConfig_t *secondaryCellGroup,

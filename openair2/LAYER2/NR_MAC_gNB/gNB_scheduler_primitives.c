@@ -413,7 +413,8 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                        int ss_type,
                        NR_SearchSpace_t *ss,
                        NR_ServingCellConfigCommon_t *scc,
-                       NR_BWP_Downlink_t *bwp){
+                       NR_BWP_Downlink_t *bwp,
+                       bool doCCEAlloc){
 
   int CCEIndex = -1;
   int cid = 0;
@@ -512,13 +513,17 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                                &nr_of_candidates,
                                ss);
 
-    CCEIndex = allocate_nr_CCEs(nr_mac,
-                                1, // bwp_id
-                                cid,
-                                aggregation_level,
-                                ss->searchSpaceType->present-1, // search_space, 0 common, 1 ue-specific
-                                0, // UE-id
-                                0); // m
+    if (doCCEAlloc)
+      CCEIndex = allocate_nr_CCEs(nr_mac,
+                                  1, // bwp_id
+                                  cid,
+                                  aggregation_level,
+                                  ss->searchSpaceType->present-1, // search_space, 0 common, 1 ue-specific
+                                  0, // UE-id
+                                  0); // m
+
+    else
+      CCEIndex=0;
 
     if (CCEIndex<0)
      return (CCEIndex);

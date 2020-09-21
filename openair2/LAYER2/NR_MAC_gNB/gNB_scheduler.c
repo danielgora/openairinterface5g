@@ -449,7 +449,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
   // hardcoding dlsch to be in slot 1
   if (get_softmodem_params()->phy_test) {
     if (slot==0) {
-      *dlsch_in_slot_bitmap = 0x1FC3E; // 1 to 6 & 10 to 16
+      *dlsch_in_slot_bitmap = 0x1FC7E; // 1 to 6 & 10 to 16
       *ulsch_in_slot_bitmap = 0xC0300; // 8,9,18,19
     }
   } else {
@@ -533,6 +533,8 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
     }
   }
 
+  memset(RC.nrmac[module_idP]->dci_pdus,0,MAX_DCI_CORESET*sizeof(dci_mac_pdus_t));
+  RC.nrmac[module_idP]->dci_pdus.num_dci_pdus = 0;
   // This schedules the DCI for Uplink and subsequently PUSCH
   if (UE_list->fiveG_connected[UE_id]) {
     int tda = 1; // time domain assignment hardcoded for now

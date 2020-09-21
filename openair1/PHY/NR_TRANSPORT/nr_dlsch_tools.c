@@ -285,17 +285,27 @@ void nr_fill_dlsch(PHY_VARS_gNB *gNB,
 
   nfapi_nr_dl_tti_pdsch_pdu_rel15_t *rel15 = &pdsch_pdu->pdsch_pdu_rel15;
  
-  int dlsch_id = find_nr_dlsch(rel15->rnti,gNB,SEARCH_EXIST);
+  int dlsch_id = find_nr_dlsch(rel15->rnti,gNB,SEARCH_EXIST_OR_FREE);
   AssertFatal( (dlsch_id>=0) && (dlsch_id<NUMBER_OF_NR_DLSCH_MAX),
               "illegal or no dlsch_id found!!! rnti %04x dlsch_id %d\n",rel15->rnti,dlsch_id);
   NR_gNB_DLSCH_t  *dlsch = gNB->dlsch[dlsch_id][0];
   NR_DL_gNB_HARQ_t **harq  = dlsch->harq_processes;
+
+  int num_slots_tdd = (gNB->frame_parms.slots_per_frame)>>(7-gNB->gNB_config.tdd_table.tdd_period.value);
+  int harq_pid = slot % num_slots_tdd;
+
+  dlsch->slot_tx[slot]             = 1;
+  dlsch->harq_ids[frame%2][slot]   = harq_pid;
+  AssertFatal(harq_pid < 8 && harq_pid >= 0,
+  "illegal harq_pid %d\n",harq_pid);
+  
+  dlsch->harq_mask                |= (1<<harq_pid);
+  dlsch->rnti                      = rel15->rnti;
   /// DLSCH struct
   memcpy((void*)&harq[dlsch->harq_ids[frame%2][slot]]->pdsch_pdu, (void*)pdsch_pdu, sizeof(nfapi_nr_dl_tti_pdsch_pdu));
   gNB->num_pdsch_rnti[slot]++;
   AssertFatal(sdu!=NULL,"sdu is null\n");
   harq[dlsch->harq_ids[frame%2][slot]]->pdu = sdu;
-
 
 }
 

@@ -723,7 +723,6 @@ void nr_generate_Msg2(module_id_t module_idP,
   NR_RA_t                               *ra = &cc->ra[CC_id];
   NR_SearchSpace_t *ss = ra->ra_ss;
   nfapi_nr_dl_tti_request_body_t *dl_req = &nr_mac->DL_req[CC_id].dl_tti_request_body;
-//  nfapi_nr_pdu_t *tx_req = &nr_mac->TX_req[CC_id].pdu_list[nr_mac->TX_req[CC_id].Number_of_PDUs];
 
   nfapi_nr_dl_tti_request_pdu_t *dl_tti_pdcch_pdu = &dl_req->dl_tti_pdu_list[dl_req->nPDUs];
   memset((void*)dl_tti_pdcch_pdu,0,sizeof(nfapi_nr_dl_tti_request_pdu_t));
@@ -772,6 +771,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     locationAndBandwidth = scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth;
     dci10_bw = NRRIV2BW(locationAndBandwidth,275); 
   }
+  LOG_I(MAC, "[RAPROC] Scheduling common search space DCI type 1 dlBWP BW %d\n", dci10_bw);
 
   uint16_t *vrb_map = cc[CC_id].vrb_map;
   int rbStart = NRRIV2PRBOFFSET(locationAndBandwidth, 275);

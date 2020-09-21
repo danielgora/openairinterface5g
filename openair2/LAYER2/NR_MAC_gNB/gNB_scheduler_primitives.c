@@ -128,26 +128,25 @@ static inline uint8_t get_max_cces(uint8_t scs) {
 
 NR_ControlResourceSet_t *get_coreset(NR_BWP_Downlink_t *bwp,
                                      NR_SearchSpace_t *ss,
-                                     int ss_type) {
-  NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
-  if (ss_type == 0) { // common search space
-    AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
-    NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
-    AssertFatal(coreset_id == coreset->controlResourceSetId,
-                "ID of common ss coreset does not correspond to id set in the "
-                "search space\n");
-    return coreset;
-  } else {
-    const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
-    for (int i = 0; i < n; i++) {
-      NR_ControlResourceSet_t *coreset =
-          bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
-      if (coreset_id == coreset->controlResourceSetId) {
-        return coreset;
-      }
+																		 int ss_type) {
+		NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
+		if (ss_type == 0) { // common search space
+		  AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
+			NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
+			AssertFatal(coreset_id == coreset->controlResourceSetId,
+			            "ID of common ss coreset does not correspond to id set in the "
+															                "search space\n");
+			return coreset;
+		} else {
+		  const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
+		  for (int i = 0; i < n; i++) {
+			  NR_ControlResourceSet_t *coreset = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
+				if (coreset_id == coreset->controlResourceSetId) {
+				  return coreset;
+				}
+			}
+		  AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
     }
-    AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
-  }
 }
 
 NR_SearchSpace_t *get_searchspace(

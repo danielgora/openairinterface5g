@@ -102,8 +102,14 @@ static void s1ap_eNB_register_mme(s1ap_eNB_instance_t *instance_p,
   DevAssert(mme_ip_address != NULL);
   message_p = itti_alloc_new_message(TASK_S1AP, SCTP_NEW_ASSOCIATION_REQ);
   sctp_new_association_req_p = &message_p->ittiMsg.sctp_new_association_req;
-  sctp_new_association_req_p->port = S1AP_PORT_NUMBER;
-  sctp_new_association_req_p->ppid = S1AP_SCTP_PPID;
+  if(instance_p->cell_type == CELL_MACRO_GNB){
+	sctp_new_association_req_p->port = NGAP_PORT_NUMBER;
+  	sctp_new_association_req_p->ppid = NGAP_SCTP_PPID;
+  }
+  else{
+	sctp_new_association_req_p->port = S1AP_PORT_NUMBER;
+	sctp_new_association_req_p->ppid = S1AP_SCTP_PPID;
+  }
   sctp_new_association_req_p->in_streams  = in_streams;
   sctp_new_association_req_p->out_streams = out_streams;
   memcpy(&sctp_new_association_req_p->remote_address,

@@ -128,26 +128,25 @@ static inline uint8_t get_max_cces(uint8_t scs) {
 
 NR_ControlResourceSet_t *get_coreset(NR_BWP_Downlink_t *bwp,
                                      NR_SearchSpace_t *ss,
-                                     int ss_type) {
-  NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
-  if (ss_type == 0) { // common search space
-    AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
-    NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
-    AssertFatal(coreset_id == coreset->controlResourceSetId,
-                "ID of common ss coreset does not correspond to id set in the "
-                "search space\n");
-    return coreset;
-  } else {
-    const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
-    for (int i = 0; i < n; i++) {
-      NR_ControlResourceSet_t *coreset =
-          bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
-      if (coreset_id == coreset->controlResourceSetId) {
-        return coreset;
-      }
+																		 int ss_type) {
+		NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
+		if (ss_type == 0) { // common search space
+		  AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
+			NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
+			AssertFatal(coreset_id == coreset->controlResourceSetId,
+			            "ID of common ss coreset does not correspond to id set in the "
+															                "search space\n");
+			return coreset;
+		} else {
+		  const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
+		  for (int i = 0; i < n; i++) {
+			  NR_ControlResourceSet_t *coreset = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
+				if (coreset_id == coreset->controlResourceSetId) {
+				  return coreset;
+				}
+			}
+		  AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
     }
-    AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
-  }
 }
 
 NR_SearchSpace_t *get_searchspace(
@@ -175,9 +174,6 @@ int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
                      uint16_t Y,
                      int m,
                      int nr_of_candidates) {
-  // uncomment these when we allocate for common search space
-  //  NR_COMMON_channels_t                *cc      = nr_mac->common_channels;
-  //  NR_ServingCellConfigCommon_t        *scc     = cc->ServingCellConfigCommon;
 
   int coreset_id = coreset->controlResourceSetId;
   int *cce_list = nr_mac->cce_list[bwp->bwp_Id][coreset_id];
@@ -431,6 +427,42 @@ void nr_configure_css_dci_initial(nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
 
 }
 
+void nr_configure_dci(gNB_MAC_INST *nr_mac,
+                      nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu,
+                      uint16_t rnti,
+                      NR_SearchSpace_t *ss,
+                      NR_ControlResourceSet_t *coreset,
+                      NR_ServingCellConfigCommon_t *scc,
+                      NR_BWP_Downlink_t *bwp,
+     		      uint8_t beam_index,
+                      uint8_t aggregation_level,
+                      int CCEIndex) {
+  pdcch_pdu->dci_pdu.RNTI[pdcch_pdu->numDlDci]=rnti;
+
+  if (coreset->pdcch_DMRS_ScramblingID != NULL &&
+    ss->searchSpaceType->present == NR_SearchSpace__searchSpaceType_PR_ue_Specific) {
+    pdcch_pdu->dci_pdu.ScramblingId[pdcch_pdu->numDlDci] = *coreset->pdcch_DMRS_ScramblingID;
+    pdcch_pdu->dci_pdu.ScramblingRNTI[pdcch_pdu->numDlDci]=rnti;
+  }
+  else {
+    pdcch_pdu->dci_pdu.ScramblingId[pdcch_pdu->numDlDci] = *scc->physCellId;
+    pdcch_pdu->dci_pdu.ScramblingRNTI[pdcch_pdu->numDlDci]=0;
+  }
+
+  pdcch_pdu->dci_pdu.AggregationLevel[pdcch_pdu->numDlDci] = aggregation_level;
+  pdcch_pdu->dci_pdu.CceIndex[pdcch_pdu->numDlDci] = CCEIndex;
+  if (ss->searchSpaceType->choice.ue_Specific->dci_Formats==NR_SearchSpace__searchSpaceType__ue_Specific__dci_Formats_formats0_0_And_1_0)
+    pdcch_pdu->dci_pdu.beta_PDCCH_1_0[pdcch_pdu->numDlDci]=0;
+
+    pdcch_pdu->dci_pdu.powerControlOffsetSS[pdcch_pdu->numDlDci]=1;
+    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].numPRGs         = 1;
+    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].prgSize         = 275;
+    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].digBFInterfaces = 1;
+    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].PMIdx[0]        = 0;
+    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].beamIdx[0]      = beam_index;
+    pdcch_pdu->numDlDci++;
+
+}		
 void nr_fill_nfapi_dl_pdu(int Mod_idP,
                           nfapi_nr_dl_tti_request_body_t *dl_req,
                           rnti_t rnti,
@@ -696,27 +728,6 @@ void nr_configure_pdcch(gNB_MAC_INST *nr_mac,
     
     //precoderGranularity
     pdcch_pdu->precoderGranularity = coreset->precoderGranularity;
-
-    pdcch_pdu->dci_pdu.RNTI[pdcch_pdu->numDlDci]=rnti;
-
-    if (coreset->pdcch_DMRS_ScramblingID != NULL &&
-        ss->searchSpaceType->present == NR_SearchSpace__searchSpaceType_PR_ue_Specific) {
-      pdcch_pdu->dci_pdu.ScramblingId[pdcch_pdu->numDlDci] = *coreset->pdcch_DMRS_ScramblingID;
-      pdcch_pdu->dci_pdu.ScramblingRNTI[pdcch_pdu->numDlDci]=rnti;
-    }
-    else {
-      pdcch_pdu->dci_pdu.ScramblingId[pdcch_pdu->numDlDci] = *scc->physCellId;
-      pdcch_pdu->dci_pdu.ScramblingRNTI[pdcch_pdu->numDlDci]=0;
-    }
-
-    pdcch_pdu->dci_pdu.AggregationLevel[pdcch_pdu->numDlDci] = aggregation_level;
-    pdcch_pdu->dci_pdu.CceIndex[pdcch_pdu->numDlDci] = CCEIndex;
-
-    if (ss->searchSpaceType->choice.ue_Specific->dci_Formats==NR_SearchSpace__searchSpaceType__ue_Specific__dci_Formats_formats0_0_And_1_0)
-      pdcch_pdu->dci_pdu.beta_PDCCH_1_0[pdcch_pdu->numDlDci]=0;
-
-    pdcch_pdu->dci_pdu.powerControlOffsetSS[pdcch_pdu->numDlDci]=1;
-    pdcch_pdu->numDlDci++;
   }
   else { // this is for InitialBWP
     AssertFatal(1==0,"Fill in InitialBWP PDCCH configuration\n");

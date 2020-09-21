@@ -187,7 +187,7 @@ typedef struct {
   /// Outgoing PCCH pdu for PHY
   PCCH_PDU PCCH_pdu;
   /// Outgoing RAR pdu for PHY
-  RAR_PDU RAR_pdu;
+  RAR_PDU RAR_pdu[NR_NB_RA_PROC_MAX];
   /// Template for RA computations
   NR_RA_t ra[NR_NB_RA_PROC_MAX];
   /// VRB map for common channels

@@ -371,10 +371,15 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
       UE_info->UE_sched_ctrl[UE_id].active_bwp = bwpList->list.array[bwp_id - 1];
       LOG_I(PHY,"Added new UE_id %d/%x with initial secondaryCellGroup\n",UE_id,rnti);
     } else if (add_ue == 1 && !get_softmodem_params()->phy_test) {
-      /* TODO: should check for free RA process */
       const int CC_id = 0;
-      NR_RA_t *ra = &RC.nrmac[Mod_idP]->common_channels[CC_id].ra[0];
-      ra->state = RA_IDLE;
+#if 1
+      NR_COMMON_channels_t *cc = &RC.nrmac[Mod_idP]->common_channels[CC_id];
+      uint8_t ra_index = 0;
+      /* checking for free RA process */
+      for(; ra_index < NR_NB_RA_PROC_MAX; ra_index++) {
+	if(cc->ra[ra_index].state == RA_IDLE) break;
+      }
+      NR_RA_t *ra = &cc->ra[ra_index];
       ra->secondaryCellGroup = secondaryCellGroup;
       if (secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated!=NULL) {
         if (secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra != NULL) {
@@ -384,9 +389,15 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
           uint8_t num_preamble = cfra.resources.choice.ssb->ssb_ResourceList.list.count;
           ra->preambles.num_preambles = num_preamble;
           ra->preambles.preamble_list = (uint8_t *) malloc(num_preamble*sizeof(uint8_t));
-          for (int i = 0; i < num_preamble; i++)
-            ra->preambles.preamble_list[i] = cfra.resources.choice.ssb->ssb_ResourceList.list.array[i]->ra_PreambleIndex;
-        }
+      for(int i=0; i<cc->num_active_ssb; i++) {
+        for(int j=0; j<num_preamble; j++) {
+	        if(cc->ssb_index[i] == secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->resources.choice.ssb->ssb_ResourceList.list.array[i]->ssb) {
+	    //one dedicated preamble for each beam
+	        ra->preambles.preamble_list[i] = secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->resources.choice.ssb->ssb_ResourceList.list.array[i]->ra_PreambleIndex;
+	        break;	
+	        }
+	      }
+      }
       }
       LOG_I(PHY,"Added new RA process for UE RNTI %04x with initial secondaryCellGroup\n", rnti);
     } else { // secondaryCellGroup has been updated

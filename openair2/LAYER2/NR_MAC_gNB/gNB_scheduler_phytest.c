@@ -245,7 +245,7 @@ void nr_schedule_css_dlsch_phytest(module_id_t   module_idP,
     TX_req->PDU_index = nr_mac->pdu_index[CC_id]++;
     TX_req->num_TLV = 1;
     TX_req->TLVs[0].length = 8;
-    memcpy((void*)&TX_req->TLVs[0].value.direct[0],(void*)&cc[CC_id].RAR_pdu.payload[0],TX_req->TLVs[0].length);
+    memcpy((void*)&TX_req->TLVs[0].value.direct[0],(void*)&cc[CC_id].RAR_pdu[0].payload[0],TX_req->TLVs[0].length);
     nr_mac->TX_req[CC_id].Number_of_PDUs++;
     nr_mac->TX_req[CC_id].SFN=frameP;
     nr_mac->TX_req[CC_id].Slot=slotP;
@@ -530,7 +530,6 @@ void schedule_fapi_ul_pdu(int Mod_idP,
     memset(pusch_pdu,0,sizeof(nfapi_nr_pusch_pdu_t));
 
     LOG_D(MAC, "Scheduling UE specific PUSCH\n");
-    //UL_tti_req = &nr_mac->UL_tti_req[CC_id];
 
     int dci_formats[2];
     int rnti_types[2];
@@ -797,6 +796,15 @@ void schedule_fapi_ul_pdu(int Mod_idP,
                          bwp,
                          aggregation_level,
                          CCEIndex);
+      nr_configure_dci(nr_mac,
+	               pdcch_pdu_rel15,
+                       UE_info->rnti[UE_id],										 ss,
+		       coreset,
+		       scc,
+		       bwp,
+		       UE_info->UE_beam_index[UE_id],
+                       aggregation_level,
+                       CCEIndex);
 
       dci_pdu_rel15_t *dci_pdu_rel15 = calloc(MAX_DCI_CORESET,sizeof(dci_pdu_rel15_t));
       config_uldci(ubwp,pusch_pdu,pdcch_pdu_rel15,&dci_pdu_rel15[0],dci_formats,rnti_types,time_domain_assignment,UE_info->UE_sched_ctrl[UE_id].tpc0,n_ubwp,bwp_id);

@@ -418,6 +418,7 @@ int configure_fapi_dl_pdu(int Mod_idP,
 
   int ret = nr_configure_pdcch(nr_mac,
                                pdcch_pdu_rel15,
+                               UE_id,
                                UE_list->rnti[UE_id],
 		               1, // ue-specific
 		               ss,
@@ -1086,6 +1087,7 @@ void schedule_fapi_ul_pdu(int Mod_idP,
 
     int ret = nr_configure_pdcch(nr_mac,
                                  pdcch_pdu_rel15,
+                                 UE_id,
                                  UE_list->rnti[UE_id],
                                  1, // ue-specific,
                                  ss,

@@ -335,6 +335,10 @@ typedef struct {
   rnti_t tc_rnti[MAX_MOBILES_PER_GNB];
   NR_preamble_ue preambles[MAX_MOBILES_PER_GNB];
   NR_CellGroupConfig_t *secondaryCellGroup[MAX_MOBILES_PER_GNB];
+  /// CCE indexing
+  int Y[MAX_MOBILES_PER_GNB][3][160];
+  int m[MAX_MOBILES_PER_GNB];
+  int num_pdcch_cand[MAX_MOBILES_PER_GNB][MAX_NUM_CORESET];
 } NR_UE_list_t;
 
 /*! \brief top level eNB MAC structure */
@@ -401,6 +405,8 @@ typedef struct gNB_MAC_INST_s {
   time_stats_t schedule_pch;
   /// CCE lists
   int cce_list[MAX_NUM_BWP][MAX_NUM_CORESET][MAX_NUM_CCE];
+  /// current slot
+  int current_slot;
 } gNB_MAC_INST;
 
 #endif /*__LAYER2_NR_MAC_GNB_H__ */

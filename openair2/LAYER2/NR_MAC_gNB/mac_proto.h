@@ -213,7 +213,7 @@ void find_search_space(int ss_type,
 
 int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                        nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
-                       uint16_t rnti,
+                       int UE_id,
                        int ss_type,
                        NR_SearchSpace_t *ss,
                        NR_ServingCellConfigCommon_t *scc,
@@ -271,7 +271,7 @@ int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
                      int aggregation,
                      int search_space, // 0 common, 1 ue-specific
                      int UE_id,
-                     int m
+                     int nr_of_candidates
                      );
 
 int get_dlscs(nfapi_nr_config_request_t *cfg);

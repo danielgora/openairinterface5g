@@ -133,7 +133,7 @@ int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
 		     int aggregation,
 		     int search_space, // 0 common, 1 ue-specific
 		     int UE_id,
-		     int m) {
+		     int nr_of_candidates) {
   // uncomment these when we allocate for common search space
   //  NR_COMMON_channels_t                *cc      = nr_mac->common_channels;
   //  NR_ServingCellConfigCommon_t        *scc     = cc->ServingCellConfigCommon;
@@ -169,16 +169,19 @@ int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
   uint16_t N_reg = n_rb * coreset->duration;
   uint16_t Y=0, N_cce, M_s_max, n_CI=0;
   uint16_t n_RNTI = search_space == 1 ? UE_list->rnti[UE_id]:0;
-  uint32_t A[3]={39827,39829,39839};
 
   N_cce = N_reg / NR_NB_REG_PER_CCE;
 
-  M_s_max = (aggregation==4)?4:(aggregation==8)?2:1;
+  M_s_max = nr_of_candidates;
 
   if (search_space == 1) {
-    Y = (A[0]*n_RNTI)%65537; // Candidate 0, antenna port 0
+    Y = UE_list->Y[UE_id][coreset_id][nr_mac->current_slot];
   }
-  int first_cce = aggregation * (( Y + (m*N_cce)/(aggregation*M_s_max) + n_CI ) % CEILIDIV(N_cce,aggregation));
+
+  int m = nr_mac->UE_list.num_pdcch_cand[UE_id][coreset_id];
+  AssertFatal(m<nr_of_candidates, "PDCCH candidate index %d for RNTI %d in CORESET %d exceeds the maximum number of PDCCH candidates (%d) for the search space %d\n",m,n_RNTI,coreset_id,nr_of_candidates,search_space);
+
+  int first_cce = aggregation * (( Y + CEILIDIV((m*N_cce),(aggregation*M_s_max)) + n_CI ) % CEILIDIV(N_cce,aggregation));
 
   for (int i=0;i<aggregation;i++)
     if (cce_list[first_cce+i] != 0) return(-1);
@@ -409,7 +412,7 @@ void nr_configure_css_dci_initial(nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
 
 int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                        nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
-                       uint16_t rnti,
+                       int UE_id,
                        int ss_type,
                        NR_SearchSpace_t *ss,
                        NR_ServingCellConfigCommon_t *scc,
@@ -418,6 +421,7 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
   int CCEIndex = -1;
   int cid = 0;
   NR_ControlResourceSet_t *coreset = NULL;
+  uint16_t rnti = nr_mac->UE_list.rnti[UE_id];
 
   if (bwp) { // This is not the InitialBWP
     NR_ControlResourceSet_t *temp_coreset;
@@ -517,8 +521,8 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                                 cid,
                                 aggregation_level,
                                 ss->searchSpaceType->present-1, // search_space, 0 common, 1 ue-specific
-                                0, // UE-id
-                                0); // m
+                                UE_id,
+                                nr_of_candidates); 
 
     if (CCEIndex<0)
      return (CCEIndex);
@@ -531,6 +535,7 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
 
     pdcch_pdu->dci_pdu.powerControlOffsetSS[pdcch_pdu->numDlDci]=1;
     pdcch_pdu->numDlDci++;
+    nr_mac->UE_list.num_pdcch_cand[UE_id][coresetid]++;
     return (0);
   }
   else { // this is for InitialBWP
@@ -1437,6 +1442,22 @@ int find_nr_UE_id(module_id_t mod_idP, rnti_t rntiP)
   return -1;
 }
 
+void set_Y(NR_UE_list_t *UE_list, int UE_id) {
+  int A[3] = {39827,39829,39839};
+  int D = 65537;
+  int s = 0;
+
+  UE_list->Y[UE_id][0][s] = (A[0]*UE_list->rnti[UE_id]) % D;
+  UE_list->Y[UE_id][1][s] = (A[1]*UE_list->rnti[UE_id]) % D;
+  UE_list->Y[UE_id][2][s] = (A[2]*UE_list->rnti[UE_id]) % D;
+
+  for (s=1; s<160; s++) {
+    UE_list->Y[UE_id][0][s] = (A[0]*UE_list->Y[UE_id][0][s-1]) % D;
+    UE_list->Y[UE_id][1][s] = (A[1]*UE_list->Y[UE_id][1][s-1]) % D;
+    UE_list->Y[UE_id][2][s] = (A[2]*UE_list->Y[UE_id][2][s-1]) % D;
+  }
+}
+
 int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP){
 
   int UE_id;
@@ -1462,6 +1483,7 @@ int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP){
     UE_list->num_UEs++;
     UE_list->active[UE_id] = TRUE;
     UE_list->rnti[UE_id] = rntiP;
+    set_Y(UE_list,UE_id);
     memset((void *) &UE_list->UE_sched_ctrl[UE_id],
            0,
            sizeof(NR_UE_sched_ctrl_t));

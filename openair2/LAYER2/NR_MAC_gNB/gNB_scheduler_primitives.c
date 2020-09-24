@@ -413,6 +413,7 @@ void nr_configure_css_dci_initial(nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
 int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                        nfapi_nr_dl_tti_pdcch_pdu_rel15_t* pdcch_pdu,
                        int UE_id,
+                       rnti_t rnti,
                        int ss_type,
                        NR_SearchSpace_t *ss,
                        NR_ServingCellConfigCommon_t *scc,
@@ -421,7 +422,6 @@ int nr_configure_pdcch(gNB_MAC_INST *nr_mac,
   int CCEIndex = -1;
   int cid = 0;
   NR_ControlResourceSet_t *coreset = NULL;
-  uint16_t rnti = nr_mac->UE_list.rnti[UE_id];
 
   if (bwp) { // This is not the InitialBWP
     NR_ControlResourceSet_t *temp_coreset;

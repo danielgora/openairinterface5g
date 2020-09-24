@@ -681,7 +681,7 @@ void nr_generate_Msg2(module_id_t module_idP,
 	  dci_pdu_rel15[0].mcs,
 	  dci_pdu_rel15[0].tb_scaling);
 
-    nr_configure_pdcch(nr_mac, pdcch_pdu_rel15, RA_rnti, 0, ss, scc, bwp);
+    nr_configure_pdcch(nr_mac, pdcch_pdu_rel15, UE_id, RA_rnti, 0, ss, scc, bwp);
 
     LOG_I(MAC, "Frame %d: Subframe %d : Adding common DL DCI for RA_RNTI %x\n", frameP, slotP, RA_rnti);
 

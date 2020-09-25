@@ -45,6 +45,7 @@
 //extern int **ulchmag_eren;
 //eren
 
+static short jitter[8]  __attribute__ ((aligned(16))) = {1,0,0,1,0,1,1,0};
 static short jitterc[8] __attribute__ ((aligned(16))) = {0,1,1,0,1,0,0,1};
 
 void lte_idft(LTE_DL_FRAME_PARMS *frame_parms,uint32_t *z, uint16_t Msc_PUSCH) {
@@ -758,8 +759,6 @@ void ulsch_channel_compensation(int32_t **rxdataF_ext,
   uint8_t aarx;//,symbol_mod;
   __m128i mmtmpU0,mmtmpU1,mmtmpU2,mmtmpU3;
 
-  static short ref_min[8] __attribute__ ((aligned(16))) = {SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN };
-
 #elif defined(__arm__)
   int16x4_t *ul_ch128,*rxdataF128;
   int16x8_t *ul_ch_mag128,*ul_ch_mag128b,*rxdataF_comp128;
@@ -767,8 +766,6 @@ void ulsch_channel_compensation(int32_t **rxdataF_ext,
   int32x4_t mmtmpU0,mmtmpU1,mmtmpU0b,mmtmpU1b;
   int16_t conj[4]__attribute__((aligned(16))) = {1,-1,1,-1};
   int32x4_t output_shift128 = vmovq_n_s32(-(int32_t)output_shift);
-
-  static short ref_min[8] __attribute__ ((aligned(16))) = {SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN ,SHRT_MIN };
 
 #endif
 
@@ -877,9 +874,9 @@ void ulsch_channel_compensation(int32_t **rxdataF_ext,
       //        print_shorts("ch:",ul_ch128[2]);
       //        print_shorts("pack:",rxdataF_comp128[2]);
       // Add a jitter to compensate for the saturation in "packs" resulting in a bias on the DC after IDFT
-      rxdataF_comp128[0] = _mm_subs_epi16(rxdataF_comp128[0],   _mm_cmpeq_epi16(rxdataF_comp128[0],(*(__m128i*)&ref_min[0])));
-      rxdataF_comp128[1] = _mm_subs_epi16(rxdataF_comp128[1],   _mm_cmpeq_epi16(rxdataF_comp128[1],(*(__m128i*)&ref_min[0])));
-      rxdataF_comp128[2] = _mm_subs_epi16(rxdataF_comp128[2],   _mm_cmpeq_epi16(rxdataF_comp128[2],(*(__m128i*)&ref_min[0])));
+      rxdataF_comp128[0] = _mm_add_epi16(rxdataF_comp128[0],(*(__m128i*)&jitter[0]));
+      rxdataF_comp128[1] = _mm_add_epi16(rxdataF_comp128[1],(*(__m128i*)&jitter[0]));
+      rxdataF_comp128[2] = _mm_add_epi16(rxdataF_comp128[2],(*(__m128i*)&jitter[0]));
 
       ul_ch128+=3;
       ul_ch_mag128+=3;
@@ -927,9 +924,9 @@ void ulsch_channel_compensation(int32_t **rxdataF_ext,
       mmtmpU1 = vqshlq_s32(mmtmpU1,-output_shift128);
       rxdataF_comp128[2] = vcombine_s16(vmovn_s32(mmtmpU0),vmovn_s32(mmtmpU1));
       // Add a jitter to compensate for the saturation in "packs" resulting in a bias on the DC after IDFT
-      rxdataF_comp128[0] = vqsubq_s16(rxdataF_comp128[0],   vceqq_s16(rxdataF_comp128[0],(*(int16x8_t*)&ref_min[0])));
-      rxdataF_comp128[1] = vqsubq_s16(rxdataF_comp128[1],   vceqq_s16(rxdataF_comp128[1],(*(int16x8_t*)&ref_min[0])));
-      rxdataF_comp128[2] = vqsubq_s16(rxdataF_comp128[2],   vceqq_s16(rxdataF_comp128[1],(*(int16x8_t*)&ref_min[0])));
+      rxdataF_comp128[0] = vqaddq_s16(rxdataF_comp128[0],(*(int16x8_t*)&jitter[0]));
+      rxdataF_comp128[1] = vqaddq_s16(rxdataF_comp128[1],(*(int16x8_t*)&jitter[0]));
+      rxdataF_comp128[2] = vqaddq_s16(rxdataF_comp128[2],(*(int16x8_t*)&jitter[0]));
       
       ul_ch128+=6;
       ul_ch_mag128+=3;

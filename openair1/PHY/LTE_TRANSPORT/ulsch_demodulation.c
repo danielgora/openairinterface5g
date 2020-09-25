@@ -1073,28 +1073,6 @@ void rx_ulsch(PHY_VARS_eNB *eNB,
                              l%(frame_parms->symbols_per_tti/2),
                              l/(frame_parms->symbols_per_tti/2),
                              frame_parms);
-    for(re=0;re<ulsch[UE_id]->harq_processes[harq_pid]->nb_rb*12;re++){
-      rxF_ext = (short*)&pusch_vars->rxdataF_ext[0][(l*frame_parms->N_RB_UL*12)+re];
-      ave_power+=rxF_ext[0]*rxF_ext[0]+rxF_ext[1]*rxF_ext[1];
-    }
-  }
-  ave_power/=(double)(ulsch[UE_id]->harq_processes[harq_pid]->nb_rb*12*(frame_parms->symbols_per_tti-ulsch[UE_id]->harq_processes[harq_pid]->srs_active));
-  LOG_D(PHY,"rxF_ext ave %lf\n",sqrt(ave_power));
-
-  if(ave_power>1.0){
-    shift = 3 - (int)log2(sqrt((double)ave_power));
-  }
-  if(shift>0){
-    short * temp_iq;
-    for(i=0;i<frame_parms->symbols_per_tti*frame_parms->ofdm_symbol_size;i++){
-      temp_iq=(short*)&pusch_vars->rxdataF_ext[0][i];
-      temp_iq[0]<<=shift;
-      temp_iq[1]<<=shift;
-    }
-  }else{
-    shift=0;
-  }
-  for (l=0; l<(frame_parms->symbols_per_tti-ulsch[UE_id]->harq_processes[harq_pid]->srs_active); l++) {
     
     if (lte_ul_channel_estimation(&eNB->frame_parms,proc,
 		              eNB->ulsch[UE_id],
@@ -1133,15 +1111,10 @@ void rx_ulsch(PHY_VARS_eNB *eNB,
     symbol_offset = frame_parms->N_RB_UL*12*((3 - frame_parms->Ncp)+(7-frame_parms->Ncp));
     pusch_vars->ulsch_interference_power[i] += interference_power(&pusch_vars->drs_ch_estimates[i][symbol_offset],ulsch[UE_id]->harq_processes[harq_pid]->nb_rb*12);
     pusch_vars->ulsch_power[i] += signal_power(&pusch_vars->drs_ch_estimates[i][symbol_offset],ulsch[UE_id]->harq_processes[harq_pid]->nb_rb*12);
-    //ave
-    pusch_vars->ulsch_interference_power[i] >>= 1;
-    pusch_vars->ulsch_power[i] >>= 1;
 
     pusch_vars->ulsch_interference_power[i] = pusch_vars->ulsch_interference_power[i]/correction_factor;
     pusch_vars->ulsch_power[i] = pusch_vars->ulsch_power[i]/correction_factor;
 
-    pusch_vars->ulsch_power[i] /= pow(4,shift);
-    pusch_vars->ulsch_interference_power[i] /= pow(4,shift);
     if(pusch_vars->ulsch_power[i]>0x20000000){
       pusch_vars->ulsch_power[i] = 0x20000000;
       pusch_vars->ulsch_interference_power[i] = 1;

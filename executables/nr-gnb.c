@@ -569,7 +569,7 @@ int wakeup_rxtx(PHY_VARS_gNB *gNB,RU_t *ru) {
 
   // wake up TX for subframe n+sf_ahead
   // lock the TX mutex and make sure the thread is ready
-  while (wait_timer < 200) {
+  while (wait_timer < 250) {
     clock_gettime(CLOCK_REALTIME, &abstime);
     abstime.tv_nsec = abstime.tv_nsec + time_ns;
 

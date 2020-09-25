@@ -1052,11 +1052,6 @@ void rx_ulsch(PHY_VARS_eNB *eNB,
     return;
   }
 
-  short *rxF_ext;
-  int re;
-  double ave_power=0;
-  int shift=0;
-
   for (l=0; l<(frame_parms->symbols_per_tti-ulsch[UE_id]->harq_processes[harq_pid]->srs_active); l++) {
     if(LOG_DEBUGFLAG(DEBUG_ULSCH)) {
       LOG_I(PHY,"rx_ulsch : symbol %d (first_rb %d,nb_rb %d), rxdataF %p, rxdataF_ext %p\n",l,

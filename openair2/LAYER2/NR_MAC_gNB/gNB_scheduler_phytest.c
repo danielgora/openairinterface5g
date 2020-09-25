@@ -123,6 +123,7 @@ void nr_schedule_css_dlsch_phytest(module_id_t   module_idP,
     pdsch_pdu_rel15->CyclicPrefix = 0;
     pdsch_pdu_rel15->NrOfCodewords = 1;
     int mcsIndex = 9;
+    if (get_softmodem_params()->phy_test) mcsIndex = 28;
     pdsch_pdu_rel15->targetCodeRate[0] = nr_get_code_rate_dl(mcsIndex,0);
     pdsch_pdu_rel15->qamModOrder[0] = 2;
     pdsch_pdu_rel15->mcsIndex[0] = mcsIndex;
@@ -310,6 +311,7 @@ int configure_fapi_dl_pdu(int Mod_idP,
 
   pdsch_pdu_rel15->NrOfCodewords = 1;
   int mcs = (mcsIndex!=NULL) ? *mcsIndex : 9;
+  if (get_softmodem_params()->phy_test) mcs = 28;
   int current_harq_pid = UE_list->UE_sched_ctrl[UE_id].current_harq_pid;
   pdsch_pdu_rel15->targetCodeRate[0] = nr_get_code_rate_dl(mcs,0);
   pdsch_pdu_rel15->qamModOrder[0] = 2;
@@ -885,6 +887,7 @@ void schedule_fapi_ul_pdu(int Mod_idP,
     //pusch information always include
     //this informantion seems to be redundant. with hthe mcs_index and the modulation table, the mod_order and target_code_rate can be determined.
     pusch_pdu->mcs_index = 9;
+    if (get_softmodem_params()->phy_test) pusch_pdu->mcs_index = 28;
     pusch_pdu->mcs_table = 0; //0: notqam256 [TS38.214, table 5.1.3.1-1] - corresponds to nr_target_code_rate_table1 in PHY
     pusch_pdu->target_code_rate = nr_get_code_rate_ul(pusch_pdu->mcs_index,pusch_pdu->mcs_table) ;
     pusch_pdu->qam_mod_order = nr_get_Qm_ul(pusch_pdu->mcs_index,pusch_pdu->mcs_table) ;

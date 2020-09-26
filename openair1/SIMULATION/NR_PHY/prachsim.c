@@ -43,6 +43,7 @@
 #include "PHY/NR_TRANSPORT/nr_transport_proto.h"
 #include "PHY/NR_TRANSPORT/nr_transport_common_proto.h"
 #include "PHY/NR_UE_TRANSPORT/nr_transport_proto_ue.h"
+#include "executables/softmodem-common.h"
 #include "nr_unitary_defs.h"
 #include "OCG_vars.h"
 

@@ -89,6 +89,8 @@
 /* temporary compilation wokaround (UE/eNB split */
 uint16_t sf_ahead;
 
+uint32_t target_dl_mcs;
+uint32_t target_ul_mcs;
 
 pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;

@@ -100,6 +100,8 @@ pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;
 int nfapi_sync_var=-1; //!< protected by mutex \ref nfapi_sync_mutex
 
+uint32_t target_dl_mcs;
+uint32_t target_ul_mcs;
 
 uint16_t sf_ahead=4;
 

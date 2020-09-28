@@ -774,13 +774,16 @@ rx_sdu(const module_id_t enb_mod_idP,
               UE_template_ptr = &(UE_list->UE_template[CC_idP][UE_id]);
             }
           } else {
-            LOG_D(MAC, "[eNB %d][RAPROC] CC_id %d Frame %d CCCH: Received Msg3 from already registered UE %d: length %d, offset %ld\n",
+            LOG_E(MAC, "[eNB %d][RAPROC] CC_id %d Frame %d CCCH: Received Msg3 from already registered UE %d: length %d, offset %ld\n",
                   enb_mod_idP,
                   CC_idP,
                   frameP,
                   UE_id,
                   rx_lengths[i],
                   payload_ptr - sduP);
+            cancel_ra_proc(enb_mod_idP, CC_idP, frameP, current_rnti);
+            fill_nfapi_rnti_release(enb_mod_idP, current_rnti);
+            break;
             // kill RA proc
           }
 

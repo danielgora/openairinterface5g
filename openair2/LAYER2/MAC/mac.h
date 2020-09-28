@@ -1170,6 +1170,7 @@ typedef struct {
   int msg4_TBsize;
   /// MCS used for Msg4
   int msg4_mcs;
+  uint8_t msg4_count;
 #if (LTE_RRC_VERSION >= MAKE_VERSION(14, 0, 0))
   uint8_t rach_resource_type;
   uint8_t msg2_mpdcch_repetition_cnt;

@@ -321,6 +321,7 @@ schedule_SR (module_id_t module_idP,
   UE_info_t *UE_info = &eNB->UE_info;
   nfapi_ul_config_request_t      *ul_req = NULL;
   nfapi_ul_config_request_body_t *ul_req_body = NULL;
+  LTE_PhysicalConfigDedicated_t *physicalConfigDedicated = NULL;
   LTE_SchedulingRequestConfig_t  *SRconfig = NULL;
   nfapi_ul_config_sr_information sr;
 
@@ -331,11 +332,11 @@ schedule_SR (module_id_t module_idP,
       if (!UE_info->active[UE_id]) {
         continue;
       }
-
-      if (UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated == NULL) continue;
-
-      if ((SRconfig = UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig) != NULL) {
-        if (SRconfig->present == LTE_SchedulingRequestConfig_PR_setup) {
+      physicalConfigDedicated = UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated;
+      if (physicalConfigDedicated == NULL) continue;
+      SRconfig = UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig;
+      //if ((SRconfig = UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig) != NULL) {
+        if ((physicalConfigDedicated != NULL) && (SRconfig != NULL) && (SRconfig->present == LTE_SchedulingRequestConfig_PR_setup)) {
           if (SRconfig->choice.setup.sr_ConfigIndex <= 4) {          // 5 ms SR period
             if ((subframeP % 5) != SRconfig->choice.setup.sr_ConfigIndex) continue;
           } else if (SRconfig->choice.setup.sr_ConfigIndex <= 14) {  // 10 ms SR period
@@ -350,7 +351,11 @@ schedule_SR (module_id_t module_idP,
             if ((subframeP % 2) != (SRconfig->choice.setup.sr_ConfigIndex - 155)) continue;
           }
         }  // SRconfig->present == SchedulingRequestConfig_PR_setup)
-      }  // SRconfig = UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig)!=NULL)
+        else{
+          LOG_E(MAC,"schedule_SR : frame %d subframe %d UE_id %d physicalConfigDedicated SRconfig %p\n",frameP,subframeP,UE_id,SRconfig);
+          continue;
+        }
+      //}  // SRconfig = UE_list->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig)!=NULL)
 
       /* If we get here there is some PUCCH1 reception to schedule for SR */
       ul_req = &(eNB->UL_req[CC_id]);
@@ -1158,7 +1163,7 @@ void update_ue_timers(module_id_t module_idP,frame_t frameP, sub_frame_t subfram
       ue_context_p->ue_context.ue_rrc_inactivity_timer++;
     }
 
-    if (ue_context_p->ue_context.ue_reestablishment_timer > 0) {
+    if ((ue_context_p->ue_context.ue_reestablishment_timer > 0) && (ue_context_p->ue_context.ue_reestablishment_timer_thres > 0)) {
       ue_context_p->ue_context.ue_reestablishment_timer++;
   }
 

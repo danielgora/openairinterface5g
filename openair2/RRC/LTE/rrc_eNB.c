@@ -862,7 +862,9 @@ rrc_eNB_free_mem_UE_context(
   memset(ue_context_pP->ue_context.DRB_active, 0, sizeof(ue_context_pP->ue_context.DRB_active));
 
   if (ue_context_pP->ue_context.physicalConfigDedicated) {
-    ASN_STRUCT_FREE(asn_DEF_LTE_PhysicalConfigDedicated, ue_context_pP->ue_context.physicalConfigDedicated);
+    ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_LTE_PhysicalConfigDedicated, ue_context_pP->ue_context.physicalConfigDedicated);
+    memset(ue_context_pP->ue_context.physicalConfigDedicated,0,sizeof(struct LTE_PhysicalConfigDedicated));
+    free(ue_context_pP->ue_context.physicalConfigDedicated);
     ue_context_pP->ue_context.physicalConfigDedicated = NULL;
   }
 
@@ -2317,7 +2319,7 @@ rrc_eNB_generate_RRCConnectionRelease(
 
 #endif
   size = do_RRCConnectionRelease(ctxt_pP->module_id, buffer,rrc_eNB_get_next_transaction_identifier(ctxt_pP->module_id));
-  ue_context_pP->ue_context.ue_reestablishment_timer = 0;
+  //ue_context_pP->ue_context.ue_reestablishment_timer = 0;
   ue_context_pP->ue_context.ue_release_timer = 0;
   ue_context_pP->ue_context.ue_rrc_inactivity_timer = 0;
   LOG_I(RRC,
@@ -7894,7 +7896,7 @@ rrc_eNB_decode_ccch(
             LOG_E(RRC,
                   PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest without UE context, let's reject the UE\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
-            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, ue_context_p, CC_id);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
             break;
           }
 
@@ -7905,8 +7907,7 @@ rrc_eNB_decode_ccch(
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
                   rrcConnectionReestablishmentRequest->ue_Identity.physCellId,
                   RC.rrc[ctxt_pP->module_id]->carrier[CC_id].physCellId);
-            rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
-                CC_id);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
             break;
           }
 
@@ -7923,21 +7924,7 @@ rrc_eNB_decode_ccch(
             LOG_E(RRC,
                   PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest c_RNTI range error, let's reject the UE\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
-            rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
-                CC_id);
-            break;
-          }
-
-          c_rnti = BIT_STRING_to_uint16(&rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI);
-          LOG_D(RRC, "c_rnti is %x\n", c_rnti);
-          ue_context_p = rrc_eNB_get_ue_context(RC.rrc[ctxt_pP->module_id], c_rnti);
-
-          if (ue_context_p == NULL) {
-            LOG_E(RRC,
-                  PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest without UE context, let's reject the UE\n",
-                  PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
-            rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
-                CC_id);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
             break;
           }
 
@@ -7947,7 +7934,7 @@ rrc_eNB_decode_ccch(
             LOG_E(RRC,
                   PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest without UE_id(MAC) rnti %x, let's reject the UE\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),c_rnti);
-            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, ue_context_p, CC_id);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
             break;
           }
 
@@ -7978,7 +7965,7 @@ rrc_eNB_decode_ccch(
               LOG_E(RRC,
                     PROTOCOL_RRC_CTXT_UE_FMT" RRCConnectionReestablishmentRequest without UE_id(MAC) previous rnti %x, let's reject the UE\n",
                     PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),previous_rnti);
-              rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, ue_context_p, CC_id);
+              rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
               break;
             }
 
@@ -7998,11 +7985,12 @@ rrc_eNB_decode_ccch(
             LOG_E(RRC,
                   PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest (UE %x c-plane is not end), let's reject the UE\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),c_rnti);
-            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, ue_context_p, CC_id);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
             break;
           }
 
           if(ue_context_p->ue_context.ue_reestablishment_timer > 0) {
+            if(ue_context_p->ue_context.ue_reestablishment_timer < 960){
             LOG_E(RRC,
                   PROTOCOL_RRC_CTXT_UE_FMT" RRRCConnectionReconfigurationComplete(Previous) don't receive, delete the Previous UE,\nprevious Status %d, new Status RRC_RECONFIGURED\n",
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
@@ -8026,6 +8014,13 @@ rrc_eNB_decode_ccch(
               } else {
                 ue_context_p->ue_context.e_rab[e_rab].status = E_RAB_STATUS_FAILED;
               }
+            }
+            }else{
+                LOG_E(RRC,
+                      PROTOCOL_RRC_CTXT_UE_FMT" RRRCConnectionReconfigurationComplete(Previous) will wait timeout, let's reject the UE\n",
+                      PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
+                rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
+                break;
             }
           }
 
@@ -8297,11 +8292,12 @@ rrc_eNB_decode_ccch(
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
                   random_value);
             if (NODE_IS_MONOLITHIC(RC.rrc[ctxt_pP->module_id]->node_type)) {
-              if (rrc_mac_remove_ue(ctxt_pP->module_id,ctxt_pP->rnti) == -1) {
-                LOG_E(RRC, "rrc_mac_remove_ue failed\n");
-                ASN_STRUCT_FREE(asn_DEF_LTE_UL_CCCH_Message,ul_ccch_msg);
-                return -1;
-              }
+              //if (rrc_mac_remove_ue(ctxt_pP->module_id,ctxt_pP->rnti) == -1) {
+              //  LOG_E(RRC, "rrc_mac_remove_ue failed\n");
+              //  ASN_STRUCT_FREE(asn_DEF_LTE_UL_CCCH_Message,ul_ccch_msg);
+              //  return -1;
+              //}
+              put_UE_in_freelist(ctxt_pP->module_id,ctxt_pP->rnti,0);
             }
             else if (NODE_IS_CU(RC.rrc[ctxt_pP->module_id]->node_type)) {
               MessageDef *m = itti_alloc_new_message(TASK_RRC_ENB, F1AP_UE_CONTEXT_RELEASE_CMD);
@@ -9770,13 +9766,14 @@ void rrc_subframe_process(protocol_ctxt_t *const ctxt_pP, const int CC_id) {
       }
     }
 
-    if (ue_context_p->ue_context.ue_reestablishment_timer > 0) {
+    if ((ue_context_p->ue_context.ue_reestablishment_timer > 0)&&(ue_context_p->ue_context.ue_reestablishment_timer_thres > 0)) {
       if (ue_context_p->ue_context.ue_reestablishment_timer >= ue_context_p->ue_context.ue_reestablishment_timer_thres) {
         LOG_I(RRC, "Removing UE %x instance because of reestablishment_timer timeout\n",
               ue_context_p->ue_context.rnti);
         ue_context_p->ue_context.ul_failure_timer = 20000; // lead to send S1 UE_CONTEXT_RELEASE_REQ
         removed_ue_count = add_ue_to_remove(ue_to_be_removed, removed_ue_count, ue_context_p);
-        ue_context_p->ue_context.ue_reestablishment_timer = 0;
+        //ue_context_p->ue_context.ue_reestablishment_timer = 0;
+        ue_context_p->ue_context.ue_reestablishment_timer_thres = 0;
         break; // break RB_FOREACH
       }
     }
@@ -9804,7 +9801,7 @@ void rrc_subframe_process(protocol_ctxt_t *const ctxt_pP, const int CC_id) {
       ue_to_be_removed[cur_ue]->ue_context.ue_release_timer_s1 = 1;
       ue_to_be_removed[cur_ue]->ue_context.ue_release_timer_thres_s1 = 100;
       ue_to_be_removed[cur_ue]->ue_context.ue_release_timer = 0;
-      ue_to_be_removed[cur_ue]->ue_context.ue_reestablishment_timer = 0;
+      //ue_to_be_removed[cur_ue]->ue_context.ue_reestablishment_timer = 0;
     }
 
     rrc_eNB_free_UE(ctxt_pP->module_id, ue_to_be_removed[cur_ue]);

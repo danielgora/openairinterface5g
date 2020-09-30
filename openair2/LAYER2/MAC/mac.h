@@ -1161,6 +1161,7 @@ typedef struct {
   int msg4_TBsize;
   /// MCS used for Msg4
   int msg4_mcs;
+  uint8_t msg4_count;
   uint8_t rach_resource_type;
   uint8_t msg2_mpdcch_repetition_cnt;
   int     msg2_mpdcch_done;

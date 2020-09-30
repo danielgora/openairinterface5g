@@ -1122,6 +1122,7 @@ generate_Msg4(module_id_t module_idP,
           dl_req_body->number_dci++;
           dl_req_body->number_pdu++;
           ra->state = WAITMSG4ACK;
+          ra->msg4_count = 1;
           LOG_D(MAC,"[eNB %d][RAPROC] Frame %d, Subframe %d: state:WAITMSG4ACK\n", module_idP, frameP, subframeP);
           // increment Absolute subframe by 8 for Msg4 retransmission
           LOG_D(MAC,
@@ -1352,6 +1353,11 @@ check_Msg4_retransmission(module_id_t module_idP, int CC_idP,
       if ((ra->Msg4_frame == frameP)
           && (ra->Msg4_subframe == subframeP)) {
         //ra->wait_ack_Msg4++;
+        if(ra->msg4_count > 4){
+          LOG_I(MAC, "Msg4 Retransmission count reach max, put UE %x into freeList\n", ra->rnti);
+          put_UE_in_freelist(module_idP, ra->rnti, 1);
+          return;
+        }
         // we have to schedule a retransmission
         dl_req->sfn_sf = frameP<<4 | subframeP;
         first_rb = 0;
@@ -1431,6 +1437,7 @@ check_Msg4_retransmission(module_id_t module_idP, int CC_idP,
                               dci_dl_pdu_rel8.cce_idx);
         // prepare frame for retransmission
         get_retransmission_timing(mac->common_channels[CC_idP].tdd_Config,&ra->Msg4_frame,&ra->Msg4_subframe);
+        ra->msg4_count++;
         LOG_W(MAC,
               "[eNB %d][RAPROC] CC_id %d Frame %d, subframeP %d: Msg4 not acknowledged, adding ue specific dci (rnti %x) for RA (Msg4 Retransmission round %d in %d.%d)\n",
               module_idP, CC_idP, frameP, subframeP, ra->rnti,
@@ -1672,6 +1679,7 @@ cancel_ra_proc(module_id_t module_idP, int CC_id, frame_t frameP,
       ra[i].RRC_timer = 20;
       ra[i].rnti = 0;
       ra[i].msg3_round = 0;
+      ra[i].msg4_count = 0;
       LOG_D(MAC,"[eNB %d][RAPROC] CC_id %d Frame %d Canceled RA procedure for UE rnti %x\n", module_idP, CC_id, frameP, rnti);
     }
   }
@@ -1688,5 +1696,6 @@ void clear_ra_proc(module_id_t module_idP, int CC_id, frame_t frameP) {
     ra[i].RRC_timer = 20;
     ra[i].rnti = 0;
     ra[i].msg3_round = 0;
+    ra[i].msg4_count = 0;
   }
 }

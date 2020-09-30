@@ -478,8 +478,8 @@ int8_t nr_ue_decode_mib(module_id_t module_id,
   SFN_C_TYPE sfn_c=SFN_C_IMPOSSIBLE;   //  only valid for mux=1
   uint32_t n_c=UINT_MAX;
   uint32_t number_of_search_space_per_slot=UINT_MAX;
-  uint32_t first_symbol_index=UINT_MAX;
-  uint32_t search_space_duration;  //  element of search space
+  //uint32_t first_symbol_index=UINT_MAX;
+  //uint32_t search_space_duration;  //  element of search space
   //  38.213 table 10.1-1
 
   /// MUX PATTERN 1
@@ -2100,7 +2100,7 @@ int8_t nr_ue_process_dci_time_dom_resource_assignment(NR_UE_MAC_INST_t *mac,
 						      uint8_t time_domain_ind
 						      ){
   int dmrs_typeA_pos = mac->scc->dmrs_TypeA_Position;
-  uint8_t k_offset=0;
+  //uint8_t k_offset=0;
   uint8_t sliv_S=0;
   uint8_t sliv_L=0;
   uint8_t table_5_1_2_1_1_2_time_dom_res_alloc_A[16][3]={ // for PDSCH from TS 38.214 subclause 5.1.2.1.1

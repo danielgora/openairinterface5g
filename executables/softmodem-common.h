@@ -67,13 +67,13 @@ extern "C"
 #define CONFIG_HLP_SOFTS         "Enable soft scope and L1 and L2 stats (Xforms)\n"
 #define CONFIG_HLP_EXMCAL        "Calibrate the EXMIMO borad, available files: exmimo2_2arxg.lime exmimo2_2brxg.lime \n"
 #define CONFIG_HLP_ITTIL         "Generate ITTI analyzser logs (similar to wireshark logs but with more details)\n"
-//#define CONFIG_HLP_DLMCS         "Set the downlink MCS\n"
+#define CONFIG_HLP_DLMCS         "Set the downlink MCS\n"
 #define CONFIG_HLP_STMON         "Enable processing timing measurement of lte softmodem on per subframe basis \n"
 
 
 //#define CONFIG_HLP_NUMUES        "Set the number of UEs for the emulation"
 #define CONFIG_HLP_MSLOTS        "Skip the missed slots/subframes \n"
-//#define CONFIG_HLP_ULMCS         "Set the uplink MCS\n"
+#define CONFIG_HLP_ULMCS         "Set the uplink MCS\n"
 
 #define CONFIG_HLP_UE            "Set the lte softmodem as a UE\n"
 #define CONFIG_HLP_TQFS          "Apply three-quarter of sampling frequency, 23.04 Msps to reduce the data rate on USB/PCIe transfers (only valid for 20 MHz)\n"
@@ -135,8 +135,8 @@ extern "C"
     {"basicsim",             CONFIG_HLP_RFSIM,        PARAMFLAG_BOOL, uptr:&basicsim,                     defintval:0,           TYPE_INT,    0},                     \
     {"nokrnmod",             CONFIG_HLP_NOKRNMOD,     PARAMFLAG_BOOL, uptr:&nokrnmod,                     defintval:0,           TYPE_INT,    0},                     \
     {"nbiot-disable",        CONFIG_HLP_DISABLNBIOT,  PARAMFLAG_BOOL, uptr:&nonbiot,                      defuintval:0,          TYPE_INT,    0},                     \
-    {"m" ,                   CONFIG_HLP_DLMCS,          0,            iptr:&target_dl_mcs,                defintval:9,           TYPE_INT,    0},                     \
-    {"u" ,                   CONFIG_HLP_ULMCS,          0,            iptr:&target_ul_mcs,                defintval:9,           TYPE_INT,    0},                     \
+    {"m" ,                   CONFIG_HLP_DLMCS,          0,            uptr:&target_dl_mcs,                defintval:9,           TYPE_INT,    0},                     \
+    {"u" ,                   CONFIG_HLP_ULMCS,          0,            uptr:&target_ul_mcs,                defintval:9,           TYPE_INT,    0},                     \
   }
 
   

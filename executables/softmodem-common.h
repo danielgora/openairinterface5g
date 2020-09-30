@@ -67,13 +67,13 @@ extern "C"
 #define CONFIG_HLP_SOFTS         "Enable soft scope and L1 and L2 stats (Xforms)\n"
 #define CONFIG_HLP_EXMCAL        "Calibrate the EXMIMO borad, available files: exmimo2_2arxg.lime exmimo2_2brxg.lime \n"
 #define CONFIG_HLP_ITTIL         "Generate ITTI analyzser logs (similar to wireshark logs but with more details)\n"
-#define CONFIG_HLP_DLMCS         "Set the downlink MCS\n"
+//#define CONFIG_HLP_DLMCS         "Set the downlink MCS\n"
 #define CONFIG_HLP_STMON         "Enable processing timing measurement of lte softmodem on per subframe basis \n"
 
 
 //#define CONFIG_HLP_NUMUES        "Set the number of UEs for the emulation"
 #define CONFIG_HLP_MSLOTS        "Skip the missed slots/subframes \n"
-#define CONFIG_HLP_ULMCS         "Set the uplink MCS\n"
+//#define CONFIG_HLP_ULMCS         "Set the uplink MCS\n"
 
 #define CONFIG_HLP_UE            "Set the lte softmodem as a UE\n"
 #define CONFIG_HLP_TQFS          "Apply three-quarter of sampling frequency, 23.04 Msps to reduce the data rate on USB/PCIe transfers (only valid for 20 MHz)\n"

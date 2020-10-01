@@ -183,6 +183,7 @@ int main(int argc, char **argv)
   int pucch_tgt_snrx10 = 200;
   int ibwps=24;
   int ibwp_rboffset=41;
+  int params_from_file = 0;
   if ( load_configmodule(argc,argv,CONFIG_ENABLECMDLINEONLY) == 0 ) {
     exit_fun("[NR_ULSIM] Error, configuration module init failed\n");
   }
@@ -419,6 +420,10 @@ int main(int argc, char **argv)
       }
       break;
 
+    case 'Q':
+      params_from_file = 1;
+      break;
+
     default:
     case 'h':
       printf("%s -h(elp) -p(extended_prefix) -N cell_id -f output_filename -F input_filename -g channel_model -n n_frames -t Delayspread -s snr0 -S snr1 -x transmission_mode -y TXant -z RXant -i Intefrence0 -j Interference1 -A interpolation_file -C(alibration offset dB) -N CellId\n", argv[0]);
@@ -450,6 +455,7 @@ int main(int argc, char **argv)
       printf("-P Print ULSCH performances\n");
       printf("-T Enable PTRS, arguments list L_PTRS{0,1,2} K_PTRS{2,4}, e.g. -T 2 0 2 \n");
       printf("-U Change DMRS Config, arguments list DMRS TYPE{0=A,1=B} DMRS AddPos{0:3}, e.g. -U 2 0 2 \n");
+      printf("-Q If -F used, read parameters from file\n");
       exit(-1);
       break;
 
@@ -732,35 +738,38 @@ int main(int argc, char **argv)
     // 800 samples is N_TA_OFFSET for FR1 @ 30.72 Ms/s,
     AssertFatal(frame_parms->subcarrier_spacing==30000,"only 30 kHz for file input for now (%d)\n",frame_parms->subcarrier_spacing);
   
-    fseek(input_fd,file_offset*((slot_length<<2)+4000+16),SEEK_SET);
-    fread((void*)&n_rnti,sizeof(int16_t),1,input_fd);
-    printf("rnti %x\n",n_rnti);
-    fread((void*)&nb_rb,sizeof(int16_t),1,input_fd);
-    printf("nb_rb %d\n",nb_rb);
-    int16_t dummy;
-    fread((void*)&start_rb,sizeof(int16_t),1,input_fd);
-    //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-    printf("rb_start %d\n",start_rb);
-    fread((void*)&nb_symb_sch,sizeof(int16_t),1,input_fd);
-    //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-    printf("nb_symb_sch %d\n",nb_symb_sch);
-    fread((void*)&start_symbol,sizeof(int16_t),1,input_fd);
-    printf("start_symbol %d\n",start_symbol);
-    fread((void*)&Imcs,sizeof(int16_t),1,input_fd);
-    printf("mcs %d\n",Imcs);
-    fread((void*)&rv_index,sizeof(int16_t),1,input_fd);
-    printf("rv_index %d\n",rv_index);
-    //    fread((void*)&harq_pid,sizeof(int16_t),1,input_fd);
-    fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-    printf("harq_pid %d\n",harq_pid);
+    if (params_from_file) {
+      fseek(input_fd,file_offset*((slot_length<<2)+4000+16),SEEK_SET);
+      fread((void*)&n_rnti,sizeof(int16_t),1,input_fd);
+      printf("rnti %x\n",n_rnti);
+      fread((void*)&nb_rb,sizeof(int16_t),1,input_fd);
+      printf("nb_rb %d\n",nb_rb);
+      int16_t dummy;
+      fread((void*)&start_rb,sizeof(int16_t),1,input_fd);
+      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("rb_start %d\n",start_rb);
+      fread((void*)&nb_symb_sch,sizeof(int16_t),1,input_fd);
+      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("nb_symb_sch %d\n",nb_symb_sch);
+      fread((void*)&start_symbol,sizeof(int16_t),1,input_fd);
+      printf("start_symbol %d\n",start_symbol);
+      fread((void*)&Imcs,sizeof(int16_t),1,input_fd);
+      printf("mcs %d\n",Imcs);
+      fread((void*)&rv_index,sizeof(int16_t),1,input_fd);
+      printf("rv_index %d\n",rv_index);
+      //    fread((void*)&harq_pid,sizeof(int16_t),1,input_fd);
+      fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("harq_pid %d\n",harq_pid);
+    }
+    fseek(input_fd,file_offset*sizeof(int16_t)*2,SEEK_SET);
     fread((void*)&gNB->common_vars.rxdata[0][slot_offset-delay],
-	  sizeof(int16_t),
-	  slot_length<<1,
-	  input_fd);
+    sizeof(int16_t),
+    slot_length<<1,
+    input_fd);
     for (int i=0;i<16;i+=2) printf("slot_offset %d : %d,%d\n",
-				   slot_offset,
-				   ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[i],
-				   ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[1+i]);
+           slot_offset,
+           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[i],
+           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[1+i]);
   }
   
   for (SNR = snr0; SNR < snr1; SNR += snr_step) {

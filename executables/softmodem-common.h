@@ -135,8 +135,8 @@ extern "C"
     {"basicsim",             CONFIG_HLP_RFSIM,        PARAMFLAG_BOOL, uptr:&basicsim,                     defintval:0,           TYPE_INT,    0},                     \
     {"nokrnmod",             CONFIG_HLP_NOKRNMOD,     PARAMFLAG_BOOL, uptr:&nokrnmod,                     defintval:0,           TYPE_INT,    0},                     \
     {"nbiot-disable",        CONFIG_HLP_DISABLNBIOT,  PARAMFLAG_BOOL, uptr:&nonbiot,                      defuintval:0,          TYPE_INT,    0},                     \
-    {"m" ,                   CONFIG_HLP_DLMCS,          0,            iptr:&target_dl_mcs,                defintval:9,           TYPE_INT,    0},                     \
-    {"u" ,                   CONFIG_HLP_ULMCS,          0,            iptr:&target_ul_mcs,                defintval:9,           TYPE_INT,    0},                     \
+    {"m" ,                   CONFIG_HLP_DLMCS,          0,            uptr:&target_dl_mcs,                defintval:9,           TYPE_INT,    0},                     \
+    {"u" ,                   CONFIG_HLP_ULMCS,          0,            uptr:&target_ul_mcs,                defintval:9,           TYPE_INT,    0},                     \
   }
 
   

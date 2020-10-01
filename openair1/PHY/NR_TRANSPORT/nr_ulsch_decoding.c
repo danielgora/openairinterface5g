@@ -383,7 +383,7 @@ uint32_t nr_processULSegment(void* arg) {
 
     LOG_E(PHY,"ulsch_decoding.c: Problem in rate_matching\n");
     rdata->decodeIterations = max_ldpc_iterations + 1;
-    return;
+    return 1;
   } else {
     stop_meas(&phy_vars_gNB->ulsch_rate_unmatching_stats);
   }
@@ -467,7 +467,6 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
                            uint32_t G) {
 
   uint32_t A;
-  uint32_t ret;
   uint32_t r;
   uint32_t r_offset;
   uint32_t offset;
@@ -494,7 +493,7 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
 
   if (!harq_process) {
     LOG_E(PHY,"ulsch_decoding.c: NULL harq_process pointer\n");
-    return; 
+    return 1; 
   }
 
   double   Coderate = 0.0;
@@ -509,7 +508,7 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
 
    if (!ulsch_llr) {
     LOG_E(PHY,"ulsch_decoding.c: NULL ulsch_llr pointer\n");
-    return;
+    return 1;
   }
 
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_PHY_gNB_ULSCH_DECODING,1);
@@ -577,13 +576,13 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
       stats->current_RI = n_layers;
       stats->total_bytes_tx += harq_process->TBS;
     }
-    // This is a new packet, so compute quantities regarding segmentation
-    if (A > 3824)
-      harq_process->B = A+24;
-    else
-      harq_process->B = A+16;
+  }
+  if (A > 3824)
+    harq_process->B = A+24;
+  else
+    harq_process->B = A+16;
 
-  // [hna] Perform nr_segmenation with input and output set to NULL to calculate only (B, C, K, Z, F)
+// [hna] Perform nr_segmenation with input and output set to NULL to calculate only (B, C, K, Z, F)
   nr_segmentation(NULL,
                   NULL,
                   harq_process->B,
@@ -594,11 +593,10 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
                   p_decParams->BG);
 
 #ifdef DEBUG_ULSCH_DECODING
-    printf("ulsch decoding nr segmentation Z %d\n", harq_process->Z);
-    if (!frame%100)
-      printf("K %d C %d Z %d \n", harq_process->K, harq_process->C, harq_process->Z);
+  printf("ulsch decoding nr segmentation Z %d\n", harq_process->Z);
+  if (!frame%100)
+    printf("K %d C %d Z %d \n", harq_process->K, harq_process->C, harq_process->Z);
 #endif
-  }
   Tbslbrm = nr_compute_tbslbrm(0,nb_rb,n_layers);
 
   p_decParams->Z = harq_process->Z;
@@ -618,7 +616,7 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
 
   if (harq_process->C > a_segments) {
     LOG_E(PHY,"Illegal harq_process->C %d > %d\n",harq_process->C,a_segments);
-    return;
+    return 1;
   }
 #ifdef DEBUG_ULSCH_DECODING
   printf("Segmentation: C %d, K %d\n",harq_process->C,harq_process->K);
@@ -660,5 +658,5 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
     offset += (Kr_bytes - (harq_process->F>>3) - ((harq_process->C>1)?3:0));
     //////////////////////////////////////////////////////////////////////////////////////////
   }
-  return;
+  return 1;
 }

@@ -42,7 +42,6 @@ MSC_GEN=0
 XFORMS="True"
 SKIP_SHARED_LIB_FLAG="False"
 UE_EXPANSION="False"
-UESIM_EXPANSION="False"
 PHY_RM="False"
 UDP_1MS="False"
 PRINT_STATS="False"
@@ -266,10 +265,6 @@ function main() {
        --mu)
             UE_EXPANSION="True"
             echo_info "Will compile with UE_EXPANSION"
-            shift;;
-       --musim)
-            UESIM_EXPANSION="True"
-            echo_info "Will compile with UESIM_EXPANSION"
             shift;;
        --rm)
             PHY_RM="True"
@@ -605,7 +600,6 @@ function main() {
     echo "set ( PHY_RM $PHY_RM )"                                         >>  $cmake_file
     echo "set ( UDP_1MS $UDP_1MS )"                                       >>  $cmake_file
     echo "set ( PHYSIM $PHYSIM )"                                         >>  $cmake_file
-    echo "set ( UESIM_EXPANSION $UESIM_EXPANSION )"                       >> $cmake_file
     echo "set ( ENABLE_VCD_FIFO $VCD_TIMING )"                            >> $cmake_file
     echo "set ( RF_BOARD \"${HW}\")"                                      >> $cmake_file
     echo "set ( TRANSP_PRO \"${TP}\")"                                    >> $cmake_file

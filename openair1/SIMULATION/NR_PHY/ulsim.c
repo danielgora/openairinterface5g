@@ -209,7 +209,7 @@ int main(int argc, char **argv)
   //logInit();
   randominit(0);
 
-  while ((c = getopt(argc, argv, "a:b:c:d:ef:g:h:i:j:kl:m:n:p:r:s:y:z:F:G:H:M:N:PR:S:T:U:L:")) != -1) {
+  while ((c = getopt(argc, argv, "a:b:c:d:ef:g:h:i:j:kl:m:n:p:r:s:y:z:F:G:H:M:N:PR:S:T:U:L:Q")) != -1) {
     printf("handling optarg %c\n",c);
     switch (c) {
 
@@ -674,9 +674,6 @@ int main(int argc, char **argv)
   uint8_t max_rounds = 4;
   uint8_t crc_status = 0;
 
-  unsigned char mod_order = nr_get_Qm_ul(Imcs, 0);
-  uint16_t      code_rate = nr_get_code_rate_ul(Imcs, 0);
-
   uint8_t mapping_type = typeB; // Default Values
   pusch_dmrs_type_t dmrs_config_type = pusch_dmrs_type1; // Default Values
   pusch_dmrs_AdditionalPosition_t add_pos = pusch_dmrs_pos0; // Default Values
@@ -700,6 +697,53 @@ int main(int argc, char **argv)
     }
     printf("NOTE: DMRS config is modified with Mapping Type %d , Additional Position %d \n", mapping_type, add_pos );
   }
+
+  int slot_offset = frame_parms->get_samples_slot_timestamp(slot,frame_parms,0);
+  int slot_length = slot_offset - frame_parms->get_samples_slot_timestamp(slot-1,frame_parms,0);
+  int read_errors=0;
+
+  if (input_fd != NULL)	{
+    AssertFatal(frame_parms->nb_antennas_rx == 1, "nb_ant != 1\n");
+    // 800 samples is N_TA_OFFSET for FR1 @ 30.72 Ms/s,
+    AssertFatal(frame_parms->subcarrier_spacing==30000,"only 30 kHz for file input for now (%d)\n",frame_parms->subcarrier_spacing);
+  
+    if (params_from_file) {
+      fseek(input_fd,file_offset*((slot_length<<2)+4000+16),SEEK_SET);
+      read_errors+=fread((void*)&n_rnti,sizeof(int16_t),1,input_fd);
+      printf("rnti %x\n",n_rnti);
+      read_errors+=fread((void*)&nb_rb,sizeof(int16_t),1,input_fd);
+      printf("nb_rb %d\n",nb_rb);
+      int16_t dummy;
+      read_errors+=fread((void*)&start_rb,sizeof(int16_t),1,input_fd);
+      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("rb_start %d\n",start_rb);
+      read_errors+=fread((void*)&nb_symb_sch,sizeof(int16_t),1,input_fd);
+      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("nb_symb_sch %d\n",nb_symb_sch);
+      read_errors+=fread((void*)&start_symbol,sizeof(int16_t),1,input_fd);
+      printf("start_symbol %d\n",start_symbol);
+      read_errors+=fread((void*)&Imcs,sizeof(int16_t),1,input_fd);
+      printf("mcs %d\n",Imcs);
+      read_errors+=fread((void*)&rv_index,sizeof(int16_t),1,input_fd);
+      printf("rv_index %d\n",rv_index);
+      //    fread((void*)&harq_pid,sizeof(int16_t),1,input_fd);
+      read_errors+=fread((void*)&dummy,sizeof(int16_t),1,input_fd);
+      printf("harq_pid %d\n",harq_pid);
+    } else
+      fseek(input_fd,file_offset*sizeof(int16_t)*2,SEEK_SET);
+    read_errors+=fread((void*)&gNB->common_vars.rxdata[0][slot_offset-delay],
+    sizeof(int16_t),
+    slot_length<<1,
+    input_fd);
+    if (read_errors==0) exit(1);
+    for (int i=0;i<16;i+=2) printf("slot_offset %d : %d,%d\n",
+           slot_offset,
+           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[i],
+           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[1+i]);
+  }
+
+  unsigned char mod_order = nr_get_Qm_ul(Imcs, 0);
+  uint16_t      code_rate = nr_get_code_rate_ul(Imcs, 0);
 
   uint8_t  length_dmrs         = pusch_len1;
   uint16_t l_prime_mask        = get_l_prime(nb_symb_sch, mapping_type, add_pos, length_dmrs);
@@ -747,50 +791,6 @@ int main(int argc, char **argv)
   //for (int i=0;i<16;i++) printf("%f\n",gaussdouble(0.0,1.0));
   snrRun = 0;
   int n_errs = 0;
-  int read_errors=0;
-
-  int slot_offset = frame_parms->get_samples_slot_timestamp(slot,frame_parms,0);
-  int slot_length = slot_offset - frame_parms->get_samples_slot_timestamp(slot-1,frame_parms,0);
-
-  if (input_fd != NULL)	{
-    AssertFatal(frame_parms->nb_antennas_rx == 1, "nb_ant != 1\n");
-    // 800 samples is N_TA_OFFSET for FR1 @ 30.72 Ms/s,
-    AssertFatal(frame_parms->subcarrier_spacing==30000,"only 30 kHz for file input for now (%d)\n",frame_parms->subcarrier_spacing);
-  
-    if (params_from_file) {
-      fseek(input_fd,file_offset*((slot_length<<2)+4000+16),SEEK_SET);
-      read_errors+=fread((void*)&n_rnti,sizeof(int16_t),1,input_fd);
-      printf("rnti %x\n",n_rnti);
-      read_errors+=fread((void*)&nb_rb,sizeof(int16_t),1,input_fd);
-      printf("nb_rb %d\n",nb_rb);
-      int16_t dummy;
-      read_errors+=fread((void*)&start_rb,sizeof(int16_t),1,input_fd);
-      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-      printf("rb_start %d\n",start_rb);
-      read_errors+=fread((void*)&nb_symb_sch,sizeof(int16_t),1,input_fd);
-      //fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-      printf("nb_symb_sch %d\n",nb_symb_sch);
-      read_errors+=fread((void*)&start_symbol,sizeof(int16_t),1,input_fd);
-      printf("start_symbol %d\n",start_symbol);
-      read_errors+=fread((void*)&Imcs,sizeof(int16_t),1,input_fd);
-      printf("mcs %d\n",Imcs);
-      read_errors+=fread((void*)&rv_index,sizeof(int16_t),1,input_fd);
-      printf("rv_index %d\n",rv_index);
-      //    fread((void*)&harq_pid,sizeof(int16_t),1,input_fd);
-      read_errors+=fread((void*)&dummy,sizeof(int16_t),1,input_fd);
-      printf("harq_pid %d\n",harq_pid);
-    }
-    fseek(input_fd,file_offset*sizeof(int16_t)*2,SEEK_SET);
-    read_errors+=fread((void*)&gNB->common_vars.rxdata[0][slot_offset-delay],
-    sizeof(int16_t),
-    slot_length<<1,
-    input_fd);
-    if (read_errors==0) exit(1);
-    for (int i=0;i<16;i+=2) printf("slot_offset %d : %d,%d\n",
-           slot_offset,
-           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[i],
-           ((int16_t*)&gNB->common_vars.rxdata[0][slot_offset])[1+i]);
-  }
   
   for (SNR = snr0; SNR < snr1; SNR += snr_step) {
     varArray_t *table_rx=initVarArray(1000,sizeof(double));

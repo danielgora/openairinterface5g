@@ -334,17 +334,27 @@ typedef struct {
   uint8_t cri_ssbri_bitlen;
   uint8_t rsrp_bitlen;
   uint8_t diff_rsrp_bitlen;
-}CRI_SSBRI_RSRP_bitlen_t;
+}L1_RSRP_bitlen_t;
 
-#define MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG 16
+typedef struct{
+  uint8_t cri_bitlen;
+  uint8_t ri_bitlen;
+  uint8_t li_bitlen;
+  uint8_t pmi_x1_bitlen;
+  uint8_t pmi_x2_bitlen;
+  uint8_t cqi_bitlen;
+} CSI_Meas_bitlen_t;
+
 typedef struct nr_csi_report {
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type;
   long periodicity;
   uint16_t offset;
-  NR_CSI_ResourceConfig__csi_RS_ResourceSetList_PR CSI_Resource_type;
-  uint8_t nb_of_nzp_csi_report;
+  long ** SSB_Index_list;
+  long ** CSI_Index_list;
+//  uint8_t nb_of_nzp_csi_report;
   uint8_t nb_of_csi_ssb_report;
-  CRI_SSBRI_RSRP_bitlen_t CSI_report_bitlen[MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG];
+  L1_RSRP_bitlen_t CSI_report_bitlen;
+  CSI_Meas_bitlen_t csi_meas_bitlen;
 } nr_csi_report_t;
 
 /*! As per the spec 38.212 and table:  6.3.1.1.2-12 in a single UCI sequence we can have multiple CSI_report 
@@ -353,6 +363,7 @@ typedef struct nr_csi_report {
   From spec 38.214 section 5.2.1.2 For periodic and semi-persistent CSI Resource Settings, the number of CSI-RS Resource Sets configured is limited to S=1
  */
 /*! \brief scheduling control information set through an API */
+#define MAX_CSI_REPORTS 48
 typedef struct {
   uint64_t dlsch_in_slot_bitmap;  // static bitmap signaling which slot in a tdd period contains dlsch
   uint64_t ulsch_in_slot_bitmap;  // static bitmap signaling which slot in a tdd period contains ulsch
@@ -360,7 +371,7 @@ typedef struct {
   uint16_t ta_timer;
   int16_t ta_update;
   uint8_t current_harq_pid;
-  struct CSI_Report CSI_report[MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG];
+  struct CSI_Report CSI_report[MAX_CSI_REPORTS];
   NR_UE_sr_t sr_req;
   NR_UE_harq_t harq_processes[NR_MAX_NB_HARQ_PROCESSES];
   int dummy;

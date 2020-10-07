@@ -637,16 +637,24 @@ uint16_t get_csi_bitlen(int Mod_idP,
   uint8_t csi_report_id =0;
   uint16_t csi_bitlen =0;
   long periodicity;
-  CRI_SSBRI_RSRP_bitlen_t * CSI_report_bitlen = NULL; 
+  L1_RSRP_bitlen_t * CSI_report_bitlen = NULL;
+  CSI_Meas_bitlen_t * csi_meas_bitlen = NULL;
 
   NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
   for (csi_report_id = 0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++){
-    CSI_report_bitlen = &(UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen[0]); //This might need to be moodif for Aperiodic CSI-RS measurements
     periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
-    if (((n_of_slots*frame + slot - UE_list->csi_report_template[UE_id][csi_report_id].offset)%periodicity)==0)
-      csi_bitlen+= ((CSI_report_bitlen->cri_ssbri_bitlen * CSI_report_bitlen->nb_ssbri_cri) +
+    if (((n_of_slots*frame + slot - UE_list->csi_report_template[UE_id][csi_report_id].offset)%periodicity)==0){
+      if (NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP==UE_list->csi_report_template[UE_id][csi_report_id].reportQuantity_type||
+	    NR_CSI_ReportConfig__reportQuantity_PR_cri_RSRP==UE_list->csi_report_template[UE_id][csi_report_id].reportQuantity_type){
+        CSI_report_bitlen = &(UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen); //This might need to be moodif for Aperiodic CSI-RS measurements
+        csi_bitlen+= ((CSI_report_bitlen->cri_ssbri_bitlen * CSI_report_bitlen->nb_ssbri_cri) +
 	               CSI_report_bitlen->rsrp_bitlen +(CSI_report_bitlen->diff_rsrp_bitlen * 
-		       (CSI_report_bitlen->nb_ssbri_cri -1 )) *UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report);
+		       (CSI_report_bitlen->nb_ssbri_cri -1 )));//*UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report);
+      } else{
+        csi_meas_bitlen = &(UE_list->csi_report_template[UE_id][csi_report_id].csi_meas_bitlen); //This might need to be moodif for Aperiodic CSI-RS measurements
+	csi_bitlen+= (csi_meas_bitlen->cri_bitlen +csi_meas_bitlen->ri_bitlen+csi_meas_bitlen->li_bitlen+csi_meas_bitlen->cqi_bitlen+csi_meas_bitlen->pmi_x1_bitlen+csi_meas_bitlen->pmi_x2_bitlen);
+      }
+    }
   }
   
   return csi_bitlen;

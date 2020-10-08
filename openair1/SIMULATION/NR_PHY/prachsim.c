@@ -114,6 +114,8 @@ int main(int argc, char **argv){
   uint32_t tx_lev = 10000, prach_errors = 0, samp_count; //,tx_lev_dB;
   uint64_t SSB_positions = 0x01, absoluteFrequencyPointA = 640000;
   double DS_TDL = .03;
+  uint16_t RA_sfn_index = -1;
+  uint8_t N_RA_slot,config_period = 1;
 
   //  int8_t interf1=-19,interf2=-19;
   //  uint8_t abstraction_flag=0,calibration_flag=0;
@@ -436,7 +438,10 @@ int main(int argc, char **argv){
                                &format,
                                &start_symbol,
                                &N_t_slot,
-                               &N_dur);
+                               &N_dur,
+                               &RA_sfn_index,
+                               &N_RA_slot,
+                               &config_period);
 
   if (ret == 0) {printf("No prach in %d.%d, mu %d, config_index %d\n",frame,slot,mu,config_index); exit(-1);}
   format0 = format&0xff;      // first column of format from table

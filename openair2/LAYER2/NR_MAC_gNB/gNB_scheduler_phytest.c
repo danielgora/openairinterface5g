@@ -382,7 +382,7 @@ int configure_fapi_dl_pdu_phytest(int Mod_idP,
   dci_pdu_rel15[0].antenna_ports.val = 0;  // nb of cdm groups w/o data 1 and dmrs port 0
   // dmrs sequence initialization
   dci_pdu_rel15[0].dmrs_sequence_initialization.val = pdsch_pdu_rel15->SCID;
-  LOG_D(MAC, "[gNB scheduler phytest] DCI type 1 payload: freq_alloc %d (%d,%d,%d), time_alloc %d, vrb to prb %d, mcs %d tb_scaling %d ndi %d rv %d\n",
+  LOG_D(MAC, "[gNB scheduler phytest] DCI type 1 payload: freq_alloc %d (%d,%d,%d), time_alloc %d, vrb to prb %d, mcs %d tb_scaling %d ndi %d rv %d dai %d tpc %d pucch_res_indi %d harq_timing_indi %d\n",
 	dci_pdu_rel15[0].frequency_domain_assignment.val,
 	pdsch_pdu_rel15->rbStart, 
 	pdsch_pdu_rel15->rbSize,	
@@ -392,7 +392,11 @@ int configure_fapi_dl_pdu_phytest(int Mod_idP,
 	dci_pdu_rel15[0].mcs,
 	dci_pdu_rel15[0].tb_scaling,
 	dci_pdu_rel15[0].ndi, 
-	dci_pdu_rel15[0].rv);
+	dci_pdu_rel15[0].rv,
+  dci_pdu_rel15[0].dai[0].val,
+  dci_pdu_rel15[0].tpc,
+  dci_pdu_rel15[0].pucch_resource_indicator,
+  dci_pdu_rel15[0].pdsch_to_harq_feedback_timing_indicator.val);
 
   NR_SearchSpace_t *ss;
   int target_ss = NR_SearchSpace__searchSpaceType_PR_ue_Specific;

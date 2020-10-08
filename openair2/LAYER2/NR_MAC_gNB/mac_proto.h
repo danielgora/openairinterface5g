@@ -258,9 +258,7 @@ void nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                         NR_SearchSpace_t *ss,
                         NR_ControlResourceSet_t *coreset,
                         NR_ServingCellConfigCommon_t *scc,
-                        NR_BWP_Downlink_t *bwp,
-                        uint8_t aggregation_level,
-                        int CCEIndex);
+                        NR_BWP_Downlink_t *bwp);
 
 void fill_dci_pdu_rel15(NR_ServingCellConfigCommon_t *scc,
                         NR_CellGroupConfig_t *secondaryCellGroup,

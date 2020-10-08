@@ -450,7 +450,8 @@ void nr_initiate_ra_proc(module_id_t module_idP,
     uint8_t beam_index = ssb_index_from_prach(module_idP,
 		                              frameP,
                                               slotP,
-                			      preamble_index,														 freq_index,
+                			      preamble_index,
+                                              freq_index,
 	   				      symbol);
     int pr_found=0;
     if (preamble_index == ra->preambles.preamble_list[beam_index]) {
@@ -527,7 +528,7 @@ void nr_schedule_RA(module_id_t module_idP, frame_t frameP, sub_frame_t slotP){
 
   start_meas(&mac->schedule_ra);
   for (int CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
-    NR_COMMON_channels_t *cc = &mac->common_channels[CC_id];
+  NR_COMMON_channels_t *cc = &mac->common_channels[CC_id];
     for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
       NR_RA_t *ra = &cc->ra[i];
       LOG_D(MAC,"RA[state:%d]\n",ra->state);
@@ -592,10 +593,8 @@ void nr_schedule_reception_msg3(module_id_t module_idP, int CC_id, frame_t frame
   gNB_MAC_INST                                *mac = RC.nrmac[module_idP];
   nfapi_nr_ul_tti_request_t                   *ul_req = &mac->UL_tti_req[0];
   NR_COMMON_channels_t                        *cc = &mac->common_channels[CC_id];
-//  NR_RA_t                                     *ra = &cc->ra[0];
-	for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
-	NR_RA_t *ra = &cc->ra[i];
-
+  for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
+  NR_RA_t *ra = &cc->ra[i];
   if (ra->state == WAIT_Msg3) {
     if ((frameP == ra->Msg3_frame) && (slotP == ra->Msg3_slot) ){
       ul_req->SFN = ra->Msg3_frame;
@@ -606,7 +605,7 @@ void nr_schedule_reception_msg3(module_id_t module_idP, int CC_id, frame_t frame
       ul_req->n_pdus+=1;
     }
   }
-	}
+  }
 }
 
 void nr_add_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t slotP,NR_RA_t *ra,uint8_t RAR_pdu_index){
@@ -784,8 +783,6 @@ void nr_generate_Msg2(module_id_t module_idP,
   for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
   NR_RA_t *ra = &cc->ra[i];
   if (ra->state == Msg2) {
-//  NR_UE_list_t *UE_list = &nr_mac->UE_list;
-//  NR_SearchSpace_t *ss = ra->ra_ss;
 
   uint16_t RA_rnti = ra->RA_rnti;
   long locationAndBandwidth;
@@ -876,58 +873,38 @@ void nr_generate_Msg2(module_id_t module_idP,
 
     pdsch_pdu_rel15->StartSymbolIndex = StartSymbolIndex;
     pdsch_pdu_rel15->NrOfSymbols      = NrOfSymbols;
-    pdsch_pdu_rel15->dlDmrsSymbPos = fill_dmrs_mask(NULL, scc->dmrs_TypeA_Position, NrOfSymbols);
-		pdsch_pdu_rel15->precodingAndBeamforming.numPRGs = 1;
-		pdsch_pdu_rel15->precodingAndBeamforming.prgSize = 275;
-		pdsch_pdu_rel15->precodingAndBeamforming.digBFInterfaces = 1;
-		pdsch_pdu_rel15->precodingAndBeamforming.PMIdx[0] = 0;
-		pdsch_pdu_rel15->precodingAndBeamforming.beamIdx[0] = ra->beam_id;
-#if 1
-			nr_configure_dci(nr_mac,
-	                                 pdcch_pdu_rel15,
-		                         RA_rnti,
-				         ss,
-				         coreset,
-				         scc,						 bwp,
-					 ra->beam_id,
-                                         aggregation_level,
-                                         CCEIndex);
-#else
-    pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].RNTI=RA_rnti;
+    pdsch_pdu_rel15->dlDmrsSymbPos    = fill_dmrs_mask(NULL, scc->dmrs_TypeA_Position, NrOfSymbols);
+    pdsch_pdu_rel15->precodingAndBeamforming.numPRGs         = 1;
+    pdsch_pdu_rel15->precodingAndBeamforming.prgSize         = 275;
+    pdsch_pdu_rel15->precodingAndBeamforming.digBFInterfaces = 1;
+    pdsch_pdu_rel15->precodingAndBeamforming.PMIdx[0]        = 0;
+    pdsch_pdu_rel15->precodingAndBeamforming.beamIdx[0]      = ra->beam_id;
 
-    pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].ScramblingId = *scc->physCellId;
-    pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].ScramblingRNTI=0;
+    uint8_t nr_of_candidates, aggregation_level;
+    find_aggregation_candidates(&aggregation_level, &nr_of_candidates, ss);
+    NR_ControlResourceSet_t *coreset = get_coreset(bwp, ss, 0 /* common */);
+    int CCEIndex = allocate_nr_CCEs(nr_mac,
+                                    bwp,
+                                    coreset,
+                                    aggregation_level,
+                                    0, /* n_RNTI 0: common search space */
+                                    0); // m
 
-    uint8_t nr_of_candidates,aggregation_level;
-		int CCEIndex = -1;
-    find_aggregation_candidates(&aggregation_level,
-                               &nr_of_candidates,
-                               ss);
-
-    CCEIndex = allocate_nr_CCEs(nr_mac,
-                                1, // bwp_id
-                                0,
-                                aggregation_level,
-                                ss->searchSpaceType->present-1, // search_space, 0 common, 1 ue-specific
-                                UE_id, // UE-id
-                                0); // m
-    if(CCEIndex < 0) {
-      LOG_I(MAC, "[RAPROC] Subframe %d: CCE allocation is not feasible , skip scheduling UE %d\n", slotP, RA_rnti);
-				return;
+    if (CCEIndex < 0) {
+      LOG_E(MAC, "%s(): cannot find free CCE for RA RNTI %04x!\n", __func__, ra->rnti);
+      return;
     }
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].AggregationLevel = aggregation_level;
-    pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].CceIndex = CCEIndex;
+    nr_configure_dci(nr_mac,
+                     pdcch_pdu_rel15,
+                     RA_rnti,
+    	             ss,
+	             coreset,
+	             scc,
+	  	     bwp,
+		     ra->beam_id,
+                     aggregation_level,
+                     CCEIndex);
 
-    if (ss->searchSpaceType->choice.ue_Specific->dci_Formats==NR_SearchSpace__searchSpaceType__ue_Specific__dci_Formats_formats0_0_And_1_0)
-      pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].beta_PDCCH_1_0 = 0;
-
-    pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].powerControlOffsetSS=1;
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].precodingAndBeamforming.numPRGs = 1;
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].precodingAndBeamforming.prgSize = 275;
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].precodingAndBeamforming.digBFInterfaces = 1;
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].precodingAndBeamforming.PMIdx[0] = 0;
-		pdcch_pdu_rel15->dci_pdu[pdcch_pdu_rel15->numDlDci].precodingAndBeamforming.beamIdx[0] = UE_list->UE_ssb_index[UE_id];
-#endif
     dci_pdu_rel15_t dci_pdu_rel15;
     dci_pdu_rel15.frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
 										     pdsch_pdu_rel15->rbStart,dci10_bw);

@@ -627,7 +627,15 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
                      sched_ctrl->search_space,
                      sched_ctrl->coreset,
                      scc,
-                     bwp,
+                     bwp);
+    nr_configure_dci(nr_mac,
+                     pdcch_pdu_rel15,
+                     RA_rnti,
+    	               ss,
+	                   coreset,
+	                   scc,
+	  	               bwp,
+		                 ra->beam_id,
                      sched_ctrl->aggregation_level,
                      sched_ctrl->cce_index);
 
@@ -675,9 +683,7 @@ void nr_configure_pdcch(gNB_MAC_INST *nr_mac,
                         NR_SearchSpace_t *ss,
                         NR_ControlResourceSet_t *coreset,
                         NR_ServingCellConfigCommon_t *scc,
-                        NR_BWP_Downlink_t *bwp,
-                        uint8_t aggregation_level,
-                        int CCEIndex) {
+                        NR_BWP_Downlink_t *bwp) {
   if (bwp) { // This is not the InitialBWP
     pdcch_pdu->BWPSize  = NRRIV2BW(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
     pdcch_pdu->BWPStart = NRRIV2PRBOFFSET(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);

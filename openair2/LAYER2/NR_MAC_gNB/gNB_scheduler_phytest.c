@@ -793,9 +793,7 @@ void schedule_fapi_ul_pdu(int Mod_idP,
                          ss,
                          coreset,
                          scc,
-                         bwp,
-                         aggregation_level,
-                         CCEIndex);
+                         bwp);
       nr_configure_dci(nr_mac,
 	               pdcch_pdu_rel15,
                        UE_info->rnti[UE_id],										 ss,

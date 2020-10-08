@@ -159,8 +159,8 @@ void find_SSB_and_RO_available(module_id_t module_idP) {
                                     &N_t_slot,
                                     &N_dur,
                                     &N_RA_slot,
-	                                 &N_RA_sfn,
-                                   &max_association_period);
+	                            &N_RA_sfn,
+                                    &max_association_period);
 
   float num_ssb_per_RO = ssb_per_rach_occasion[cfg->prach_config.ssb_per_rach.value];	
 	uint8_t fdm = cfg->prach_config.num_prach_fd_occasions.value;
@@ -207,7 +207,7 @@ void schedule_nr_prach(module_id_t module_idP, frame_t frameP, sub_frame_t slotP
   uint8_t config_index = scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->rach_ConfigGeneric.prach_ConfigurationIndex;
   uint8_t mu,N_dur,N_t_slot,start_symbol = 0,N_RA_slot;
   uint16_t RA_sfn_index = -1;
-	uint8_t config_period = 1;
+  uint8_t config_period = 1;
   uint16_t format;
   int slot_index = 0;
   uint16_t prach_occasion_id = -1;

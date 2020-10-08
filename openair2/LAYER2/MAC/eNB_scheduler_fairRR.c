@@ -4331,7 +4331,18 @@ void ulsch_scheduler_pre_processor_fairRR(module_id_t module_idP,
         int32_t framex10psubframe = UE_template->pusch_bler_calc_frame*10+UE_template->pusch_bler_calc_subframe;
         int pusch_bler_interval=50;
         double total_bler;
-        
+        if (cc->tdd_Config) {
+          switch (cc->tdd_Config->subframeAssignment) {
+            case 1:
+              pusch_bler_interval=(5*pusch_bler_interval)>>1;
+              break;
+            
+            case 2:
+              pusch_bler_interval=5*pusch_bler_interval;
+              break;
+            
+          }
+        }
         if(UE_info->UE_sched_ctrl[UE_id].pusch_rx_num[CC_id] == 0 && UE_info->UE_sched_ctrl[UE_id].pusch_rx_error_num[CC_id] == 0) {
           total_bler = 0;
         }
@@ -4846,10 +4857,10 @@ void schedule_ulsch_rnti_fairRR(module_id_t   module_idP,
         UE_template->pusch_tpc_tx_frame=frameP;
         UE_template->pusch_tpc_tx_subframe=subframeP;
 
-        if (snr > target_snr + 4) {
+        if (snr > target_snr + 2) {
           tpc = 0; //-1
           tpc_accumulated--;
-        } else if (snr < target_snr - 4) {
+        } else if (snr < target_snr - 2) {
           tpc = 2; //+1
           tpc_accumulated++;
         } else {

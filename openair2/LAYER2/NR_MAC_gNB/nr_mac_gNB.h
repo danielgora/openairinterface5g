@@ -269,10 +269,20 @@ typedef struct UE_info {
 typedef struct NR_sched_pucch {
   int frame;
   int ul_slot;
+  bool sr_flag;
+  int csi_bits;
+  bool simultaneous_harqcsi;
   uint8_t dai_c;
   uint8_t timing_indicator;
   uint8_t resource_indicator;
 } NR_sched_pucch;
+
+typedef struct NR_sched_pusch {
+  int frame;
+  int slot;
+  bool active;
+  nfapi_nr_pusch_pdu_t pusch_pdu;
+} NR_sched_pusch;
 
 typedef struct NR_UE_harq {
   uint8_t is_waiting;
@@ -280,6 +290,7 @@ typedef struct NR_UE_harq {
   uint8_t round;
   uint16_t feedback_slot;
 } NR_UE_harq_t;
+
 
 //! fixme : need to enhace for the multiple TB CQI report
 
@@ -329,6 +340,19 @@ typedef struct NR_UE_sr {
   bool ul_SR [MAX_SR_BITLEN];
 } NR_UE_sr_t;
 
+typedef enum {
+  INACTIVE = 0,
+  ACTIVE_NOT_SCHED,
+  ACTIVE_SCHED
+} NR_UL_harq_states_t;
+
+typedef struct NR_UE_ul_harq {
+  uint8_t ndi;
+  uint8_t round;
+  uint16_t last_tx_slot;
+  NR_UL_harq_states_t state;
+} NR_UE_ul_harq_t;
+
 typedef struct {
   uint8_t nb_ssbri_cri;
   uint8_t cri_ssbri_bitlen;
@@ -347,8 +371,6 @@ typedef struct{
 
 typedef struct nr_csi_report {
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type;
-  long periodicity;
-  uint16_t offset;
   long ** SSB_Index_list;
   long ** CSI_Index_list;
 //  uint8_t nb_of_nzp_csi_report;
@@ -362,18 +384,25 @@ typedef struct nr_csi_report {
   From spec 38.331 from the IE CSI-ResourceConfig for SSB RSRP reporting we can configure only one resource set 
   From spec 38.214 section 5.2.1.2 For periodic and semi-persistent CSI Resource Settings, the number of CSI-RS Resource Sets configured is limited to S=1
  */
+
 /*! \brief scheduling control information set through an API */
 #define MAX_CSI_REPORTS 48
 typedef struct {
   uint64_t dlsch_in_slot_bitmap;  // static bitmap signaling which slot in a tdd period contains dlsch
   uint64_t ulsch_in_slot_bitmap;  // static bitmap signaling which slot in a tdd period contains ulsch
-  NR_sched_pucch *sched_pucch;
+  NR_sched_pucch **sched_pucch;
+  NR_sched_pusch *sched_pusch;
   uint16_t ta_timer;
   int16_t ta_update;
+  bool ta_apply;
+  uint8_t tpc0;
+  uint8_t tpc1;
+  uint16_t ul_rssi;
   uint8_t current_harq_pid;
   struct CSI_Report CSI_report[MAX_CSI_REPORTS];
   NR_UE_sr_t sr_req;
   NR_UE_harq_t harq_processes[NR_MAX_NB_HARQ_PROCESSES];
+  NR_UE_ul_harq_t ul_harq_processes[NR_MAX_NB_HARQ_PROCESSES];
   int dummy;
   NR_UE_mac_ce_ctrl_t UE_mac_ce_ctrl;// MAC CE related information
 } NR_UE_sched_ctrl_t;
@@ -383,6 +412,19 @@ typedef struct NR_preamble_ue {
   uint8_t *preamble_list;
 } NR_preamble_ue;
 
+typedef struct {
+
+  int lc_bytes_tx[64];
+  int lc_bytes_rx[64];
+  int dlsch_rounds[8];
+  int dlsch_errors;
+  int dlsch_total_bytes;
+  int ulsch_rounds[8];
+  int ulsch_errors;
+  int ulsch_total_bytes_scheduled;
+  int ulsch_total_bytes_rx;
+} NR_mac_stats_t;
+
 /*! \brief UE list used by gNB to order UEs/CC for scheduling*/
 #define MAX_CSI_REPORTCONFIG 48
 typedef struct {
@@ -390,6 +432,7 @@ typedef struct {
   /// scheduling control info
   nr_csi_report_t csi_report_template[MAX_MOBILES_PER_GNB][MAX_CSI_REPORTCONFIG];
   NR_UE_sched_ctrl_t UE_sched_ctrl[MAX_MOBILES_PER_GNB];
+  NR_mac_stats_t mac_stats[MAX_MOBILES_PER_GNB];
   int next[MAX_MOBILES_PER_GNB];
   int head;
   int next_ul[MAX_MOBILES_PER_GNB];
@@ -427,18 +470,14 @@ typedef struct gNB_MAC_INST_s {
   eth_params_t                    eth_params_s;
   /// Module
   module_id_t                     Mod_id;
-  /// frame counter
-  frame_t                         frame;
-  /// slot counter
-  int                             slot;
   /// timing advance group
   NR_TAG_t                        *tag;
   /// Pointer to IF module instance for PHY
   NR_IF_Module_t                  *if_inst;
-  /// TA command
-  int                             ta_command;
-  /// MAC CE flag indicating TA length
-  int                             ta_len;
+  /// Pusch target SNR
+  int                             pusch_target_snrx10;
+  /// Pucch target SNR
+  int                             pucch_target_snrx10;
   /// Common cell resources
   NR_COMMON_channels_t common_channels[NFAPI_CC_MAX];
   /// current PDU index (BCH,DLSCH)

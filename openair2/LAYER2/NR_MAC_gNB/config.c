@@ -302,30 +302,6 @@ void config_common(int Mod_idP, int pdsch_AntennaPorts, NR_ServingCellConfigComm
   else LOG_I(PHY,"TDD has been properly configurated\n");
   }
 
-/*
-  // PDCCH-ConfigCommon
-  cfg->pdcch_config.controlResourceSetZero.value = scc->downlinkConfigCommon->initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->controlResourceSetZero;
-  cfg->pdcch_config.searchSpaceZero.value = scc->downlinkConfigCommon->initialDownlinkBWP->pdcch_ConfigCommon->choice.setup->searchSpaceZero;
-
-  // PDSCH-ConfigCommon
-  cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value = scc->downlinkConfigCommon->initialDownlinkBWP->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.count;
-  cfg->pdsch_config.dmrs_TypeA_Position.value = scc->dmrs_TypeA_Position;
-  AssertFatal(cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value<=NFAPI_NR_PDSCH_CONFIG_MAXALLOCATIONS,"illegal TimeDomainAllocation count %d\n",cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value);
-  for (int i=0;i<cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value;i++) {
-    cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_k0[i].value=*scc->downlinkConfigCommon->initialDownlinkBWP->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.array[i]->k0;
-    cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_mappingType[i].value=scc->downlinkConfigCommon->initialDownlinkBWP->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.array[i]->mappingType;
-    cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_startSymbolAndLength[i].value=scc->downlinkConfigCommon->initialDownlinkBWP->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.array[i]->startSymbolAndLength;
-  }
-
-  // PUSCH-ConfigCommon
-  cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value = scc->uplinkConfigCommon->initialUplinkBWP->pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list.count;
-  cfg->pusch_config.dmrs_TypeA_Position.value = scc->dmrs_TypeA_Position+2;
-  AssertFatal(cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value<=NFAPI_NR_PUSCH_CONFIG_MAXALLOCATIONS,"illegal TimeDomainAllocation count %d\n",cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value);
-  for (int i=0;i<cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value;i++) {
-    cfg->pusch_config.PUSCHTimeDomainResourceAllocation_k2[i].value=*scc->uplinkConfigCommon->initialUplinkBWP->pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list.array[0]->k2;
-  }*/
-
-
 }
 
 //! Calculating number of bits set
@@ -344,13 +320,12 @@ uint8_t number_of_bits_set (uint8_t buf,uint8_t * max_ri){
   return nb_of_bits_set;
 }
 
+
 //!TODO : smae function can be written to handle csi_resources
 void update_csi_bitlen (NR_CSI_MeasConfig_t *csi_MeasConfig, NR_UE_list_t *UE_list, int UE_id, module_id_t Mod_idP) {
   uint8_t csi_report_id = 0;
   uint8_t csi_resourceidx =0;
   uint8_t csi_ssb_idx =0;
-  uint16_t period, offset;
-  NR_CSI_ReportPeriodicityAndOffset_PR p_and_o;
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type;
   NR_CSI_ResourceConfigId_t csi_ResourceConfigId;
 
@@ -358,54 +333,6 @@ void update_csi_bitlen (NR_CSI_MeasConfig_t *csi_MeasConfig, NR_UE_list_t *UE_li
     csi_ResourceConfigId=csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->resourcesForChannelMeasurement;
     reportQuantity_type = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportQuantity.present;
     UE_list->csi_report_template[UE_id][csi_report_id].reportQuantity_type = reportQuantity_type;
-    p_and_o = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.present;
-
-    switch(p_and_o){
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots4:
-        period = 4;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots4;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots5:
-        period = 5;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots5;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots8:
-        period = 8;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots8;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots10:
-        period = 10;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots10;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots16:
-        period = 16;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots16;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots20:
-        period = 20;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots20;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots40:
-        period = 40;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots40;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots80:
-        period = 80;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots80;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots160:
-        period = 160;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots160;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots320:
-        period = 320;
-        offset = csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.choice.periodic->reportSlotConfig.choice.slots320;
-        break;
-    default:
-      AssertFatal(1==0,"No periodicity and offset resource found in CSI report");
-    }
-    UE_list->csi_report_template[UE_id][csi_report_id].periodicity=period;
-    UE_list->csi_report_template[UE_id][csi_report_id].offset=offset;
 
     for ( csi_resourceidx = 0; csi_resourceidx < csi_MeasConfig->csi_ResourceConfigToAddModList->list.count; csi_resourceidx++) {
       if ( csi_MeasConfig->csi_ResourceConfigToAddModList->list.array[csi_resourceidx]->csi_ResourceConfigId != csi_ResourceConfigId) 
@@ -671,14 +598,16 @@ void update_csi_bitlen (NR_CSI_MeasConfig_t *csi_MeasConfig, NR_UE_list_t *UE_li
   }
 }
 
+
 int rrc_mac_config_req_gNB(module_id_t Mod_idP, 
 			   int ssb_SubcarrierOffset,
                            int pdsch_AntennaPorts,
+                           int pusch_tgt_snrx10,
+                           int pucch_tgt_snrx10,
                            NR_ServingCellConfigCommon_t *scc,
 			   int add_ue,
 			   uint32_t rnti,
-			   NR_CellGroupConfig_t *secondaryCellGroup
-                           ){
+			   NR_CellGroupConfig_t *secondaryCellGroup){
 
   if (scc != NULL ) {
     AssertFatal((scc->ssb_PositionsInBurst->present > 0) && (scc->ssb_PositionsInBurst->present < 4), "SSB Bitmap type %d is not valid\n",scc->ssb_PositionsInBurst->present);
@@ -699,7 +628,8 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
       }
     }
   
-  
+    RC.nrmac[Mod_idP]->pusch_target_snrx10 = pusch_tgt_snrx10;
+    RC.nrmac[Mod_idP]->pucch_target_snrx10 = pucch_tgt_snrx10;
     NR_PHY_Config_t phycfg;
     phycfg.Mod_id = Mod_idP;
     phycfg.CC_id  = 0;

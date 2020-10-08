@@ -41,6 +41,7 @@
 #include "executables/softmodem-common.h"
 
 #define MAX_IF_MODULES 100
+//#define UL_HARQ_PRINT
 
 NR_IF_Module_t *if_inst[MAX_IF_MODULES];
 NR_Sched_Rsp_t Sched_INFO[MAX_IF_MODULES][MAX_NUM_CCs];
@@ -88,7 +89,6 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
   uint16_t *payload = calloc (1, payload_size);
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type = NR_CSI_ReportConfig__reportQuantity_PR_NOTHING;
   NR_UE_list_t *UE_list = &(RC.nrmac[Mod_idP]->UE_list);
-  long periodicity;
   uint8_t csi_report_id = 0;
 
   memcpy ( payload, uci_pdu->csi_part1.csi_part1_payload, payload_size);
@@ -98,12 +98,6 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
  //   if (csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.present == NR_CSI_ReportConfig__reportConfigType_PR_periodic) {
       //considering 30khz scs and
       //Has to implement according to reportSlotConfig type
-    periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
-    LOG_I(PHY,"SFN/SF:%d%d \n", frame,slot);
-   /* if (((NR_SubcarrierSpacing_kHz30 == scs) && (((((frame & 0xf)+1)*20 + slot) & periodicity) == periodicity))
-       ||((NR_SubcarrierSpacing_kHz120 == scs)&&(((((frame & 0xf)+1)*80 + slot) & periodicity) == periodicity))) {*/
-    if (((slots_per_frame[scs]*frame + slot -UE_list->csi_report_template[UE_id][csi_report_id].offset)%periodicity)!=0) 
-      continue;
 
     reportQuantity_type = UE_list->csi_report_template[UE_id][csi_report_id].reportQuantity_type;
     LOG_I(PHY,"SFN/SF:%d%d reportQuantity type = %d\n",frame,slot,reportQuantity_type);
@@ -213,62 +207,41 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
 #endif
 }
 
-void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl) {
-  // TODO
-  int max_harq_rounds = 4; // TODO define macro
+void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_stats_t *stats, int target_snrx10) {
+
   int num_ucis = UL_info->uci_ind.num_ucis;
   nfapi_nr_uci_t *uci_list = UL_info->uci_ind.uci_list;
   uint8_t UE_id = 0;
 
   for (int i = 0; i < num_ucis; i++) {
     switch (uci_list[i].pdu_type) {
-      case NFAPI_NR_UCI_PDCCH_PDU_TYPE: break;
+      case NFAPI_NR_UCI_PUSCH_PDU_TYPE: break;
 
       case NFAPI_NR_UCI_FORMAT_0_1_PDU_TYPE: {
-        if (get_softmodem_params()->phy_test == 0) {
-          nfapi_nr_uci_pucch_pdu_format_0_1_t *uci_pdu = &uci_list[i].pucch_pdu_format_0_1;
-          // handle harq
-          int harq_idx_s = 0;
 
-        if ( uci_pdu->sr->sr_indication && !(uci_pdu->sr->sr_confidence_level)) {
-          sched_ctrl->sr_req.nr_of_srs =1;
-          sched_ctrl->sr_req.ul_SR[0] = 1;
-        }
+        nfapi_nr_uci_pucch_pdu_format_0_1_t *uci_pdu = &uci_list[i].pucch_pdu_format_0_1;
 
-          // iterate over received harq bits
-          for (int harq_bit = 0; harq_bit < uci_pdu->harq->num_harq; harq_bit++) {
-            // search for the right harq process
-            for (int harq_idx = harq_idx_s; harq_idx < NR_MAX_NB_HARQ_PROCESSES-1; harq_idx++) {
-              if ((UL_info->slot-1) == sched_ctrl->harq_processes[harq_idx].feedback_slot) {
-                if (uci_pdu->harq->harq_list[harq_bit].harq_value == 0)
-                  sched_ctrl->harq_processes[harq_idx].round++;
-                if ((uci_pdu->harq->harq_list[harq_bit].harq_value == 1) ||
-                   (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds)) {
-                  sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
-                  sched_ctrl->harq_processes[harq_idx].round = 0;
-                }
-                sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
-                harq_idx_s = harq_idx + 1;
-                break;
-              }
-              // if gNB fails to receive a ACK/NACK
-              else if (((UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot) &&
-                      (sched_ctrl->harq_processes[harq_idx].is_waiting)) {
-                sched_ctrl->harq_processes[harq_idx].round++;
-                if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
-                  sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
-                  sched_ctrl->harq_processes[harq_idx].round = 0;
-                }
-                sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
-              }
-            }
+        // tpc (power control)
+        sched_ctrl->tpc1 = nr_get_tpc(target_snrx10,uci_pdu->ul_cqi,30);
+
+        if (uci_pdu->pduBitmap & 0x01){
+          if( uci_pdu->sr->sr_indication && !(uci_pdu->sr->sr_confidence_level)) {
+            sched_ctrl->sr_req.nr_of_srs =1;
+            sched_ctrl->sr_req.ul_SR[0] = 1;
           }
         }
+
+        if(uci_pdu->pduBitmap & 0x02)
+          nr_rx_acknack(NULL,uci_pdu,NULL,UL_info,sched_ctrl,stats);
+
         break;
       }
-
       case NFAPI_NR_UCI_FORMAT_2_3_4_PDU_TYPE: {
         nfapi_nr_uci_pucch_pdu_format_2_3_4_t *uci_pdu = &uci_list[i].pucch_pdu_format_2_3_4;
+
+        // tpc (power control)
+        sched_ctrl->tpc1 = nr_get_tpc(target_snrx10,uci_pdu->ul_cqi,30);
+
         module_id_t Mod_idP = UL_info -> module_id;
         NR_CSI_MeasConfig_t *csi_MeasConfig = RC.nrmac[Mod_idP]->UE_list.secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
 
@@ -287,43 +260,8 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl) {
           sched_ctrl->sr_req.nr_of_srs = uci_pdu->sr.sr_bit_len;
         }
 
-        if (uci_pdu -> pduBitmap & 0x02) {
-          ///Hadle Harq
-          int harq_idx_s = 0;
-
-          // iterate over received harq bits
-          for (int harq_bit = 0; harq_bit < uci_pdu->harq.harq_bit_len; harq_bit++) {
-            // search for the right harq process
-            for (int harq_idx = harq_idx_s; harq_idx < NR_MAX_NB_HARQ_PROCESSES-1; harq_idx++) {
-              if ((UL_info->slot-1) == sched_ctrl->harq_processes[harq_idx].feedback_slot) {
-                if ((*(uci_pdu->harq.harq_payload)&(1<<harq_bit)) == 0)
-                  sched_ctrl->harq_processes[harq_idx].round++;
-
-                if (((*(uci_pdu->harq.harq_payload) & (1 << harq_bit)) == 1) ||
-                    (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds)) {
-                  sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
-                  sched_ctrl->harq_processes[harq_idx].round = 0;
-                }
-
-                sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
-                harq_idx_s = harq_idx + 1;
-                break;
-              }
-              // if gNB fails to receive a ACK/NACK
-              else if (((UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot) &&
-                       (sched_ctrl->harq_processes[harq_idx].is_waiting)) {
-                sched_ctrl->harq_processes[harq_idx].round++;
-
-                if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
-                  sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
-                  sched_ctrl->harq_processes[harq_idx].round = 0;
-                }
-
-                sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
-              }
-            }
-          }
-        }
+        if(uci_pdu->pduBitmap & 0x02)
+          nr_rx_acknack(NULL,NULL,uci_pdu,UL_info,sched_ctrl,stats);
 
         if (uci_pdu -> pduBitmap & 0x04) {
           //int bwp_id =1;
@@ -349,7 +287,8 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl) {
 }
 
 
-void handle_nr_ulsch(NR_UL_IND_t *UL_info) {
+void handle_nr_ulsch(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_stats_t *stats) {
+
   if(nfapi_mode == 1) {
     if (UL_info->crc_ind.number_crcs>0) {
       //LOG_D(PHY,"UL_info->crc_ind.crc_indication_body.number_of_crcs:%d CRC_IND:SFN/SF:%d\n", UL_info->crc_ind.crc_indication_body.number_of_crcs, NFAPI_SFNSF2DEC(UL_info->crc_ind.sfn_sf));
@@ -376,6 +315,8 @@ void handle_nr_ulsch(NR_UL_IND_t *UL_info) {
               UL_info->rx_ind.pdu_list[i].rnti) {
             LOG_D(PHY, "UL_info->crc_ind.crc_indication_body.crc_pdu_list[%d].crc_indication_rel8.crc_flag:%d\n", j, UL_info->crc_ind.crc_list[j].tb_crc_status);
 
+            handle_nr_ul_harq(UL_info->slot, sched_ctrl, stats, UL_info->crc_ind.crc_list[j]);
+
             if (UL_info->crc_ind.crc_list[j].tb_crc_status == 1) { // CRC error indication
               LOG_D(MAC,"Frame %d, Slot %d Calling rx_sdu (CRC error) \n",UL_info->frame,UL_info->slot);
 
@@ -387,7 +328,8 @@ void handle_nr_ulsch(NR_UL_IND_t *UL_info) {
                         (uint8_t *)NULL,
                         UL_info->rx_ind.pdu_list[i].pdu_length,
                         UL_info->rx_ind.pdu_list[i].timing_advance,
-                        UL_info->rx_ind.pdu_list[i].ul_cqi);
+                        UL_info->rx_ind.pdu_list[i].ul_cqi,
+                        UL_info->rx_ind.pdu_list[i].rssi);
             } else {
               LOG_D(MAC,"Frame %d, Slot %d Calling rx_sdu (CRC ok) \n",UL_info->frame,UL_info->slot);
               nr_rx_sdu(UL_info->module_id,
@@ -398,7 +340,8 @@ void handle_nr_ulsch(NR_UL_IND_t *UL_info) {
                         UL_info->rx_ind.pdu_list[i].pdu,
                         UL_info->rx_ind.pdu_list[i].pdu_length,
                         UL_info->rx_ind.pdu_list[i].timing_advance,
-                        UL_info->rx_ind.pdu_list[i].ul_cqi);
+                        UL_info->rx_ind.pdu_list[i].ul_cqi,
+                        UL_info->rx_ind.pdu_list[i].rssi);
             }
             break;
           }
@@ -427,7 +370,7 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
   NR_IF_Module_t   *ifi        = if_inst[module_id];
   gNB_MAC_INST     *mac        = RC.nrmac[module_id];
 
-  LOG_I(PHY,"SFN/SF:%d%d module_id:%d CC_id:%d UL_info[rach_pdus:%d rx_ind:%d crcs:%d]\n",
+  LOG_D(PHY,"SFN/SF:%d%d module_id:%d CC_id:%d UL_info[rach_pdus:%d rx_ind:%d crcs:%d]\n",
         UL_info->frame,UL_info->slot,
         module_id,CC_id, UL_info->rach_ind.number_of_pdus,
         UL_info->rx_ind.number_of_pdus, UL_info->crc_ind.number_crcs);
@@ -447,10 +390,11 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
   // clear DL/UL info for new scheduling round
   clear_nr_nfapi_information(mac,CC_id,UL_info->frame,UL_info->slot);
   handle_nr_rach(UL_info);
-  handle_nr_uci(UL_info, &mac->UE_list.UE_sched_ctrl[0]);
+  
+  handle_nr_uci(UL_info,&mac->UE_list.UE_sched_ctrl[0],&mac->UE_list.mac_stats[0],mac->pucch_target_snrx10);
   // clear HI prior to handling ULSCH
   mac->UL_dci_req[CC_id].numPdus = 0;
-  handle_nr_ulsch(UL_info);
+  handle_nr_ulsch(UL_info, &mac->UE_list.UE_sched_ctrl[0],&mac->UE_list.mac_stats[0]);
 
   if (nfapi_mode != 1) {
     if (ifi->CC_mask == ((1<<MAX_NUM_CCs)-1)) {
@@ -462,8 +406,6 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
       nfapi_nr_config_request_scf_t *cfg = &mac->config[CC_id];
       int spf = get_spf(cfg);
       gNB_dlsch_ulsch_scheduler(module_id,
-				UL_info->frame,
-				UL_info->slot,
 				(UL_info->frame+((UL_info->slot>(spf-1-sl_ahead))?1:0)) % 1024,
 				(UL_info->slot+sl_ahead)%spf);
       
@@ -475,13 +417,7 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
       sched_info->DL_req      = &mac->DL_req[CC_id];
       sched_info->UL_dci_req  = &mac->UL_dci_req[CC_id];
 
-      if ((mac->common_channels[CC_id].ServingCellConfigCommon->tdd_UL_DL_ConfigurationCommon==NULL) ||
-          (is_nr_UL_slot(mac->common_channels[CC_id].ServingCellConfigCommon,UL_info->slot)>0)) {
-	//printf("NR_UL_indication: this is an UL slot. UL_info: frame %d, slot %d. UL_tti_req: frame %d, slot %d\n",UL_info->frame,UL_info->slot,mac->UL_tti_req[CC_id].SFN,mac->UL_tti_req[CC_id].Slot);
-        sched_info->UL_tti_req      = &mac->UL_tti_req[CC_id];
-      }
-      else
-        sched_info->UL_tti_req      = NULL;
+      sched_info->UL_tti_req  = &mac->UL_tti_req[CC_id];
 
       sched_info->TX_req      = &mac->TX_req[CC_id];
 #ifdef DUMP_FAPI

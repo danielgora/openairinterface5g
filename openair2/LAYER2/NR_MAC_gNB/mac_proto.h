@@ -36,8 +36,6 @@
 #include "LAYER2/NR_MAC_gNB/nr_mac_gNB.h"
 #include "NR_TAG-Id.h"
 
-#define MAX_ACK_BITS 2 //only format 0 is available for now
-
 void set_cset_offset(uint16_t);
 
 void mac_top_init_gNB(void);
@@ -50,6 +48,8 @@ void config_common(int Mod_idP,
 int rrc_mac_config_req_gNB(module_id_t Mod_idP, 
 			   int ssb_SubcarrierOffset,
                            int pdsch_AntennaPorts,
+                           int pusch_tgt_snrx10,
+                           int pucch_tgt_snrx10,
                            NR_ServingCellConfigCommon_t *scc,
 			   int nsa_flag,
 			   uint32_t rnti,
@@ -62,7 +62,6 @@ void clear_nr_nfapi_information(gNB_MAC_INST * gNB,
                                 sub_frame_t subframeP);
 
 void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
-			       frame_t frame_txP, sub_frame_t slot_txP,
 			       frame_t frame_rxP, sub_frame_t slot_rxP);
 
 int nr_generate_dlsch_pdu(module_id_t Mod_idP,
@@ -132,12 +131,17 @@ int configure_fapi_dl_pdu(int Mod_id,
                          uint16_t *rbSize,
                          uint16_t *rbStart);
 
+void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
+                   nfapi_nr_uci_pucch_pdu_format_0_1_t *uci_01,
+                   nfapi_nr_uci_pucch_pdu_format_2_3_4_t *uci_234,
+                   NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_stats_t *stats);
+
 void config_uldci(NR_BWP_Uplink_t *ubwp,
                   nfapi_nr_pusch_pdu_t *pusch_pdu,
                   nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu_rel15,
                   dci_pdu_rel15_t *dci_pdu_rel15,
                   int *dci_formats, int *rnti_types,
-                  int time_domain_assignment,
+                  int time_domain_assignment, uint8_t tpc,
                   int n_ubwp, int bwp_id);
 
 void configure_fapi_dl_Tx(module_id_t Mod_idP,
@@ -154,16 +158,36 @@ void nr_schedule_uss_dlsch_phytest(module_id_t   module_idP,
                                    NR_sched_pucch *pucch_sched,
                                    nfapi_nr_dl_tti_pdsch_pdu_rel15_t *pdsch_config);
 
-void nr_schedule_uss_ulsch_phytest(int Mod_idP,
-                                   frame_t       frameP,
-                                   sub_frame_t   slotP);
+void nr_schedule_pusch(int Mod_idP,
+                       int UE_id,
+                       int num_slots_per_tdd,
+                       int ul_slots,
+                       frame_t       frameP,
+                       sub_frame_t   slotP);
 
-void nr_update_pucch_scheduling(int Mod_idP,
-                                int UE_id,
-                                frame_t frameP,
-                                sub_frame_t slotP,
-                                int slots_per_tdd,
-                                int *pucch_id);
+void nr_schedule_pucch(int Mod_idP,
+                       int UE_id,
+                       int nr_ulmix_slots,
+                       frame_t frameP,
+                       sub_frame_t slotP);
+
+void nr_csi_meas_reporting(int Mod_idP,
+                           int UE_id,
+                           frame_t frameP,
+                           sub_frame_t slotP,
+                           int slots_per_tdd,
+                           int ul_slots,
+                           int n_slots_frame);
+
+void nr_acknack_scheduling(int Mod_idP,
+                           int UE_id,
+                           frame_t frameP,
+                           sub_frame_t slotP,
+                           int slots_per_tdd,
+                           int *pucch_id,
+                           int *pucch_occ);
+
+int get_pucch_resource(NR_UE_list_t *UE_list,int UE_id,int k,int l);
 
 void get_pdsch_to_harq_feedback(int Mod_idP,
                                 int UE_id,
@@ -192,11 +216,11 @@ int nr_is_dci_opportunity(nfapi_nr_search_space_t search_space,
 void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
 			NR_ServingCellConfigCommon_t *scc,
 			NR_BWP_Uplink_t *bwp,
+                        uint16_t rnti,
                         uint8_t pucch_resource,
-                        uint16_t O_uci,
                         uint16_t O_csi,
                         uint16_t O_ack,
-                        uint8_t SR_flag);
+                        uint8_t O_sr);
 
 void find_search_space(int ss_type,
                        NR_BWP_Downlink_t *bwp,
@@ -228,6 +252,8 @@ void find_aggregation_candidates(uint8_t *aggregation_level,
                                  uint8_t *nr_of_candidates,
                                  NR_SearchSpace_t *ss);
 
+uint8_t nr_get_tpc(int target, uint8_t cqi, int incr);
+
 int get_spf(nfapi_nr_config_request_scf_t *cfg);
 
 int to_absslot(nfapi_nr_config_request_scf_t *cfg,int frame,int slot);
@@ -254,6 +280,8 @@ int find_nr_UE_id(module_id_t mod_idP, rnti_t rntiP);
 
 int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP);
 
+void mac_remove_nr_ue(module_id_t mod_id, rnti_t rnti);
+
 int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
                      int bwp_id,
                      int coreset_id,
@@ -262,6 +290,17 @@ int allocate_nr_CCEs(gNB_MAC_INST *nr_mac,
                      int UE_id,
                      int m
                      );
+
+uint16_t compute_pucch_prb_size(uint8_t format,
+                                uint8_t nr_prbs,
+                                uint16_t O_tot,
+                                uint16_t O_csi,
+                                NR_PUCCH_MaxCodeRate_t *maxCodeRate,
+                                uint8_t Qm,
+                                uint8_t n_symb,
+                                uint8_t n_re_ctrl);
+
+void update_csi_bitlen (NR_CSI_MeasConfig_t *csi_MeasConfig, NR_UE_list_t *UE_list, int UE_id, module_id_t Mod_idP);
 
 int get_dlscs(nfapi_nr_config_request_t *cfg);
 
@@ -289,15 +328,24 @@ void nr_generate_Msg2(module_id_t module_idP,
 
 void nr_schedule_reception_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t slotP);
 
+void schedule_fapi_ul_pdu(int Mod_idP,
+                          frame_t frameP,
+                          sub_frame_t slotP,
+                          int num_slots_per_tdd,
+                          int ul_slots,
+                          int time_domain_assignment);
 
 void nr_process_mac_pdu(
     module_id_t module_idP,
+    rnti_t rnti,
     uint8_t CC_id,
     frame_t frameP,
     uint8_t *pduP,
     uint16_t mac_pdu_len);
 
 int binomial(int n, int k);
+
+bool is_xlsch_in_slot(uint64_t bitmap, sub_frame_t slot);
 
 
 /* \brief Function to indicate a received SDU on ULSCH.
@@ -316,15 +364,21 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
                const rnti_t rntiP,
                uint8_t * sduP,
                const uint16_t sdu_lenP,
-               const uint16_t timing_advance, const uint8_t ul_cqi);
+               const uint16_t timing_advance,
+               const uint8_t ul_cqi,
+               const uint16_t rssi);
+
+void handle_nr_ul_harq(uint16_t slot, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_stats_t *stats, nfapi_nr_crc_t crc_pdu);
 
 int16_t ssb_index_from_prach(module_id_t module_idP,
                              frame_t frameP,
-													   sub_frame_t slotP,
+                             sub_frame_t slotP,
                              uint16_t preamble_index,
                              uint8_t freq_index,
                              uint8_t symbol);
 
 void find_SSB_and_RO_available(module_id_t module_idP);
+
+void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_stats_t *stats, int target_snrx10);
 
 #endif /*__LAYER2_NR_MAC_PROTO_H__*/

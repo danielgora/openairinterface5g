@@ -327,6 +327,12 @@ void init_prach_ru_list(RU_t *ru);
 void free_nr_ru_prach_entry(RU_t *ru, int prach_id);
 void free_nr_prach_entry(PHY_VARS_gNB *gNB, int prach_id);
 
+int nr_generate_csi_rs(uint32_t **gold_csi_rs,
+                       int32_t **txdataF,
+                       int16_t amp,
+                       NR_DL_FRAME_PARMS frame_parms,
+                       nfapi_nr_dl_tti_csi_rs_pdu_rel15_t csi_params);
+
 void nr_decode_pucch1(int32_t **rxdataF,
                       pucch_GroupHopping_t pucch_GroupHopping,
                       uint32_t n_id,       // hoppingID higher layer parameter
@@ -342,9 +348,20 @@ void nr_decode_pucch1(int32_t **rxdataF,
                       uint8_t timeDomainOCC,
                       uint8_t nr_bit);
 
+void nr_decode_pucch2(PHY_VARS_gNB *gNB,
+                      int slot,
+                      nfapi_nr_uci_pucch_pdu_format_2_3_4_t* uci_pdu,
+                      nfapi_nr_pucch_pdu_t* pucch_pdu);
+
 void nr_decode_pucch0(PHY_VARS_gNB *gNB,
-              int slot,
+                      int slot,
                       nfapi_nr_uci_pucch_pdu_format_0_1_t* uci_pdu,
                       nfapi_nr_pucch_pdu_t* pucch_pdu);
+
+void nr_decode_pucch2(PHY_VARS_gNB *gNB,
+                      int slot,
+                      nfapi_nr_uci_pucch_pdu_format_2_3_4_t* uci_pdu,
+                      nfapi_nr_pucch_pdu_t* pucch_pdu);
+
 
 #endif /*__NR_TRANSPORT__H__*/

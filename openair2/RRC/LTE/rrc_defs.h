@@ -271,7 +271,8 @@ typedef enum UE_STATE_e {
   RRC_RECONFIGURED,
   RRC_HO_EXECUTION,
   RRC_NR_NSA,
-  RRC_NR_NSA_RECONFIGURED
+  RRC_NR_NSA_RECONFIGURED,
+  RRC_NR_NSA_DELETED
 } UE_STATE_t;
 
 typedef enum HO_STATE_e {
@@ -591,6 +592,8 @@ typedef struct eNB_RRC_UE_s {
 
   uint8_t                            Status; // RRC status, type enum UE_STATE_t
   rnti_t                             rnti;
+  int                                gnb_rnti;     //RNTI of the UE at the gNB if in ENDC connection
+  int                                gnb_x2_assoc_id;
   uint64_t                           random_ue_identity;
 
 
@@ -716,6 +719,9 @@ typedef struct {
   LTE_BCCH_BCH_Message_MBMS_t            mib_fembms;
   LTE_BCCH_DL_SCH_Message_MBMS_t         siblock1_MBMS;
   LTE_BCCH_DL_SCH_Message_MBMS_t         systemInformation_MBMS;
+  LTE_SchedulingInfo_MBMS_r14_t 	 schedulingInfo_MBMS;
+  LTE_PLMN_IdentityInfo_t		 PLMN_identity_info_MBMS[6];
+  LTE_MCC_MNC_Digit_t			 dummy_mcc_MBMS[6][3], dummy_mnc_MBMS[6][3];
   LTE_SystemInformationBlockType1_t     *sib1;
   LTE_SystemInformationBlockType2_t     *sib2;
   LTE_SystemInformationBlockType3_t     *sib3;
@@ -732,6 +738,12 @@ typedef struct {
   LTE_MCCH_Message_t                mcch;
   LTE_MBSFNAreaConfiguration_r9_t  *mcch_message;
   SRB_INFO                          MCCH_MESS[8];// MAX_MBSFN_AREA
+  uint8_t                           **MCCH_MESSAGE_COUNTING; //  MAX_MBSFN_AREA
+  uint8_t                           sizeof_MCCH_MESSAGE_COUNTING[8];// MAX_MBSFN_AREA
+  LTE_MCCH_Message_t                mcch_counting;
+  LTE_MBMSCountingRequest_r10_t    *mcch_message_counting;
+  SRB_INFO                          MCCH_MESS_COUNTING[8];// MAX_MBSFN_AREA
+
   //TTN - SIB 18,19,21 for D2D
   LTE_SystemInformationBlockType18_r12_t *sib18;
   LTE_SystemInformationBlockType19_r12_t *sib19;
@@ -781,6 +793,10 @@ typedef struct eNB_RRC_INST_s {
   int num_neigh_cells;
   int num_neigh_cells_cc[MAX_NUM_CCs];
   uint32_t neigh_cells_id[MAX_NUM_NEIGH_CELLs][MAX_NUM_CCs];
+
+  // Nr scc freq band and SSB absolute frequency
+  uint32_t nr_neigh_freq_band[MAX_NUM_NEIGH_CELLs][MAX_NUM_CCs];
+  int nr_scg_ssb_freq;
 
   // other RAN parameters
   int srb1_timer_poll_retransmit;

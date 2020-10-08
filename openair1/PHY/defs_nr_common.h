@@ -82,6 +82,9 @@
 #define NR_MAX_PDSCH_DMRS_LENGTH 3300      //275*6(k)*2(QPSK real+imag) 
 #define NR_MAX_PDSCH_DMRS_INIT_LENGTH_DWORD 104  // ceil(NR_MAX_PDSCH_DMRS_LENGTH/32)
 
+#define NR_MAX_CSI_RS_LENGTH 4400 //275*8(max allocation per RB)*2(QPSK)
+#define NR_MAX_CSI_RS_INIT_LENGTH_DWORD 138  // ceil(NR_MAX_CSI_RS_LENGTH/32)
+
 #define NR_MAX_PUSCH_DMRS_LENGTH NR_MAX_PDSCH_DMRS_LENGTH 
 #define NR_MAX_PUSCH_DMRS_INIT_LENGTH_DWORD NR_MAX_PDSCH_DMRS_INIT_LENGTH_DWORD
 
@@ -110,6 +113,9 @@
 
 #define MAX_NUM_NR_CHANNEL_BITS (14*273*12*8)  // 14 symbols, 273 RB
 #define MAX_NUM_NR_RE (14*273*12)
+
+extern const uint8_t nr_rv_round_map[4]; 
+extern const uint8_t nr_rv_round_map_ue[4]; 
 
 typedef enum {
   NR_MU_0=0,
@@ -319,6 +325,8 @@ struct NR_DL_FRAME_PARMS {
   uint8_t nb_antenna_ports_gNB;
   /// Cyclic Prefix for DL (0=Normal CP, 1=Extended CP)
   lte_prefix_type_t Ncp;
+  /// sequence which is computed based on carrier frequency and numerology to rotate/derotate each OFDM symbol according to Section 5.3 in 38.211
+  int16_t symbol_rotation[224*2];
   /// shift of pilot position in one RB
   uint8_t nushift;
   /// SRS configuration from TS 38.331 RRC

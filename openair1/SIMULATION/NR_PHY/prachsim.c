@@ -37,7 +37,6 @@
 #include "SCHED_NR_UE/phy_frame_config_nr.h"
 #include "PHY/phy_vars_nr_ue.h"
 #include "PHY/NR_REFSIG/refsig_defs_ue.h"
-#include "PHY/NR_REFSIG/nr_mod_table.h"
 #include "PHY/MODULATION/modulation_eNB.h"
 #include "PHY/MODULATION/modulation_UE.h"
 #include "PHY/INIT/phy_init.h"
@@ -49,6 +48,10 @@
 
 #define NR_PRACH_DEBUG 1
 #define PRACH_WRITE_OUTPUT_DEBUG 1
+
+unsigned char NB_eNB_INST=0;
+LCHAN_DESC DCCH_LCHAN_DESC,DTCH_DL_LCHAN_DESC,DTCH_UL_LCHAN_DESC;
+rlc_info_t Rlc_info_um,Rlc_info_am_config;
 
 PHY_VARS_gNB *gNB;
 PHY_VARS_NR_UE *UE;
@@ -67,17 +70,34 @@ int sl_ahead = 0;
 uint64_t get_softmodem_optmask(void) {return 0;}
 softmodem_params_t *get_softmodem_params(void) {return 0;}
 
-void pdcp_run (const protocol_ctxt_t *const  ctxt_pP) { return;}
+void
+rrc_data_ind(
+  const protocol_ctxt_t *const ctxt_pP,
+  const rb_id_t                Srb_id,
+  const sdu_size_t             sdu_sizeP,
+  const uint8_t   *const       buffer_pP
+)
+{
+}
 
-boolean_t pdcp_data_ind(const protocol_ctxt_t *const ctxt_pP,
-                        const srb_flag_t   srb_flagP,
-                        const MBMS_flag_t  MBMS_flagP,
-                        const rb_id_t      rb_idP,
-                        const sdu_size_t   sdu_buffer_sizeP,
-                        mem_block_t *const sdu_buffer_pP) {return(false);}
+int
+gtpv1u_create_s1u_tunnel(
+  const instance_t                              instanceP,
+  const gtpv1u_enb_create_tunnel_req_t *const  create_tunnel_req_pP,
+  gtpv1u_enb_create_tunnel_resp_t *const create_tunnel_resp_pP
+) {
+  return 0;
+}
 
-void nr_ip_over_LTE_DRB_preconfiguration(void){}
-void pdcp_layer_init(void) {}
+int
+rrc_gNB_process_GTPV1U_CREATE_TUNNEL_RESP(
+  const protocol_ctxt_t *const ctxt_pP,
+  const gtpv1u_enb_create_tunnel_resp_t *const create_tunnel_resp_pP,
+  uint8_t                         *inde_list
+) {
+  return 0;
+}
+
 int8_t nr_mac_rrc_data_ind_ue(const module_id_t module_id, const int CC_id, const uint8_t gNB_index, const int8_t channel, const uint8_t* pduP, const sdu_size_t pdu_len) {return 0;}
 
 int main(int argc, char **argv){
@@ -93,6 +113,7 @@ int main(int argc, char **argv){
   uint16_t Nid_cell = 0, preamble_tx = 0, preamble_delay, format, format0, format1;
   uint32_t tx_lev = 10000, prach_errors = 0, samp_count; //,tx_lev_dB;
   uint64_t SSB_positions = 0x01, absoluteFrequencyPointA = 640000;
+  double DS_TDL = .03;
 
   //  int8_t interf1=-19,interf2=-19;
   //  uint8_t abstraction_flag=0,calibration_flag=0;
@@ -558,6 +579,7 @@ int main(int argc, char **argv){
                                 channel_model,
                                 fs,
                                 bw,
+                                DS_TDL,
                                 0.0,
                                 delay,
                                 0);
@@ -603,7 +625,7 @@ int main(int argc, char **argv){
   /* tx_lev_dB not used later, no need to set */
   //tx_lev_dB = (unsigned int) dB_fixed(tx_lev);
 
-  prach_start = subframe*frame_parms->samples_per_subframe-UE->N_TA_offset;
+  prach_start = subframe*frame_parms->samples_per_subframe;
 
   #ifdef NR_PRACH_DEBUG
   LOG_M("txsig0.m", "txs0", &txdata[0][subframe*frame_parms->samples_per_subframe], frame_parms->samples_per_subframe, 1, 1);

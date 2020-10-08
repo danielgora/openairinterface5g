@@ -1132,7 +1132,7 @@ int get_nr_prach_info_from_index(uint8_t index,
                                  uint8_t *N_dur,
                                  uint16_t *RA_sfn_index,
                                  uint8_t *N_RA_slot,
-																 uint8_t *config_period) {
+                                 uint8_t *config_period) {
 
   int x,y;
   int64_t s_map;
@@ -1162,7 +1162,7 @@ int get_nr_prach_info_from_index(uint8_t index,
             return 0; // no prach in even slots @ 120kHz for 1 prach per 60khz slot
         }
         if (start_symbol != NULL && N_t_slot != NULL && N_dur != NULL && format != NULL){
-				  *config_period = x;
+          *config_period = x;
           *start_symbol = table_6_3_3_2_4_prachConfig_Index[index][6];
           *N_t_slot = table_6_3_3_2_4_prachConfig_Index[index][8];
           *N_dur = table_6_3_3_2_4_prachConfig_Index[index][9];
@@ -1178,8 +1178,8 @@ int get_nr_prach_info_from_index(uint8_t index,
             *start_symbol,
             *N_t_slot,
             *N_dur,
-						*N_RA_slot,
-						*RA_sfn_index);
+            *N_RA_slot,
+            *RA_sfn_index);
         }
         return 1;
       }
@@ -1227,8 +1227,8 @@ int get_nr_prach_info_from_index(uint8_t index,
               *start_symbol,
               *N_t_slot,
               *N_dur,
-							*N_RA_slot,
-							*RA_sfn_index);
+              *N_RA_slot,
+              *RA_sfn_index);
           }
           return 1;
         }
@@ -1341,8 +1341,9 @@ uint8_t compute_nr_root_seq(NR_RACH_ConfigCommon_t *rach_config,
     if (NCS == 0) return nb_preambles;
     else {
       r = L_ra/NCS;
-      printf(" found_sequences %u\n", (nb_preambles/r));
-      return (nb_preambles/r);
+      found_sequences = (nb_preambles/r) + (nb_preambles%r!=0); //ceil(nb_preambles/r)
+      printf(" found_sequences %u\n", found_sequences);
+      return (found_sequences);
     }
   }
   else{
@@ -1792,11 +1793,9 @@ uint16_t Table_51312[28][2] = {{2,120},{2,193},{2,308},{2,449},{2,602},{4,378},{
 uint16_t Table_51313[29][2] = {{2,30},{2,40},{2,50},{2,64},{2,78},{2,99},{2,120},{2,157},{2,193},{2,251},{2,308},{2,379},{2,449},{2,526},{2,602},{4,340},
 		{4,378},{4,434},{4,490},{4,553},{4,616},{6,438},{6,466},{6,517},{6,567},{6,616},{6,666}, {6,719}, {6,772}};
 
-//Table 6.1.4.1-1 of 38.214 TODO fix for tp-pi2BPSK
 uint16_t Table_61411[28][2] = {{2,120},{2,157},{2,193},{2,251},{2,308},{2,379},{2,449},{2,526},{2,602},{2,679},{4,340},{4,378},{4,434},{4,490},{4,553},{4,616},
 		{4,658},{6,466},{6,517},{6,567},{6,616},{6,666},{6,719},{6,772},{6,822},{6,873}, {6,910}, {6,948}};
 
-//Table 6.1.4.1-2 of 38.214 TODO fix for tp-pi2BPSK
 uint16_t Table_61412[28][2] = {{2,30},{2,40},{2,50},{2,64},{2,78},{2,99},{2,120},{2,157},{2,193},{2,251},{2,308},{2,379},{2,449},{2,526},{2,602},{2,679},
 		{4,378},{4,434},{4,490},{4,553},{4,616},{4,658},{4,699},{4,772},{6,567},{6,616},{6,666}, {6,772}};
 
@@ -1805,92 +1804,156 @@ uint16_t Table_61412[28][2] = {{2,30},{2,40},{2,50},{2,64},{2,78},{2,99},{2,120}
 uint8_t nr_get_Qm_dl(uint8_t Imcs, uint8_t table_idx) {
   switch(table_idx) {
     case 0:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 0 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51311[Imcs][0]);
     break;
 
     case 1:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 1 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_51312[Imcs][0]);
     break;
 
     case 2:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 2 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51313[Imcs][0]);
     break;
 
     default:
-      AssertFatal(0, "Invalid MCS table index %d (expected in range [1,3])\n", table_idx);
+      AssertFatal(0, "Invalid MCS table index %d (expected in range [0,2])\n", table_idx);
   }
 }
 
 uint32_t nr_get_code_rate_dl(uint8_t Imcs, uint8_t table_idx) {
   switch(table_idx) {
     case 0:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 0 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51311[Imcs][1]);
     break;
 
     case 1:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 1 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_51312[Imcs][1]);
     break;
 
     case 2:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 2 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51313[Imcs][1]);
     break;
 
     default:
-      AssertFatal(0, "Invalid MCS table index %d (expected in range [1,3])\n", table_idx);
+      AssertFatal(0, "Invalid MCS table index %d (expected in range [0,2])\n", table_idx);
   }
 }
 
 uint8_t nr_get_Qm_ul(uint8_t Imcs, uint8_t table_idx) {
   switch(table_idx) {
     case 0:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 0 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51311[Imcs][0]);
     break;
 
     case 1:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 1 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_51312[Imcs][0]);
     break;
 
     case 2:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 2 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51313[Imcs][0]);
     break;
 
     case 3:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 3 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_61411[Imcs][0]);
     break;
 
     case 4:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 4 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_61412[Imcs][0]);
     break;
 
     default:
-      AssertFatal(0, "Invalid MCS table index %d (expected in range [1,2])\n", table_idx);
+      AssertFatal(0, "Invalid MCS table index %d (expected in range [0,4])\n", table_idx);
   }
 }
 
 uint32_t nr_get_code_rate_ul(uint8_t Imcs, uint8_t table_idx) {
   switch(table_idx) {
     case 0:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 0 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51311[Imcs][1]);
     break;
 
     case 1:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 1 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_51312[Imcs][1]);
     break;
 
     case 2:
+      if (Imcs > 28) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 2 (expected range [0,28])\n", Imcs);
+        Imcs = 28;
+      }
       return (Table_51313[Imcs][1]);
     break;
 
     case 3:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 3 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_61411[Imcs][1]);
     break;
 
     case 4:
+      if (Imcs > 27) {
+        LOG_E(MAC, "Invalid MCS index %d for MCS table 4 (expected range [0,27])\n", Imcs);
+        Imcs = 27;
+      }
       return (Table_61412[Imcs][1]);
     break;
 
     default:
-      AssertFatal(0, "Invalid MCS table index %d (expected in range [1,2])\n", table_idx);
+      AssertFatal(0, "Invalid MCS table index %d (expected in range [0,4])\n", table_idx);
   }
 }
 
@@ -2065,9 +2128,9 @@ uint8_t get_K_ptrs(uint16_t nrb0, uint16_t nrb1, uint16_t N_RB) {
     LOG_I(PHY,"PUSH PT-RS is not present.\n");
     return -1;
   } else if (N_RB >= nrb0 && N_RB < nrb1)
-    return 0;
+    return 2;
   else
-    return 1;
+    return 4;
 }
 
 uint16_t nr_dci_size(NR_ServingCellConfigCommon_t *scc,
@@ -2594,6 +2657,40 @@ int16_t fill_dmrs_mask(NR_PDSCH_Config_t *pdsch_Config,int dmrs_TypeA_Position,i
   }
   AssertFatal(1==0,"Shouldn't get here\n");
   return(-1);
+}
+
+uint8_t get_pusch_mcs_table(long *mcs_Table,
+                            int is_tp,
+                            int dci_format,
+                            int rnti_type,
+                            int target_ss,
+                            bool config_grant) {
+
+  // implementing 6.1.4.1 in 38.214
+  if (mcs_Table != NULL) {
+    if (config_grant || (rnti_type == NR_RNTI_CS)) {
+      if (*mcs_Table == NR_PUSCH_Config__mcs_Table_qam256)
+        return 1;
+      else
+        return (2+(is_tp<<1));
+    }
+    else {
+      if ((*mcs_Table == NR_PUSCH_Config__mcs_Table_qam256) &&
+          (dci_format == NR_UL_DCI_FORMAT_0_1) &&
+          ((rnti_type == NR_RNTI_C ) || (rnti_type == NR_RNTI_SP_CSI)))
+        return 1;
+      // TODO take into account UE configuration
+      if ((*mcs_Table == NR_PUSCH_Config__mcs_Table_qam64LowSE) &&
+          (target_ss == NR_SearchSpace__searchSpaceType_PR_ue_Specific) &&
+          ((rnti_type == NR_RNTI_C ) || (rnti_type == NR_RNTI_SP_CSI)))
+        return (2+(is_tp<<1));
+      if (rnti_type == NR_RNTI_MCS_C)
+        return (2+(is_tp<<1));
+      AssertFatal(1==0,"Invalid configuration to set MCS table");
+    }
+  }
+  else
+    return (0+(is_tp*3));
 }
 
 

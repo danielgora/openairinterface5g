@@ -71,6 +71,22 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
   RLC_BearerConfig->reestablishRLC=calloc(1,sizeof(*RLC_BearerConfig->reestablishRLC));
   *RLC_BearerConfig->reestablishRLC=NR_RLC_BearerConfig__reestablishRLC_true;
   RLC_BearerConfig->rlc_Config=calloc(1,sizeof(*RLC_BearerConfig->rlc_Config));
+
+#if 0
+
+  // RLC UM Bi-directional Bearer configuration 
+  RLC_BearerConfig->rlc_Config->present = NR_RLC_Config_PR_um_Bi_Directional;
+  RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional = calloc(1,sizeof(*RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional));
+  RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->ul_UM_RLC.sn_FieldLength = calloc(1,sizeof(*RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->ul_UM_RLC.sn_FieldLength));
+  *RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->ul_UM_RLC.sn_FieldLength   =    NR_SN_FieldLengthUM_size12;
+
+  RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->dl_UM_RLC.sn_FieldLength = calloc(1,sizeof(*RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->dl_UM_RLC.sn_FieldLength));
+  *RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->dl_UM_RLC.sn_FieldLength   =    NR_SN_FieldLengthUM_size12;
+  RLC_BearerConfig->rlc_Config->choice.um_Bi_Directional->dl_UM_RLC.t_Reassembly = NR_T_Reassembly_ms15;
+
+#else
+
+  // RLC AM Bearer configuration
   RLC_BearerConfig->rlc_Config->present = NR_RLC_Config_PR_am;
   RLC_BearerConfig->rlc_Config->choice.am = calloc(1,sizeof(*RLC_BearerConfig->rlc_Config->choice.am));
   RLC_BearerConfig->rlc_Config->choice.am->ul_AM_RLC.sn_FieldLength = calloc(1,sizeof(*RLC_BearerConfig->rlc_Config->choice.am->ul_AM_RLC.sn_FieldLength));
@@ -83,6 +99,9 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
   *RLC_BearerConfig->rlc_Config->choice.am->dl_AM_RLC.sn_FieldLength = NR_SN_FieldLengthAM_size18;
   RLC_BearerConfig->rlc_Config->choice.am->dl_AM_RLC.t_Reassembly   = NR_T_Reassembly_ms15;
   RLC_BearerConfig->rlc_Config->choice.am->dl_AM_RLC.t_StatusProhibit = NR_T_StatusProhibit_ms15;
+
+#endif
+
   RLC_BearerConfig->mac_LogicalChannelConfig = calloc(1,sizeof(*RLC_BearerConfig->mac_LogicalChannelConfig));
   RLC_BearerConfig->mac_LogicalChannelConfig->ul_SpecificParameters = calloc(1,sizeof(*RLC_BearerConfig->mac_LogicalChannelConfig->ul_SpecificParameters));
   RLC_BearerConfig->mac_LogicalChannelConfig->ul_SpecificParameters->priority            = 1;
@@ -155,9 +174,8 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
   secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions= calloc(1,sizeof(struct NR_CFRA__occasions));
   memcpy(&secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->rach_ConfigGeneric,
          &servingcellconfigcommon->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->rach_ConfigGeneric, sizeof(NR_RACH_ConfigGeneric_t));
-  //secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->ssb_perRACH_Occasion= calloc(1,sizeof(long));
-  //*secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->ssb_perRACH_Occasion = NR_CFRA__occasions__ssb_perRACH_Occasion_one;
-  secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->ssb_perRACH_Occasion= NULL;
+  secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->ssb_perRACH_Occasion= calloc(1,sizeof(long));
+  *secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->occasions->ssb_perRACH_Occasion = NR_CFRA__occasions__ssb_perRACH_Occasion_one;
   secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->resources.present = NR_CFRA__resources_PR_ssb;
   secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->resources.choice.ssb = calloc(1,sizeof(struct NR_CFRA__resources__ssb));
   secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->resources.choice.ssb->ra_ssb_OccasionMaskIndex = 0;
@@ -202,7 +220,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
 
 
  secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList=calloc(1,sizeof(*secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList));
-//NR_CSI_Reporting branch
+
  int n_ssb = 0;
  NR_TCI_State_t *tcic[8];
  for (int i=0;i<8;i++) {
@@ -220,7 +238,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
    }
  }
 
-//
 #if 0
 
  NR_TCI_State_t*tci0=calloc(1,sizeof(*tci0));
@@ -384,7 +401,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  coreset->tci_StatesPDCCH_ToAddList=calloc(1,sizeof(*coreset->tci_StatesPDCCH_ToAddList));
  NR_TCI_StateId_t *tci[8];
  for (int i=0;i<8;i++) {
-   if ((bitmap>>(7-i))&0x01){//NR_CSI_Reporting
+   if ((bitmap>>(7-i))&0x01){
      tci[i]=calloc(1,sizeof(*tci[i]));
      *tci[i] = i;
      ASN_SEQUENCE_ADD(&coreset->tci_StatesPDCCH_ToAddList->list,tci[i]);
@@ -517,10 +534,9 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->dmrs_DownlinkForPDSCH_MappingTypeA->choice.setup->dmrs_AdditionalPosition = calloc(1,sizeof(*bwp->bwp_Dedicated->pdsch_Config->choice.setup->dmrs_DownlinkForPDSCH_MappingTypeA->choice.setup->dmrs_AdditionalPosition));
  *bwp->bwp_Dedicated->pdsch_Config->choice.setup->dmrs_DownlinkForPDSCH_MappingTypeA->choice.setup->dmrs_AdditionalPosition = NR_DMRS_DownlinkConfig__dmrs_AdditionalPosition_pos0;
 
-//NR_CSI_Reporting
  //bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList=NULL;
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList=calloc(1,sizeof(*bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList));
-//
+
 #if 0
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList=calloc(1,sizeof(*bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList));
 
@@ -603,7 +619,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  tcid7->qcl_Type1.referenceSignal.choice.csi_rs = 30;
  tcid7->qcl_Type1.qcl_Type=NR_QCL_Info__qcl_Type_typeA;
  ASN_SEQUENCE_ADD(&bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToAddModList->list,tcid7);
-//NR_CSI_Reporting
 #endif
 
 
@@ -623,7 +638,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
      n_ssb++;
    }
  }
-//
 
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToReleaseList=NULL;
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->vrb_ToPRB_Interleaver=NULL;
@@ -897,7 +911,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  pucchres2->secondHopPRB=NULL;
  pucchres2->format.present= NR_PUCCH_Resource__format_PR_format2;
  pucchres2->format.choice.format2=calloc(1,sizeof(*pucchres2->format.choice.format2));
- pucchres2->format.choice.format2->nrofPRBs=16;
+ pucchres2->format.choice.format2->nrofPRBs=4;
  pucchres2->format.choice.format2->nrofSymbols=1;
  pucchres2->format.choice.format2->startingSymbolIndex=13;
  ASN_SEQUENCE_ADD(&pucch_Config->resourceToAddModList->list,pucchres2);
@@ -908,7 +922,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  pucchres3->secondHopPRB=NULL;
  pucchres3->format.present= NR_PUCCH_Resource__format_PR_format2;
  pucchres3->format.choice.format2=calloc(1,sizeof(*pucchres3->format.choice.format2));
- pucchres3->format.choice.format2->nrofPRBs=16;
+ pucchres3->format.choice.format2->nrofPRBs=4;
  pucchres3->format.choice.format2->nrofSymbols=1;
  pucchres3->format.choice.format2->startingSymbolIndex=12;
  ASN_SEQUENCE_ADD(&pucch_Config->resourceToAddModList->list,pucchres3);
@@ -920,7 +934,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  pucchfmt2->interslotFrequencyHopping=NULL;
  pucchfmt2->additionalDMRS=NULL;
  pucchfmt2->maxCodeRate=calloc(1,sizeof(*pucchfmt2->maxCodeRate));
- *pucchfmt2->maxCodeRate=NR_PUCCH_MaxCodeRate_zeroDot15;
+ *pucchfmt2->maxCodeRate=NR_PUCCH_MaxCodeRate_zeroDot25;
  pucchfmt2->nrofSlots=NULL;
  pucchfmt2->pi2BPSK=NULL;
  pucchfmt2->simultaneousHARQ_ACK_CSI=NULL;
@@ -1079,15 +1093,10 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  csires0->csi_ResourceConfigId=0;
  csires0->csi_RS_ResourceSetList.present = NR_CSI_ResourceConfig__csi_RS_ResourceSetList_PR_nzp_CSI_RS_SSB;
  csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB = calloc(1,sizeof(*csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB));
- csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList = calloc(1,sizeof(*csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList));
- //For verification of CSI measurement adding the ssb resource set list
- csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList = calloc(1,sizeof(*csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList));//NULL;
- NR_NZP_CSI_RS_ResourceSetId_t *csires00 = calloc(1,sizeof(*csires00));
- //For verification of CSI measurment for SSB
+ csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList = NULL;
+ csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList = calloc(1,sizeof(*csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList));
  NR_CSI_SSB_ResourceSetId_t *ssbres00 = calloc(1,sizeof(*ssbres00));
- *csires00 = 0;
  *ssbres00 = 0;
- ASN_SEQUENCE_ADD(&csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList->list,csires00);
  ASN_SEQUENCE_ADD(&csires0->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList->list,ssbres00);
  csires0->bwp_Id = 1;
  csires0->resourceType = NR_CSI_ResourceConfig__resourceType_periodic;
@@ -1098,7 +1107,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  NR_CSI_ReportConfig_t *csirep1 = calloc(1,sizeof(*csirep1));
  csirep1->reportConfigId=0;
  csirep1->carrier=NULL;
- csirep1->resourcesForChannelMeasurement=0;//initial_csi_index; Just for verification
+ csirep1->resourcesForChannelMeasurement=0;
  csirep1->csi_IM_ResourcesForInterference=NULL;
  csirep1->nzp_CSI_RS_ResourcesForInterference=NULL;
  csirep1->reportConfigType.present = NR_CSI_ReportConfig__reportConfigType_PR_periodic;
@@ -1107,7 +1116,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  csirep1->reportConfigType.choice.periodic->reportSlotConfig.choice.slots320 = 49;
  NR_PUCCH_CSI_Resource_t *pucchcsires1 = calloc(1,sizeof(*pucchcsires1));
  pucchcsires1->uplinkBandwidthPartId=1;
- pucchcsires1->pucch_Resource=3;//4;//12;
+ pucchcsires1->pucch_Resource=3;
  ASN_SEQUENCE_ADD(&csirep1->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list,pucchcsires1);
  csirep1->reportQuantity.present = NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP;
  csirep1->reportQuantity.choice.ssb_Index_RSRP=(NULL_t)0;
@@ -1142,8 +1151,7 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  csirep1->groupBasedBeamReporting.present = NR_CSI_ReportConfig__groupBasedBeamReporting_PR_disabled;
  csirep1->groupBasedBeamReporting.choice.disabled=calloc(1,sizeof(*csirep1->groupBasedBeamReporting.choice.disabled));
  csirep1->groupBasedBeamReporting.choice.disabled->nrofReportedRS = calloc(1,sizeof(*csirep1->groupBasedBeamReporting.choice.disabled->nrofReportedRS));
- *csirep1->groupBasedBeamReporting.choice.disabled->nrofReportedRS=NR_CSI_ReportConfig__groupBasedBeamReporting__disabled__nrofReportedRS_n2;
- //*csirep1->groupBasedBeamReporting.choice.disabled->nrofReportedRS=NR_CSI_ReportConfig__groupBasedBeamReporting__disabled__nrofReportedRS_n1;
+ *csirep1->groupBasedBeamReporting.choice.disabled->nrofReportedRS=NR_CSI_ReportConfig__groupBasedBeamReporting__disabled__nrofReportedRS_n1;
  // this corresponds to:
  //if the UE is configured with the higher layer parameter groupBasedBeamReporting set to 'disabled', the UE is not required to update measurements for more than 64 CSI-RS and/or SSB resources, and the UE shall report in a single report nrofReportedRS (higher layer configured) different CRI or SSBRI for each report setting. 
 
@@ -1154,7 +1162,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  csirep1->ext1 = NULL;
 
  ASN_SEQUENCE_ADD(&csi_MeasConfig->csi_ReportConfigToAddModList->list,csirep1);
-
 
  secondaryCellGroup->spCellConfig->spCellConfigDedicated->sCellDeactivationTimer=NULL;
  secondaryCellGroup->spCellConfig->spCellConfigDedicated->crossCarrierSchedulingConfig=NULL;
@@ -1202,7 +1209,7 @@ void fill_default_rbconfig(NR_RadioBearerConfig_t *rbconfig) {
   NR_DRB_ToAddMod_t *drb_ToAddMod = calloc(1,sizeof(*drb_ToAddMod));
   drb_ToAddMod->cnAssociation = calloc(1,sizeof(*drb_ToAddMod->cnAssociation));
   drb_ToAddMod->cnAssociation->present = NR_DRB_ToAddMod__cnAssociation_PR_eps_BearerIdentity;
-  drb_ToAddMod->cnAssociation->choice.eps_BearerIdentity=5;
+  drb_ToAddMod->cnAssociation->choice.eps_BearerIdentity= 5;
   drb_ToAddMod->drb_Identity = 1;
   drb_ToAddMod->reestablishPDCP = NULL;
   drb_ToAddMod->recoverPDCP = NULL;

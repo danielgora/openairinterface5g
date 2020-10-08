@@ -364,7 +364,7 @@ typedef struct
 //table 3-22
 typedef struct 
 {
-  nfapi_uint8_tlv_t phy_cell_id;//Physical Cell ID, 𝑁_{𝐼𝐷}^{𝑐𝑒𝑙𝑙} [38.211, sec 7.4.2.1] Value: 0 ->1007
+  nfapi_uint16_tlv_t phy_cell_id;//Physical Cell ID, 𝑁_{𝐼𝐷}^{𝑐𝑒𝑙𝑙} [38.211, sec 7.4.2.1] Value: 0 ->1007
   nfapi_uint8_tlv_t frame_duplex_type;//Frame duplex type Value: 0 = FDD 1 = TDD
 
 } nfapi_nr_cell_config_t;
@@ -1538,7 +1538,7 @@ typedef struct
 }nfapi_nr_uci_pucch_pdu_format_2_3_4_t;
 
 typedef enum {
-  NFAPI_NR_UCI_PDCCH_PDU_TYPE  = 0,
+  NFAPI_NR_UCI_PUSCH_PDU_TYPE  = 0,
   NFAPI_NR_UCI_FORMAT_0_1_PDU_TYPE  = 1,
   NFAPI_NR_UCI_FORMAT_2_3_4_PDU_TYPE = 2,
 } nfapi_nr_uci_pdu_type_e;

@@ -116,6 +116,8 @@ int get_nr_prach_occasion_info_from_index(uint8_t index,
                                  uint16_t *N_RA_sfn,
                                  uint8_t *max_association_period);
 
+uint8_t get_nr_prach_duration(uint8_t prach_format);
+
 uint8_t get_pusch_mcs_table(long *mcs_Table,
                             int is_tp,
                             int dci_format,

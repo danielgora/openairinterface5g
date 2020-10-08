@@ -51,10 +51,10 @@ float ssb_per_rach_occasion[8] = {0.125,0.25,0.5,1,2,4,8};
 
 int16_t ssb_index_from_prach(module_id_t module_idP,
                              frame_t frameP,
-                             sub_frame_t slotP,
-                             uint16_t preamble_index,
-                             uint8_t freq_index,
-                             uint8_t symbol) {
+			     sub_frame_t slotP,
+			     uint16_t preamble_index,
+			     uint8_t freq_index,
+			     uint8_t symbol) {
 
   gNB_MAC_INST *gNB = RC.nrmac[module_idP];
   NR_COMMON_channels_t *cc = gNB->common_channels;
@@ -95,6 +95,7 @@ int16_t ssb_index_from_prach(module_id_t module_idP,
 			       &N_RA_slot,
 			       &config_period);
 
+
   uint8_t index = 0,slot_index = 0;
   for (slot_index = 0;slot_index < N_RA_slot; slot_index++) {
     if (N_RA_slot <= 1) { //1 PRACH slot in a subframe
@@ -128,7 +129,7 @@ int16_t ssb_index_from_prach(module_id_t module_idP,
 	  }		
 	}
 
-  LOG_I(MAC, "Frame %d, Slot %d: Prach Occasion id = %d ssb per RO = %f number of active SSB %u index = %d fdm %u symbol index %u freq_index %u total_RApreambles %u\n", frameP, slotP, prach_occasion_id, num_ssb_per_RO, num_active_ssb, index, fdm, start_symbol_index, freq_index, total_RApreambles);
+  LOG_D(MAC, "Frame %d, Slot %d: Prach Occasion id = %d ssb per RO = %f number of active SSB %u index = %d fdm %u symbol index %u freq_index %u total_RApreambles %u\n", frameP, slotP, prach_occasion_id, num_ssb_per_RO, num_active_ssb, index, fdm, start_symbol_index, freq_index, total_RApreambles);
   return index;
 }
 //Compute Total active SSBs and RO available
@@ -205,7 +206,7 @@ void schedule_nr_prach(module_id_t module_idP, frame_t frameP, sub_frame_t slotP
   nfapi_nr_config_request_scf_t *cfg = &RC.nrmac[module_idP]->config[0];
 
   uint8_t config_index = scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->rach_ConfigGeneric.prach_ConfigurationIndex;
-  uint8_t mu,N_dur,N_t_slot,start_symbol = 0,temp_start_symbol = 0,N_RA_slot;
+  uint8_t mu,N_dur,N_t_slot,start_symbol = 0,N_RA_slot;
   uint16_t RA_sfn_index = -1;
   uint8_t config_period = 1;
   uint16_t format;
@@ -237,115 +238,104 @@ void schedule_nr_prach(module_id_t module_idP, frame_t frameP, sub_frame_t slotP
     uint16_t format1 = (format>>8)&0xff; // second column of format from table
 
     if (N_RA_slot > 1) { //more than 1 PRACH slot in a subframe
-      if (slotP%2 == 1){
-        N_RA_slot = 1; //Even PRACH slot
-	      slot_index = 1;
-      }	
-      else {
-	      slot_index = 0;
-        N_RA_slot = 0; //Odd PRACH slot
-			}	
+      if (slotP%2 == 1)
+        slot_index = 1;
+      else
+        slot_index = 0;
     }else if (N_RA_slot <= 1) { //1 PRACH slot in a subframe
-       N_RA_slot = 0;
        slot_index = 0;
-       if((mu == 1) || (mu == 3))
-         N_RA_slot = 1;  //For scs = 30khz and 120khz
     }
 
-//  start_symbol = start_symbol_from_configuration + N_t_slot * N_dur + 14 * N_RA_slot;
-    for (int index=0; index<N_t_slot; index++) {
-    temp_start_symbol = (start_symbol + index * N_dur + 14 * N_RA_slot) % 14;
 
     UL_tti_req->SFN = frameP;
     UL_tti_req->Slot = slotP;
-    for (int n=0; n < fdm; n++) { // one structure per frequency domain occasion
+    for (int fdm_index=0; fdm_index < fdm; fdm_index++) { // one structure per frequency domain occasion
+    for (int td_index=0; td_index<N_t_slot; td_index++) {
 
-      prach_occasion_id = (((frameP % (cc->max_association_period * config_period))/config_period) * cc->total_prach_occasions_per_config_period) + (RA_sfn_index + slot_index) * N_t_slot * fdm + index * fdm + n;
-			if(prach_occasion_id < cc->total_prach_occasions){  
+      prach_occasion_id = (((frameP % (cc->max_association_period * config_period))/config_period) * cc->total_prach_occasions_per_config_period) + (RA_sfn_index + slot_index) * N_t_slot * fdm + td_index * fdm + fdm_index;
 
-      UL_tti_req->pdus_list[UL_tti_req->n_pdus].pdu_type = NFAPI_NR_UL_CONFIG_PRACH_PDU_TYPE;
-      UL_tti_req->pdus_list[UL_tti_req->n_pdus].pdu_size = sizeof(nfapi_nr_prach_pdu_t);
-      nfapi_nr_prach_pdu_t  *prach_pdu = &UL_tti_req->pdus_list[UL_tti_req->n_pdus].prach_pdu;
-      memset(prach_pdu,0,sizeof(nfapi_nr_prach_pdu_t));
-      UL_tti_req->n_pdus+=1;
+      if((prach_occasion_id < cc->total_prach_occasions) && (td_index == 0)){  
 
-      // filling the prach fapi structure
-      prach_pdu->phys_cell_id = *scc->physCellId;
-      prach_pdu->num_prach_ocas = N_t_slot;
-      prach_pdu->prach_start_symbol = temp_start_symbol;
-      prach_pdu->num_ra = n;
-      prach_pdu->num_cs = get_NCS(scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->rach_ConfigGeneric.zeroCorrelationZoneConfig,
-                                  format0,
-                                  scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->restrictedSetConfig);
+        UL_tti_req->pdus_list[UL_tti_req->n_pdus].pdu_type = NFAPI_NR_UL_CONFIG_PRACH_PDU_TYPE;
+        UL_tti_req->pdus_list[UL_tti_req->n_pdus].pdu_size = sizeof(nfapi_nr_prach_pdu_t);
+        nfapi_nr_prach_pdu_t  *prach_pdu = &UL_tti_req->pdus_list[UL_tti_req->n_pdus].prach_pdu;
+        memset(prach_pdu,0,sizeof(nfapi_nr_prach_pdu_t));
+        UL_tti_req->n_pdus+=1;
 
-      LOG_I(MAC, "Frame %d, Slot %d: Prach Occasion id = %u  fdm index = %u start symbol = %u slot index = %u subframe index = %u \n", frameP, slotP,
-	    prach_occasion_id, prach_pdu->num_ra, prach_pdu->prach_start_symbol, slot_index, RA_sfn_index);
+        // filling the prach fapi structure
+        prach_pdu->phys_cell_id = *scc->physCellId;
+        prach_pdu->num_prach_ocas = N_t_slot;
+        prach_pdu->prach_start_symbol = start_symbol;
+        prach_pdu->num_ra = fdm_index;
+        prach_pdu->num_cs = get_NCS(scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->rach_ConfigGeneric.zeroCorrelationZoneConfig,
+                                    format0,
+                                    scc->uplinkConfigCommon->initialUplinkBWP->rach_ConfigCommon->choice.setup->restrictedSetConfig);
+      
+        LOG_D(MAC, "Frame %d, Slot %d: Prach Occasion id = %u  fdm index = %u start symbol = %u slot index = %u subframe index = %u \n",
+              frameP, slotP,
+              prach_occasion_id, prach_pdu->num_ra,
+              prach_pdu->prach_start_symbol,
+              slot_index, RA_sfn_index);
 
-      // SCF PRACH PDU format field does not consider A1/B1 etc. possibilities
-      // We added 9 = A1/B1 10 = A2/B2 11 A3/B3
-      if (format1!=0xff) {
-        switch(format0) {
-          case 0xa1:
-            prach_pdu->prach_format = 9;
-            break;
-          case 0xa2:
-            prach_pdu->prach_format = 10;
-            break;
-          case 0xa3:
-            prach_pdu->prach_format = 11;
-            break;
-        default:
-          AssertFatal(1==0,"Only formats A1/B1 A2/B2 A3/B3 are valid for dual format");
+        // SCF PRACH PDU format field does not consider A1/B1 etc. possibilities
+        // We added 9 = A1/B1 10 = A2/B2 11 A3/B3
+        if (format1!=0xff) {
+          switch(format0) {
+            case 0xa1:
+              prach_pdu->prach_format = 11;
+              break;
+            case 0xa2:
+              prach_pdu->prach_format = 12;
+              break;
+            case 0xa3:
+              prach_pdu->prach_format = 13;
+              break;
+            default:
+              AssertFatal(1==0,"Only formats A1/B1 A2/B2 A3/B3 are valid for dual format");
+          }
+        }
+        else{
+          switch(format0) {
+            case 0:
+              prach_pdu->prach_format = 0;
+              break;
+            case 1:
+              prach_pdu->prach_format = 1;
+              break;
+            case 2:
+              prach_pdu->prach_format = 2;
+              break;
+            case 3:
+              prach_pdu->prach_format = 3;
+              break;
+            case 0xa1:
+              prach_pdu->prach_format = 4;
+              break;
+            case 0xa2:
+              prach_pdu->prach_format = 5;
+              break;
+            case 0xa3:
+              prach_pdu->prach_format = 6;
+              break;
+            case 0xb1:
+              prach_pdu->prach_format = 7;
+              break;
+            case 0xb4:
+              prach_pdu->prach_format = 8;
+              break;
+            case 0xc0:
+              prach_pdu->prach_format = 9;
+              break;
+            case 0xc2:
+              prach_pdu->prach_format = 10;
+              break;
+          default:
+            AssertFatal(1==0,"Invalid PRACH format");
+          }
         }
       }
-      else{
-        switch(format0) {
-          case 0xa1:
-            prach_pdu->prach_format = 0;
-            break;
-          case 0xa2:
-            prach_pdu->prach_format = 1;
-            break;
-          case 0xa3:
-            prach_pdu->prach_format = 2;
-            break;
-          case 0xb1:
-            prach_pdu->prach_format = 3;
-            break;
-          case 0xb2:
-            prach_pdu->prach_format = 4;
-            break;
-          case 0xb3:
-            prach_pdu->prach_format = 5;
-            break;
-          case 0xb4:
-            prach_pdu->prach_format = 6;
-            break;
-          case 0xc0:
-            prach_pdu->prach_format = 7;
-            break;
-          case 0xc2:
-            prach_pdu->prach_format = 8;
-            break;
-          case 0:
-            // long formats are handled @ PHY
-            break;
-          case 1:
-            // long formats are handled @ PHY
-            break;
-          case 2:
-            // long formats are handled @ PHY
-            break;
-          case 3:
-            // long formats are handled @ PHY
-            break;
-        default:
-          AssertFatal(1==0,"Invalid PRACH format");
-        }
-      }		
-     }
     }
-   }
+    }
   }
 }
 
@@ -373,13 +363,8 @@ void nr_schedule_msg2(uint16_t rach_frame, uint16_t rach_slot,
 
   // computing start of next period
   uint8_t start_next_period = (rach_slot-(rach_slot%tdd_period_slot)+tdd_period_slot)%nr_slots_per_frame[mu];
-  //scheduling msg2 based on identified active SSB from RO
-  for(int i = 0;i <= last_dl_slot_period;i++) {
-    if (index == ( (start_next_period + i ) % num_active_ssb ))
-      *msg2_slot = start_next_period + i;
-  }
-  //  *msg2_slot = start_next_period + last_dl_slot_period; // initializing scheduling of slot to next mixed (or last dl) slot
 
+  *msg2_slot = start_next_period + last_dl_slot_period; // initializing scheduling of slot to next mixed (or last dl) slot
   *msg2_frame = (*msg2_slot>(rach_slot))? rach_frame : (rach_frame +1);
  
   switch(response_window){
@@ -449,7 +434,7 @@ void nr_initiate_ra_proc(module_id_t module_idP,
   NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id];
   NR_COMMON_channels_t *cc = &nr_mac->common_channels[CC_id];
   NR_ServingCellConfigCommon_t *scc = cc->ServingCellConfigCommon;
-  NR_RA_t *ra = &cc->ra[0];
+	NR_RA_t *ra = &cc->ra[0];
 
   // if the preamble received correspond to one of the listed
   // the UE sent a RACH either for starting RA procedure or RA procedure failed and UE retries
@@ -479,11 +464,11 @@ void nr_initiate_ra_proc(module_id_t module_idP,
   if (ra->state == RA_IDLE) {
 
     uint8_t index = ssb_index_from_prach(module_idP,
-		                         frameP,
-                                         slotP,
-                                         preamble_index,
-                                         freq_index,
-                                         symbol);
+					 frameP,
+					 slotP,
+					 preamble_index,
+					 freq_index,
+					 symbol);
 
     NR_SSB_list_t *SSB_list = &nr_mac->SSB_list[index];
     int loop = 0;
@@ -518,7 +503,7 @@ void nr_initiate_ra_proc(module_id_t module_idP,
       ra->rnti = (taus() % 65518) + 1;
       loop++;
     }
-    while (loop != 100 && !(find_nr_UE_id(module_idP, ra->rnti) == -1 && ra->rnti >= 1 && ra->rnti <= 65519));
+    while (loop != 100 && !((find_nr_UE_id(module_idP, ra->rnti) == -1) && (find_nr_RA_id(module_idP, CC_id, ra->rnti) == -1) && ra->rnti >= 1 && ra->rnti <= 65519));
     if (loop == 100) {
       LOG_E(MAC,"%s:%d:%s: [RAPROC] initialisation random access aborted\n", __FILE__, __LINE__, __FUNCTION__);
       abort();
@@ -555,15 +540,19 @@ void nr_schedule_RA(module_id_t module_idP, frame_t frameP, sub_frame_t slotP){
   int CC_id = 0;
   gNB_MAC_INST *mac = RC.nrmac[module_idP];
   NR_COMMON_channels_t *cc = &mac->common_channels[CC_id];
-  NR_RA_t *ra = &cc->ra[0];
 
   start_meas(&mac->schedule_ra);
 
-  //for (i = 0; i < NR_NB_RA_PROC_MAX; i++) {
+//  for (CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
+//    for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
+  
+//	NR_RA_t *ra = &cc->ra[i];
+	NR_RA_t *ra = &cc->ra[0];
+
   LOG_D(MAC,"RA[state:%d]\n",ra->state);
   switch (ra->state){
     case Msg2:
-      nr_generate_Msg2(module_idP, CC_id, frameP, slotP);
+      nr_generate_Msg2(module_idP, CC_id, frameP, slotP,ra);
       break;
     case Msg4:
       //generate_Msg4(module_idP, CC_id, frameP, slotP, ra);
@@ -574,7 +563,8 @@ void nr_schedule_RA(module_id_t module_idP, frame_t frameP, sub_frame_t slotP){
     default:
     break;
   }
-  //}
+//    }
+//  }
   stop_meas(&mac->schedule_ra);
 }
 
@@ -748,13 +738,14 @@ void nr_add_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t 
 void nr_generate_Msg2(module_id_t module_idP,
                       int CC_id,
                       frame_t frameP,
-                      sub_frame_t slotP){
+                      sub_frame_t slotP,
+											NR_RA_t *ra){
 
   int UE_id = 0, dci_formats[2], rnti_types[2], mcsIndex;
   int startSymbolAndLength = 0, StartSymbolIndex = -1, NrOfSymbols = 14, StartSymbolIndex_tmp, NrOfSymbols_tmp, x_Overhead, time_domain_assignment = 0;
   gNB_MAC_INST                      *nr_mac = RC.nrmac[module_idP];
-  NR_COMMON_channels_t                  *cc = &nr_mac->common_channels[0];
-  NR_RA_t                               *ra = &cc->ra[0];
+  NR_COMMON_channels_t                  *cc = &nr_mac->common_channels[CC_id];
+//  NR_RA_t                               *ra = &cc->ra[0];
   NR_UE_list_t                     *UE_list = &nr_mac->UE_list;
   NR_SearchSpace_t *ss = ra->ra_ss;
 
@@ -931,6 +922,7 @@ void nr_generate_Msg2(module_id_t module_idP,
 }
 
 void nr_clear_ra_proc(module_id_t module_idP, int CC_id, frame_t frameP){
+  
   NR_RA_t *ra = &RC.nrmac[module_idP]->common_channels[CC_id].ra[0];
   LOG_D(MAC,"[gNB %d][RAPROC] CC_id %d Frame %d Clear Random access information rnti %x\n", module_idP, CC_id, frameP, ra->rnti);
   ra->state = IDLE;

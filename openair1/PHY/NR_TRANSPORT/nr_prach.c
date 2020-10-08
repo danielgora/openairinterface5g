@@ -64,13 +64,11 @@ int16_t find_nr_prach(PHY_VARS_gNB *gNB,int frame, int slot, find_type_t type) {
 		if((type == SEARCH_EXIST_OR_FREE) &&
 		  (gNB->prach_vars.list[i].frame == -1) &&
 		  (gNB->prach_vars.list[i].slot == -1)) {
-		  LOG_I(PHY, "Providing free prach index %d\n",i);
 		  return i;
 		}
     else if ((type == SEARCH_EXIST) &&
 		  (gNB->prach_vars.list[i].frame == frame) &&
       (gNB->prach_vars.list[i].slot  == slot)) {
-		  LOG_I(PHY, "Providing existing prach index %d\n",i);
 		  return i;
 		}
   }
@@ -112,14 +110,12 @@ int16_t find_nr_prach_ru(RU_t *ru,int frame,int slot, find_type_t type) {
 		if((type == SEARCH_EXIST_OR_FREE) &&
 		  (ru->prach_list[i].frame == -1) &&
 		  (ru->prach_list[i].slot == -1)) {
-		  LOG_I(PHY, "Providing free prach index %d in ru\n",i);
       pthread_mutex_unlock(&ru->prach_list_mutex);
 		  return i;
 		}	
     else if ((type == SEARCH_EXIST) &&
 		  (ru->prach_list[i].frame == frame) &&
       (ru->prach_list[i].slot  == slot)) {
-		  LOG_I(PHY, "Providing existing prach index %d in ru\n",i);
       pthread_mutex_unlock(&ru->prach_list_mutex);
       return i;
     }
@@ -143,6 +139,7 @@ void nr_fill_prach_ru(RU_t *ru,
   ru->prach_list[prach_id].fmt                = prach_pdu->prach_format;
   ru->prach_list[prach_id].numRA              = prach_pdu->num_ra;
   ru->prach_list[prach_id].prachStartSymbol   = prach_pdu->prach_start_symbol;
+  ru->prach_list[prach_id].num_prach_ocas     = prach_pdu->num_prach_ocas;
   pthread_mutex_unlock(&ru->prach_list_mutex);  
 
 }
@@ -162,6 +159,7 @@ void rx_nr_prach_ru(RU_t *ru,
 		    int prachFormat,
 		    int numRA,
 		    int prachStartSymbol,
+		    int prachOccasion,
 		    int frame,
 		    int slot) {
 
@@ -176,14 +174,18 @@ void rx_nr_prach_ru(RU_t *ru,
 
   int msg1_frequencystart   = ru->config.prach_config.num_prach_fd_occasions_list[numRA].k1.value;
 
-  rxsigF            = ru->prach_rxsigF;
+  int sample_offset_slot = (prachStartSymbol==0?0:fp->ofdm_symbol_size*prachStartSymbol+fp->nb_prefix_samples0+fp->nb_prefix_samples*(prachStartSymbol-1));
+  //to be checked for mu=0;
+
+  LOG_D(PHY,"frame %d, slot %d: doing rx_nr_prach_ru for format %d, numRA %d, prachStartSymbol %d, prachOccasion %d\n",frame,slot,prachFormat,numRA,prachStartSymbol,prachOccasion);
+
+  rxsigF            = ru->prach_rxsigF[prachOccasion];
 
   AssertFatal(ru->if_south == LOCAL_RF,"we shouldn't call this if if_south != LOCAL_RF\n");
 
   for (int aa=0; aa<ru->nb_rx; aa++){ 
     if (prach_sequence_length == 0) slot2=(slot/fp->slots_per_subframe)*fp->slots_per_subframe; 
-    prach[aa] = (int16_t*)&ru->common.rxdata[aa][(slot2*fp->get_samples_per_slot(slot,fp))-ru->N_TA_offset];
-    LOG_I(PHY,"GES printing received signal %d\n",*prach[aa]);
+    prach[aa] = (int16_t*)&ru->common.rxdata[aa][(slot2*fp->get_samples_per_slot(slot,fp))+sample_offset_slot-ru->N_TA_offset];
   } 
 
 
@@ -193,7 +195,7 @@ void rx_nr_prach_ru(RU_t *ru,
   int16_t *prach2;
 
   if (prach_sequence_length == 0) {
-    LOG_I(PHY,"PRACH (ru %d) in %d.%d, format %d, msg1_frequencyStart %d\n",
+    LOG_D(PHY,"PRACH (ru %d) in %d.%d, format %d, msg1_frequencyStart %d\n",
 	  ru->idx,frame,slot2,prachFormat,msg1_frequencystart);
     AssertFatal(prachFormat<4,"Illegal prach format %d for length 839\n",prachFormat);
     switch (prachFormat) {
@@ -216,26 +218,28 @@ void rx_nr_prach_ru(RU_t *ru,
     }
   }
   else {
-    LOG_I(PHY,"PRACH (ru %d) in %d.%d, format %s, msg1_frequencyStart %d,startSymbol %d\n",
+    LOG_D(PHY,"PRACH (ru %d) in %d.%d, format %s, msg1_frequencyStart %d,startSymbol %d\n",
 	  ru->idx,frame,slot,prachfmt[prachFormat],msg1_frequencystart,prachStartSymbol);
 
     switch (prachFormat) {
-    case 0: //A1
+    case 4: //A1
       Ncp = 288/(1<<mu);
       break;
       
-    case 1: //A2
+    case 5: //A2
       Ncp = 576/(1<<mu);
       break;
       
-    case 2: //A3
+    case 6: //A3
       Ncp = 864/(1<<mu);
       break;
       
-    case 3: //B1
+    case 7: //B1
       Ncp = 216/(1<<mu);
     break;
     
+    /*
+    // B2 and B3 do not exist in FAPI
     case 4: //B2
       Ncp = 360/(1<<mu);
       break;
@@ -243,16 +247,16 @@ void rx_nr_prach_ru(RU_t *ru,
     case 5: //B3
       Ncp = 504/(1<<mu);
       break;
-      
-    case 6: //B4
+    */
+    case 8: //B4
       Ncp = 936/(1<<mu);
       break;
       
-    case 7: //C0
+    case 9: //C0
       Ncp = 1240/(1<<mu);
       break;
       
-    case 8: //C2
+    case 10: //C2
       Ncp = 2048/(1<<mu);
       break;
       
@@ -289,8 +293,6 @@ void rx_nr_prach_ru(RU_t *ru,
   k*=K;
   k+=kbar;
 
-	LOG_I(PHY,"GES printing frequency domain k value %d fp->N_RB_UL %d n_ra_prb %d kbar %d\n",k,fp->N_RB_UL,n_ra_prb,kbar);
-	 
   int reps=1;
 
   for (int aa=0; aa<ru->nb_rx; aa++) {
@@ -333,21 +335,21 @@ void rx_nr_prach_ru(RU_t *ru,
 	  else if (mu==1) {
             dftlen=2048;
             dft(DFT_2048,prach2,rxsigF[aa],1);
-	    if (prachFormat != 7) { // !=C0
+	    if (prachFormat != 9/*C0*/) { 
 	      dft(DFT_2048,prach2+4096,rxsigF[aa]+4096,1);
 	      reps++;
 	    }
-	    if (prachFormat == 1 || prachFormat == 2 || prachFormat == 4 || prachFormat == 5 || prachFormat == 6 || prachFormat == 8) {     
+	    if (prachFormat == 5/*A2*/ || prachFormat == 6/*A3*/|| prachFormat == 8/*B4*/ || prachFormat == 10/*C2*/) {     
               dft(DFT_2048,prach2+4096*2,rxsigF[aa]+4096*2,1);
               dft(DFT_2048,prach2+4096*3,rxsigF[aa]+4096*3,1);
 	      reps+=2;
 	    }
-	    if (prachFormat == 2 || prachFormat == 5 || prachFormat == 6) {     
+	    if (prachFormat == 6/*A3*/ || prachFormat == 8/*B4*/) {     
               dft(DFT_2048,prach2+4096*4,rxsigF[aa]+4096*4,1);
               dft(DFT_2048,prach2+4096*5,rxsigF[aa]+4096*5,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 6) {
+	    if (prachFormat == 8/*B4*/) {
 	      for (int i=6;i<12;i++) dft(DFT_2048,prach2+(4096*i),rxsigF[aa]+(4096*i),1);
 	      reps+=6;
 	    }
@@ -359,7 +361,6 @@ void rx_nr_prach_ru(RU_t *ru,
       } else { // threequarter sampling
 	//	40 MHz @ 46.08 Ms/s
 	prach2 = prach[aa] + (3*Ncp); // 46.08 is 1.5 * 30.72, times 2 for I/Q
-	LOG_I(PHY,"GES printing prach2 %p prach[aa] %p Ncp %d\n",prach2,prach[aa],Ncp);
 	if (prach_sequence_length == 0) {
 	  AssertFatal(fp->N_RB_UL <= 107,"cannot do 108..136 PRBs with 3/4 sampling\n");
 	  if (prachFormat == 0 || prachFormat == 1 || prachFormat == 2) {
@@ -389,22 +390,22 @@ void rx_nr_prach_ru(RU_t *ru,
 	  else if (mu==1) {
 	    dftlen=1536;
 	    dft(DFT_1536,prach2,rxsigF[aa],1);
-	    if (prachFormat != 7) {
+	    if (prachFormat != 9/*C0*/) {
 	      dft(DFT_1536,prach2+3072,rxsigF[aa]+3072,1);
 	      reps++;
 	    }
 	    
-	    if (prachFormat == 1 || prachFormat == 2 || prachFormat == 4 || prachFormat == 5 || prachFormat == 6 || prachFormat == 8) {     
+	    if (prachFormat == 5/*A2*/ || prachFormat == 6/*A3*/|| prachFormat == 8/*B4*/ || prachFormat == 10/*C2*/) {     
 	      dft(DFT_1536,prach2+3072*2,rxsigF[aa]+3072*2,1);
 	      dft(DFT_1536,prach2+3072*3,rxsigF[aa]+3072*3,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 2 || prachFormat == 5 || prachFormat == 6) {     
+	    if (prachFormat == 6/*A3*/ || prachFormat == 8/*B4*/) {     
 	      dft(DFT_1536,prach2+3072*4,rxsigF[aa]+3072*4,1);
 	      dft(DFT_1536,prach2+3072*5,rxsigF[aa]+3072*5,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 6) {
+	    if (prachFormat == 8/*B4*/) {
 	      for (int i=6;i<12;i++) dft(DFT_1536,prach2+(3072*i),rxsigF[aa]+(3072*i),1);
 	      reps+=6;
 	    }
@@ -449,22 +450,22 @@ void rx_nr_prach_ru(RU_t *ru,
 	  else if (mu==1) {
 	    dftlen=4096;
 	    dft(DFT_4096,prach2,rxsigF[aa],1);
-	    if (prachFormat != 7) { //!=C0 
+	    if (prachFormat != 9/*C0*/) { 
 	      dft(DFT_4096,prach2+8192,rxsigF[aa]+8192,1);
 	      reps++;
 	    }
 	    
-	    if (prachFormat == 1 || prachFormat == 2 || prachFormat == 4 || prachFormat == 5 || prachFormat == 6 || prachFormat == 8) {     
+	    if (prachFormat == 5/*A2*/ || prachFormat == 6/*A3*/|| prachFormat == 8/*B4*/ || prachFormat == 10/*C2*/) {     
               dft(DFT_4096,prach2+8192*2,rxsigF[aa]+8192*2,1);
               dft(DFT_4096,prach2+8192*3,rxsigF[aa]+8192*3,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 2 || prachFormat == 5 || prachFormat == 6) {     
+	    if (prachFormat == 6/*A3*/ || prachFormat == 8/*B4*/) {     
               dft(DFT_4096,prach2+8192*4,rxsigF[aa]+8192*4,1);
               dft(DFT_4096,prach2+8192*5,rxsigF[aa]+8192*5,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 6) {
+	    if (prachFormat == 8/*B4*/) {
 	      for (int i=6;i<12;i++) dft(DFT_4096,prach2+(8192*i),rxsigF[aa]+(8192*i),1);
 	      reps+=6;
 	    }
@@ -501,22 +502,22 @@ void rx_nr_prach_ru(RU_t *ru,
 	  else if (mu==1) {
 	    dftlen=3072;
 	    dft(DFT_3072,prach2,rxsigF[aa],1);
-	    if (prachFormat != 7) { //!=C0
+	    if (prachFormat != 9/*C0*/) {
 	      dft(DFT_3072,prach2+6144,rxsigF[aa]+6144,1);
 	      reps++;
 	    }
 	    
-	    if (prachFormat == 1 || prachFormat == 2 || prachFormat == 4 || prachFormat == 5 || prachFormat == 6 || prachFormat == 8) {     
+	    if (prachFormat == 5/*A2*/ || prachFormat == 6/*A3*/|| prachFormat == 8/*B4*/ || prachFormat == 10/*C2*/) {     
               dft(DFT_3072,prach2+6144*2,rxsigF[aa]+6144*2,1);
               dft(DFT_3072,prach2+6144*3,rxsigF[aa]+6144*3,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 2 || prachFormat == 5 || prachFormat == 6) {     
+	    if (prachFormat == 6/*A3*/ || prachFormat == 8/*B4*/) {     
               dft(DFT_3072,prach2+6144*4,rxsigF[aa]+6144*4,1);
               dft(DFT_3072,prach2+6144*5,rxsigF[aa]+6144*5,1);
 	      reps+=2;
 	    } 
-	    if (prachFormat == 6) {
+	    if (prachFormat == 8/*B4*/) {
 	      for (int i=6;i<12;i++) dft(DFT_3072,prach2+(6144*i),rxsigF[aa]+(6144*i),1);
 	      reps+=6;
 	    }
@@ -529,7 +530,7 @@ void rx_nr_prach_ru(RU_t *ru,
     }
 
     //Coherent combining of PRACH repetitions (assumes channel does not change, to be revisted for "long" PRACH)
-    LOG_I(PHY,"Doing PRACH combining of %d reptitions N_ZC %d,mu %d prachFormat %d prach2 %p content %d\n",reps,N_ZC,mu,prachFormat,prach2,*prach2);
+    LOG_D(PHY,"Doing PRACH combining of %d reptitions N_ZC %d\n",reps,N_ZC);
     int16_t rxsigF_tmp[N_ZC<<1];
     //    if (k+N_ZC > dftlen) { // PRACH signal is split around DC 
     int16_t *rxsigF2=rxsigF[aa];
@@ -539,16 +540,15 @@ void rx_nr_prach_ru(RU_t *ru,
       if (k2==(dftlen<<1)) k2=0;
       rxsigF_tmp[j] = rxsigF2[k2];
       for (int i=1;i<reps;i++) rxsigF_tmp[j] += rxsigF2[k2+(i*dftlen<<1)];
-			LOG_I(PHY,"GES printing %d rxsigF_tmp[j] %d\n",j,rxsigF_tmp[j]);
     }
     memcpy((void*)rxsigF2,(void *)rxsigF_tmp,N_ZC<<2);
-		LOG_I(PHY,"GES printing rxsigF2 %d\n",*rxsigF2);
   }
 
 }
 
 void rx_nr_prach(PHY_VARS_gNB *gNB,
 		 nfapi_nr_prach_pdu_t *prach_pdu,
+		 int prachOccasion,
 		 int frame,
 		 int subframe,
 		 uint16_t *max_preamble,
@@ -610,7 +610,7 @@ void rx_nr_prach(PHY_VARS_gNB *gNB,
   uint8_t prach_fmt = prach_pdu->prach_format;
   uint16_t N_ZC = (prach_sequence_length==0)?839:139;
 
-  LOG_I(PHY,"L1 PRACH RX: rooSequenceIndex %d, numRootSeqeuences %d, NCS %d, N_ZC %d \n",  rootSequenceIndex,numrootSequenceIndex,NCS,N_ZC);
+  LOG_D(PHY,"L1 PRACH RX: rooSequenceIndex %d, numRootSeqeuences %d, NCS %d, N_ZC %d, format %d \n",rootSequenceIndex,numrootSequenceIndex,NCS,N_ZC,prach_fmt);
 
   prach_ifft        = gNB->prach_vars.prach_ifft;
   prachF            = gNB->prach_vars.prachF;
@@ -723,7 +723,7 @@ void rx_nr_prach(PHY_VARS_gNB *gNB,
 		       frame,subframe,preamble_index,NCS,N_ZC/NCS,preamble_offset,preamble_shift,en);
     }
 
-    LOG_I(PHY,"PRACH RX preamble_index %d, preamble_offset %d\n",preamble_index,preamble_offset);
+    LOG_D(PHY,"PRACH RX preamble_index %d, preamble_offset %d\n",preamble_index,preamble_offset);
 
 
     if (new_dft == 1) {
@@ -731,7 +731,7 @@ void rx_nr_prach(PHY_VARS_gNB *gNB,
 
       Xu=(int16_t*)gNB->X_u[preamble_offset-first_nonzero_root_idx];
 
-      LOG_I(PHY,"PRACH RX new dft preamble_offset-first_nonzero_root_idx %d\n",preamble_offset-first_nonzero_root_idx);
+      LOG_D(PHY,"PRACH RX new dft preamble_offset-first_nonzero_root_idx %d\n",preamble_offset-first_nonzero_root_idx);
 
 
       memset(prach_ifft,0,((N_ZC==839) ? 2048 : 256)*sizeof(int32_t));

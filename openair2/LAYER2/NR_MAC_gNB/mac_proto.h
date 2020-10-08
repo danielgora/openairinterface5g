@@ -278,6 +278,8 @@ void dump_nr_ue_list(NR_UE_list_t *listP, int ul_flag);
 
 int find_nr_UE_id(module_id_t mod_idP, rnti_t rntiP);
 
+int find_nr_RA_id(module_id_t mod_idP, int CC_idP, rnti_t rntiP);
+
 int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP);
 
 void mac_remove_nr_ue(module_id_t mod_id, rnti_t rnti);
@@ -324,7 +326,8 @@ void config_nr_mib(int Mod_idP,
 void nr_generate_Msg2(module_id_t module_idP,
                       int CC_id,
                       frame_t frameP,
-                      sub_frame_t slotP);
+                      sub_frame_t slotP,
+											NR_RA_t *ra);
 
 void nr_schedule_reception_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t slotP);
 
@@ -372,7 +375,7 @@ void handle_nr_ul_harq(uint16_t slot, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_sta
 
 int16_t ssb_index_from_prach(module_id_t module_idP,
                              frame_t frameP,
-                             sub_frame_t slotP,
+			     sub_frame_t slotP,
                              uint16_t preamble_index,
                              uint8_t freq_index,
                              uint8_t symbol);

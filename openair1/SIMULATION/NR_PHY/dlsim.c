@@ -209,6 +209,7 @@ int main(int argc, char **argv)
   int pusch_tgt_snrx10 = 200;
   int pucch_tgt_snrx10 = 200;
   int loglvl=OAILOG_INFO;
+  int file_offset = 0;
 
   //float target_error_rate = 0.01;
   int css_flag=0;
@@ -226,7 +227,7 @@ int main(int argc, char **argv)
 
   FILE *scg_fd=NULL;
   
-  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:GR:dPIL:Ea:b:e:m:w")) != -1) {
+  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:G:R:dPIL:Ea:b:e:m:w")) != -1) {
     switch (c) {
     case 'f':
       scg_fd = fopen(optarg,"r");
@@ -362,7 +363,12 @@ int main(int argc, char **argv)
         printf("Problem with filename %s\n",optarg);
         exit(-1);
       }
+      num_rounds = 1;
 
+      break;
+
+    case 'G':
+      file_offset = atoi(optarg);
       break;
 
     case 'P':
@@ -677,7 +683,6 @@ int main(int argc, char **argv)
   estimated_output_bit = (unsigned char *) malloc16(sizeof(unsigned char) * 16 * 68 * 384);
   
   // generate signal
-  AssertFatal(input_fd==NULL,"Not ready for input signal file\n");
   gNB->pbch_configured = 1;
   gNB->ssb_pdu.ssb_pdu_rel15.bchPayload=0x001234;
   
@@ -714,6 +719,8 @@ int main(int argc, char **argv)
   NR_UE_info_t *UE_info = &RC.nrmac[0]->UE_info;
   //NR_COMMON_channels_t *cc = RC.nrmac[0]->common_channels;
   snrRun = 0;
+  int slot_offset = 0;
+  int slot_length = 0;
 
   for (SNR = snr0; SNR < snr1; SNR += .2) {
 
@@ -793,103 +800,111 @@ int main(int argc, char **argv)
         Sched_INFO.TX_req    = &gNB_mac->TX_req[0];
         nr_schedule_response(&Sched_INFO);
         
-        if (run_initial_sync)
-          nr_common_signal_procedures(gNB,frame,slot);
-        else
-          phy_procedures_gNB_TX(gNB,frame,slot,0);
-            
-        int txdataF_offset = (slot%2) * frame_parms->samples_per_slot_wCP;
-        
-        if (n_trials==1) {
-          LOG_M("txsigF0.m","txsF0", &gNB->common_vars.txdataF[0][txdataF_offset],frame_parms->samples_per_slot_wCP,1,1);
-          if (gNB->frame_parms.nb_antennas_tx>1)
-          LOG_M("txsigF1.m","txsF1", &gNB->common_vars.txdataF[1][txdataF_offset],frame_parms->samples_per_slot_wCP,1,1);
-        }
-        int tx_offset = frame_parms->get_samples_slot_timestamp(slot,frame_parms,0);
-        if (n_trials==1) printf("tx_offset %d, txdataF_offset %d \n", tx_offset,txdataF_offset);
-        
-        //TODO: loop over slots
-        for (aa=0; aa<gNB->frame_parms.nb_antennas_tx; aa++) {
-    
-          if (cyclic_prefix_type == 1) {
-            PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
-                         &txdata[aa][tx_offset],
-                         frame_parms->ofdm_symbol_size,
-                         12,
-                         frame_parms->nb_prefix_samples,
-                         CYCLIC_PREFIX);
-          } else {/*
-            nr_normal_prefix_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
-                                 &txdata[aa][tx_offset],
-                                 14,
-                                 frame_parms);
-		  */
-	    PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
-			 (int*)&txdata[aa][tx_offset],
-			 frame_parms->ofdm_symbol_size,
-			 1,
-			 frame_parms->nb_prefix_samples0,
-			 CYCLIC_PREFIX);
-	    	    
-	    apply_nr_rotation(frame_parms,
-			      (int16_t*)&txdata[aa][tx_offset],
-			      slot,
-			      0,
-			      1,
-			      frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples0);
-	    PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset+frame_parms->ofdm_symbol_size],
-			 (int*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
-			 frame_parms->ofdm_symbol_size,
-			 13,
-			 frame_parms->nb_prefix_samples,
-			 CYCLIC_PREFIX);
-	    apply_nr_rotation(frame_parms,
-			      (int16_t*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
-			      slot,
-			      1,
-			      13,
-			      frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples);
-	    
+        if (input_fd==NULL) {
+          if (run_initial_sync)
+            nr_common_signal_procedures(gNB,frame,slot);
+          else
+            phy_procedures_gNB_TX(gNB,frame,slot,0);
+              
+          int txdataF_offset = (slot%2) * frame_parms->samples_per_slot_wCP;
+          
+          if (n_trials==1) {
+            LOG_M("txsigF0.m","txsF0", &gNB->common_vars.txdataF[0][txdataF_offset],frame_parms->samples_per_slot_wCP,1,1);
+            if (gNB->frame_parms.nb_antennas_tx>1)
+            LOG_M("txsigF1.m","txsF1", &gNB->common_vars.txdataF[1][txdataF_offset],frame_parms->samples_per_slot_wCP,1,1);
           }
-        }
-       
-        if (n_trials==1) {
-          LOG_M("txsig0.m","txs0", &txdata[0][tx_offset],frame_parms->get_samples_slot_timestamp(slot,frame_parms,0),1,1);
-          if (gNB->frame_parms.nb_antennas_tx>1)
-            LOG_M("txsig1.m","txs1", &txdata[1][tx_offset],frame_parms->get_samples_slot_timestamp(slot,frame_parms,0),1,1);
-        }
-        if (output_fd) {
-          printf("writing txdata to binary file\n");
-          fwrite(txdata[0],sizeof(int32_t),frame_length_complex_samples,output_fd);
-        }
+          int tx_offset = frame_parms->get_samples_slot_timestamp(slot,frame_parms,0);
+          if (n_trials==1) printf("tx_offset %d, txdataF_offset %d \n", tx_offset,txdataF_offset);
+          
+          //TODO: loop over slots
+          for (aa=0; aa<gNB->frame_parms.nb_antennas_tx; aa++) {
+      
+            if (cyclic_prefix_type == 1) {
+              PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
+                           &txdata[aa][tx_offset],
+                           frame_parms->ofdm_symbol_size,
+                           12,
+                           frame_parms->nb_prefix_samples,
+                           CYCLIC_PREFIX);
+            } else {/*
+              nr_normal_prefix_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
+                                   &txdata[aa][tx_offset],
+                                   14,
+                                   frame_parms);
+        */
+        PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
+         (int*)&txdata[aa][tx_offset],
+         frame_parms->ofdm_symbol_size,
+         1,
+         frame_parms->nb_prefix_samples0,
+         CYCLIC_PREFIX);
+              
+        apply_nr_rotation(frame_parms,
+              (int16_t*)&txdata[aa][tx_offset],
+              slot,
+              0,
+              1,
+              frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples0);
+        PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset+frame_parms->ofdm_symbol_size],
+         (int*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
+         frame_parms->ofdm_symbol_size,
+         13,
+         frame_parms->nb_prefix_samples,
+         CYCLIC_PREFIX);
+        apply_nr_rotation(frame_parms,
+              (int16_t*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
+              slot,
+              1,
+              13,
+              frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples);
+        
+            }
+          }
+         
+          if (n_trials==1) {
+            LOG_M("txsig0.m","txs0", &txdata[0][tx_offset],frame_parms->get_samples_slot_timestamp(slot,frame_parms,0),1,1);
+            if (gNB->frame_parms.nb_antennas_tx>1)
+              LOG_M("txsig1.m","txs1", &txdata[1][tx_offset],frame_parms->get_samples_slot_timestamp(slot,frame_parms,0),1,1);
+          }
+          if (output_fd) {
+            printf("writing txdata to binary file\n");
+            fwrite(txdata[0],sizeof(int32_t),frame_length_complex_samples,output_fd);
+          }
 
-        int txlev = signal_energy(&txdata[0][frame_parms->get_samples_slot_timestamp(slot,frame_parms,0)+5*frame_parms->ofdm_symbol_size + 4*frame_parms->nb_prefix_samples + frame_parms->nb_prefix_samples0], frame_parms->ofdm_symbol_size + frame_parms->nb_prefix_samples);
-        
-        //  if (n_trials==1) printf("txlev %d (%f)\n",txlev,10*log10((double)txlev));
-        
-        for (i=(frame_parms->get_samples_slot_timestamp(slot,frame_parms,0)); 
-             i<(frame_parms->get_samples_slot_timestamp(slot+1,frame_parms,0)); 
-             i++) {
-    
-          for (aa=0; aa<frame_parms->nb_antennas_tx; aa++) {
-            r_re[aa][i] = ((double)(((short *)txdata[aa]))[(i<<1)]);
-            r_im[aa][i] = ((double)(((short *)txdata[aa]))[(i<<1)+1]);
+          int txlev = signal_energy(&txdata[0][frame_parms->get_samples_slot_timestamp(slot,frame_parms,0)+5*frame_parms->ofdm_symbol_size + 4*frame_parms->nb_prefix_samples + frame_parms->nb_prefix_samples0], frame_parms->ofdm_symbol_size + frame_parms->nb_prefix_samples);
+          
+          //  if (n_trials==1) printf("txlev %d (%f)\n",txlev,10*log10((double)txlev));
+          
+          for (i=(frame_parms->get_samples_slot_timestamp(slot,frame_parms,0)); 
+               i<(frame_parms->get_samples_slot_timestamp(slot+1,frame_parms,0)); 
+               i++) {
+      
+            for (aa=0; aa<frame_parms->nb_antennas_tx; aa++) {
+              r_re[aa][i] = ((double)(((short *)txdata[aa]))[(i<<1)]);
+              r_im[aa][i] = ((double)(((short *)txdata[aa]))[(i<<1)+1]);
+            }
           }
-        }
-        
-        //AWGN
-        sigma2_dB = 10 * log10((double)txlev * ((double)UE->frame_parms.ofdm_symbol_size/(12*rel15->rbSize))) - SNR;
-        sigma2    = pow(10, sigma2_dB/10);
-        if (n_trials==1) printf("sigma2 %f (%f dB), txlev %f (factor %f)\n",sigma2,sigma2_dB,10*log10((double)txlev),(double)(double)UE->frame_parms.ofdm_symbol_size/(12*rel15->rbSize));
-        
-        for (i=frame_parms->get_samples_slot_timestamp(slot,frame_parms,0); 
-             i<frame_parms->get_samples_slot_timestamp(slot+1,frame_parms,0);
-             i++) {
+          
+          //AWGN
+          sigma2_dB = 10 * log10((double)txlev * ((double)UE->frame_parms.ofdm_symbol_size/(12*rel15->rbSize))) - SNR;
+          sigma2    = pow(10, sigma2_dB/10);
+          if (n_trials==1) printf("sigma2 %f (%f dB), txlev %f (factor %f)\n",sigma2,sigma2_dB,10*log10((double)txlev),(double)(double)UE->frame_parms.ofdm_symbol_size/(12*rel15->rbSize));
+          
+          for (i=frame_parms->get_samples_slot_timestamp(slot,frame_parms,0); 
+               i<frame_parms->get_samples_slot_timestamp(slot+1,frame_parms,0);
+               i++) {
 
-          for (aa=0; aa<frame_parms->nb_antennas_rx; aa++) {
-            ((short*) UE->common_vars.rxdata[aa])[2*i]   = (short) ((r_re[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
-            ((short*) UE->common_vars.rxdata[aa])[2*i+1] = (short) ((r_im[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
+            for (aa=0; aa<frame_parms->nb_antennas_rx; aa++) {
+              ((short*) UE->common_vars.rxdata[aa])[2*i]   = (short) ((r_re[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
+              ((short*) UE->common_vars.rxdata[aa])[2*i+1] = (short) ((r_im[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
+            }
           }
+        } else {
+          fseek(input_fd,file_offset*sizeof(int16_t)*2,SEEK_SET);
+          slot_offset = get_samples_slot_timestamp(slot,frame_parms,0);
+          slot_length = get_samples_per_slot(slot,frame_parms);
+          fread((void*)&UE->common_vars.rxdata[0][slot_offset],
+                sizeof(int16_t),slot_length<<1,input_fd);
         }
         
         nr_ue_dcireq(&dcireq); //to be replaced with function pointer later

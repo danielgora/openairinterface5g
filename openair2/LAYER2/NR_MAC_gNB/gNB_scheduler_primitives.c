@@ -1002,6 +1002,7 @@ void fill_dci_pdu_rel15(NR_ServingCellConfigCommon_t *scc,
                         int bwp_id) {
 
   uint8_t fsize=0, pos=0;
+  LOG_D(MAC,"Number of DL DCIs %d\n",pdcch_pdu_rel15->numDlDci);
 
   for (int d=0;d<pdcch_pdu_rel15->numDlDci;d++) {
 

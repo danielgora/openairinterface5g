@@ -54,6 +54,7 @@ extern int oai_nfapi_rx_ind(nfapi_rx_indication_t *ind);
 extern uint8_t nfapi_mode;
 extern uint16_t sf_ahead;
 extern uint16_t sl_ahead;
+void tci_handling(int Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t *sched_ctrl, frame_t frame, slot_t slot);
 
 void handle_nr_rach(NR_UL_IND_t *UL_info) {
 
@@ -143,9 +144,11 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
       for (csi_ssb_idx = 0; csi_ssb_idx < sched_ctrl->CSI_report[idx].choice.ssb_cri_report.nr_ssbri_cri ; csi_ssb_idx++) {
 	if (NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP == reportQuantity_type)
 
-          sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = *(UE_list->csi_report_template[UE_id][csi_report_id].SSB_Index_list [(*payload) & ~(~1<<(cri_ssbri_bitlen-1))]);
+          sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = 
+		  *(UE_list->csi_report_template[UE_id][csi_report_id].SSB_Index_list [cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
 	else
-          sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = *(UE_list->csi_report_template[UE_id][csi_report_id].CSI_Index_list [(*payload) & ~(~1<<(cri_ssbri_bitlen-1))]);
+          sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = 
+		  *(UE_list->csi_report_template[UE_id][csi_report_id].CSI_Index_list [cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
 	  
         *payload >>= cri_ssbri_bitlen;
       }
@@ -281,6 +284,8 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_
             scs);
           //API to parse the csi report and store it into sched_ctrl
           extract_pucch_csi_report (csi_MeasConfig, uci_pdu, sched_ctrl,UL_info->frame, UL_info->slot, scs, UE_id, Mod_idP);
+          //TCI handling function
+          tci_handling(Mod_idP, UE_id, UL_info->CC_id, sched_ctrl, UL_info->frame, UL_info->slot);
         }
 
         if (uci_pdu -> pduBitmap & 0x08) {

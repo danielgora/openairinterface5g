@@ -869,7 +869,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
     ue_sched_ctl->current_harq_pid = slot % num_slots_per_tdd;
     nr_acknack_scheduling(module_idP, UE_id, frame, slot, num_slots_per_tdd,&pucch_sched,&pucch_occ);
     //TCI handling function
-    tci_handling(module_idP, UE_id, CC_id, ue_sched_ctl, frame, slot);
+    //tci_handling(module_idP, UE_id, CC_id, ue_sched_ctl, frame, slot);
     nr_schedule_uss_dlsch_phytest(module_idP, frame, slot, &UE_list->UE_sched_ctrl[UE_id].sched_pucch[pucch_sched][pucch_occ], NULL);
     ue_sched_ctl->ta_apply = false;
   }

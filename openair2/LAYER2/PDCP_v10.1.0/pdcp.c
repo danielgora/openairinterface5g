@@ -1104,6 +1104,7 @@ pdcp_data_ind(
 }
 
 void pdcp_update_stats(const protocol_ctxt_t *const  ctxt_pP) {
+  return;
   uint16_t           pdcp_uid = 0;
   uint8_t            rb_id     = 0;
 

@@ -116,7 +116,7 @@ mac_rrc_data_req_ue(
 
   return(0);
 }
-
+extern UE_MAC_INST *UE_mac_inst;
 //------------------------------------------------------------------------------
 int8_t
 mac_rrc_data_ind_ue(
@@ -168,7 +168,9 @@ mac_rrc_data_ind_ue(
     }
   }
 
-  if(srb_idP == BCCH) {
+  if(srb_idP == BCCH
+      && (!UE_mac_inst[ctxt.instance].SI_Decoded
+          || !UE_mac_inst[ctxt.instance].SIB_Decoded)) {
     LOG_D(RRC,"[UE %d] Received SDU for BCCH on SRB %ld from eNB %d\n",module_idP,srb_idP,eNB_indexP);
     {
       MessageDef *message_p;

@@ -173,26 +173,19 @@ mac_rrc_data_ind_ue(
           || !UE_mac_inst[ctxt.instance].SIB_Decoded)) {
     LOG_D(RRC,"[UE %d] Received SDU for BCCH on SRB %ld from eNB %d\n",module_idP,srb_idP,eNB_indexP);
     {
-      MessageDef *message_p;
-      int msg_sdu_size = sizeof(RRC_MAC_BCCH_DATA_IND (message_p).sdu);
+      protocol_ctxt_t ctxt2;
+      PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt2, ctxt.instance, ENB_FLAG_NO, NOT_A_RNTI,
+                                     frameP, 0,
+                                     eNB_indexP);
 
-      if (sdu_lenP > msg_sdu_size) {
-        LOG_E(RRC, "SDU larger than BCCH SDU buffer size (%d, %d)", sdu_lenP, msg_sdu_size);
-        sdu_size = msg_sdu_size;
-      } else {
-        sdu_size = sdu_lenP;
-      }
 
-      message_p = itti_alloc_new_message (TASK_MAC_UE, RRC_MAC_BCCH_DATA_IND);
-      memset (RRC_MAC_BCCH_DATA_IND (message_p).sdu, 0, BCCH_SDU_SIZE);
-      RRC_MAC_BCCH_DATA_IND (message_p).frame     = frameP;
-      RRC_MAC_BCCH_DATA_IND (message_p).sub_frame = sub_frameP;
-      RRC_MAC_BCCH_DATA_IND (message_p).sdu_size  = sdu_size;
-      memcpy (RRC_MAC_BCCH_DATA_IND (message_p).sdu, sduP, sdu_size);
-      RRC_MAC_BCCH_DATA_IND (message_p).enb_index = eNB_indexP;
-      RRC_MAC_BCCH_DATA_IND (message_p).rsrq      = 30 /* TODO change phy to report rspq */;
-      RRC_MAC_BCCH_DATA_IND (message_p).rsrp      = 45 /* TODO change phy to report rspp */;
-      itti_send_msg_to_task (TASK_RRC_UE, ctxt.instance, message_p);
+      decode_BCCH_DLSCH_Message (&ctxt2,
+                                 eNB_indexP,
+                                 sduP,
+                                 sdu_lenP,
+                                 30,
+                                 45);
+
     }
   }
 
@@ -349,14 +342,10 @@ rrc_data_ind_ue(
 //-------------------------------------------------------------------------------------------//
 void rrc_in_sync_ind(module_id_t Mod_idP, frame_t frameP, uint16_t eNB_index) {
   //-------------------------------------------------------------------------------------------//
-  {
-    MessageDef *message_p;
-    //LOG_I(RRC,"sending a message to task_mac_ue\n");
-    message_p = itti_alloc_new_message (TASK_MAC_UE, RRC_MAC_IN_SYNC_IND);
-    RRC_MAC_IN_SYNC_IND (message_p).frame = frameP;
-    RRC_MAC_IN_SYNC_IND (message_p).enb_index = eNB_index;
-    itti_send_msg_to_task (TASK_RRC_UE, UE_MODULE_ID_TO_INSTANCE(Mod_idP), message_p);
-  }
+  UE_RRC_INFO *info = &UE_rrc_inst[Mod_idP].Info[eNB_index];
+  info->N310_cnt = 0;
+  if (info->T310_active)
+    info->N311_cnt++;
 }
 
 //-------------------------------------------------------------------------------------------//

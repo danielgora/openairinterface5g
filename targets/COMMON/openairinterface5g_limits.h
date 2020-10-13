@@ -8,7 +8,7 @@
 #        define NUMBER_OF_NR_RU_MAX 2
 #        ifndef PHYSIM
 #            ifndef UE_EXPANSION
-#                    define NUMBER_OF_UE_MAX 4
+#                    define NUMBER_OF_UE_MAX 128
 #                    define NUMBER_OF_NR_UE_MAX 4
 #                    define NUMBER_OF_UCI_VARS_MAX 14
 #                    define NUMBER_OF_CONNECTED_eNB_MAX 1

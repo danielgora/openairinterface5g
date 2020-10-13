@@ -2599,6 +2599,7 @@ int decode_BCCH_DLSCH_Message(
                     sizeof(LTE_SystemInformationBlockType1_t) );
             LOG_D( RRC, "[UE %"PRIu8"] Decoding First SIB1\n", ctxt_pP->module_id );
             decode_SIB1( ctxt_pP, eNB_index, rsrq, rsrp );
+            UE_mac_inst[ctxt_pP->module_id].SIB_Decoded = 1;
           }
         }
 

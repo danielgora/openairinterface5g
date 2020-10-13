@@ -161,6 +161,7 @@ void ue_init_mac(module_id_t module_idP) {
     UE_mac_inst[module_idP].UE_mode[0] = PRACH_INACTIVE;
     UE_mac_inst[module_idP].first_ULSCH_Tx =0;
     UE_mac_inst[module_idP].SI_Decoded = 0;
+    UE_mac_inst[module_idP].SIB_Decoded = 0;
     next_ra_frame = 0;
     next_Mod_id = 0;
     tx_request_pdu_list = NULL;

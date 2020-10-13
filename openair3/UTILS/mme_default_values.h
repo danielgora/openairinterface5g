@@ -62,7 +62,7 @@
  ******************************************************************************/
 
 #define MAX_NUMBER_OF_ENB       (2)
-#define MAX_NUMBER_OF_UE        (64)
+#define MAX_NUMBER_OF_UE        (128)
 
 #define MMEC                    (0)
 #define MMEGID                  (0)

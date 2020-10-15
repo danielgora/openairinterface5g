@@ -480,6 +480,54 @@ printf("\n");
   enqueue_rlc_data_req(&ctxt, 0, MBMS_FLAG_NO, rb_id, sdu_id, 0, size, memblock, NULL, NULL);
 }
 
+static void deliver_sdu_srb(void *_ue, nr_pdcp_entity_t *entity,
+                            char *buf, int size)
+{
+  /* Implementation to be added */
+  return;
+}
+
+static void deliver_pdu_srb(void *_ue, nr_pdcp_entity_t *entity,
+                            char *buf, int size, int sdu_id)
+{
+  nr_pdcp_ue_t *ue = _ue;
+  int srb_id;
+  protocol_ctxt_t ctxt;
+  int i;
+  mem_block_t *memblock;
+
+  for (i = 0; i < 2; i++) {
+    if (entity == ue->srb[i]) {
+      srb_id = i+1;
+      goto rb_found;
+    }
+  }
+
+  LOG_E(PDCP, "%s:%d:%s: fatal, no RB found for ue %d\n",
+        __FILE__, __LINE__, __FUNCTION__, ue->rnti);
+  exit(1);
+
+rb_found:
+  ctxt.module_id = 0;
+  ctxt.enb_flag = 1;
+  ctxt.instance = 0;
+  ctxt.frame = 0;
+  ctxt.subframe = 0;
+  ctxt.eNB_index = 0;
+  ctxt.configured = 1;
+  ctxt.brOption = 0;
+
+  ctxt.rnti = ue->rnti;
+
+  memblock = get_free_mem_block(size, __FUNCTION__);
+  memcpy(memblock->data, buf, size);
+
+printf("!!!!!!! deliver_pdu_srb (srb %d) calling rlc_data_req size %d: ", srb_id, size);
+//for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)memblock->data[i]);
+printf("\n");
+  enqueue_rlc_data_req(&ctxt, 1, MBMS_FLAG_NO, srb_id, sdu_id, 0, size, memblock, NULL, NULL);
+}
+
 boolean_t pdcp_data_ind(
   const protocol_ctxt_t *const  ctxt_pP,
   const srb_flag_t srb_flagP,
@@ -580,7 +628,32 @@ void pdcp_run(const protocol_ctxt_t *const  ctxt_pP)
 
 static void add_srb(int rnti, struct NR_SRB_ToAddMod *s)
 {
-  TODO;
+  nr_pdcp_entity_t *pdcp_srb;
+  nr_pdcp_ue_t *ue;
+
+  int srb_id = s->srb_Identity;
+
+  printf("\n\n################# rnti %d add drb %d\n\n\n", rnti, srb_id);
+
+  if (srb_id != 1) {
+    LOG_E(PDCP, "%s:%d:%s: fatal, bad drb id %d\n",
+          __FILE__, __LINE__, __FUNCTION__, srb_id);
+    exit(1);
+  }
+
+  nr_pdcp_manager_lock(nr_pdcp_ue_manager);
+  ue = nr_pdcp_manager_get_ue(nr_pdcp_ue_manager, rnti);
+  if (ue->srb[srb_id-1] != NULL) {
+    LOG_D(PDCP, "%s:%d:%s: warning DRB %d already exist for ue %d, do nothing\n",
+          __FILE__, __LINE__, __FUNCTION__, srb_id, rnti);
+  } else {
+    pdcp_srb = new_nr_pdcp_entity_srb(srb_id, deliver_sdu_srb, ue, deliver_pdu_srb, ue);
+    nr_pdcp_ue_add_srb_pdcp_entity(ue, srb_id, pdcp_srb);
+
+    LOG_D(PDCP, "%s:%d:%s: added drb %d to ue %d\n",
+          __FILE__, __LINE__, __FUNCTION__, srb_id, rnti);
+  }
+  nr_pdcp_manager_unlock(nr_pdcp_ue_manager);
 }
 
 static void add_drb_am(int rnti, struct NR_DRB_ToAddMod *s)

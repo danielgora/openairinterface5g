@@ -787,10 +787,8 @@ void fep_full(RU_t *ru,
   int l;
   LTE_DL_FRAME_PARMS *fp=ru->frame_parms;
 
-  double recv_pow=0;
-  int i,idx;
+  int i;
   int shift=0;
-  short * temp_iq;
 
   if ((fp->frame_type == TDD) && 
      (subframe_select(fp,subframe) != SF_UL)) return;

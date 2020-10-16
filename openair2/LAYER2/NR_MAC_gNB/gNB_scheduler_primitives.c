@@ -869,7 +869,6 @@ void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
             pucch_pdu->sr_flag = O_sr;
             break;
           case NR_PUCCH_Resource__format_PR_format2 :
-	    LOG_I(MAC,"UCI format2 is being scheduled\n");
             pucch_pdu->format_type = 2;
             pucch_pdu->nr_of_symbols = pucchres->format.choice.format2->nrofSymbols;
             pucch_pdu->start_symbol_index = pucchres->format.choice.format2->startingSymbolIndex;
@@ -1946,52 +1945,52 @@ uint16_t nr_get_csi_bitlen(int Mod_idP,
 void csi_period_offset(NR_CSI_ReportConfig_t *csirep,
                        int *period, int *offset) {
 
-    NR_CSI_ReportPeriodicityAndOffset_PR p_and_o = csirep->reportConfigType.choice.periodic->reportSlotConfig.present;
+  NR_CSI_ReportPeriodicityAndOffset_PR p_and_o = csirep->reportConfigType.choice.periodic->reportSlotConfig.present;
 
-    switch(p_and_o){
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots4:
-        *period = 4;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots4;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots5:
-        *period = 5;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots5;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots8:
-        *period = 8;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots8;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots10:
-        *period = 10;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots10;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots16:
-        *period = 16;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots16;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots20:
-        *period = 20;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots20;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots40:
-        *period = 40;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots40;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots80:
-        *period = 80;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots80;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots160:
-        *period = 160;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots160;
-        break;
-      case NR_CSI_ReportPeriodicityAndOffset_PR_slots320:
-        *period = 320;
-        *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots320;
-        break;
+  switch(p_and_o){
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots4:
+      *period = 4;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots4;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots5:
+      *period = 5;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots5;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots8:
+      *period = 8;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots8;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots10:
+      *period = 10;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots10;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots16:
+      *period = 16;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots16;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots20:
+      *period = 20;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots20;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots40:
+      *period = 40;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots40;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots80:
+      *period = 80;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots80;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots160:
+      *period = 160;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots160;
+      break;
+    case NR_CSI_ReportPeriodicityAndOffset_PR_slots320:
+      *period = 320;
+      *offset = csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots320;
+      break;
     default:
       AssertFatal(1==0,"No periodicity and offset resource found in CSI report");
-    }
+  }
 }
 
 

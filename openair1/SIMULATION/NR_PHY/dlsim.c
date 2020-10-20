@@ -208,6 +208,7 @@ int main(int argc, char **argv)
   int run_initial_sync=0;
   int pusch_tgt_snrx10 = 200;
   int pucch_tgt_snrx10 = 200;
+  int nrnti = 0x1234;
   int loglvl=OAILOG_INFO;
   int file_offset = 0;
 
@@ -227,7 +228,7 @@ int main(int argc, char **argv)
 
   FILE *scg_fd=NULL;
   
-  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:G:R:dPIL:Ea:b:e:m:w")) != -1) {
+  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:G:R:dPIL:Ea:b:e:m:w:r:")) != -1) {
     switch (c) {
     case 'f':
       scg_fd = fopen(optarg,"r");
@@ -417,6 +418,10 @@ int main(int argc, char **argv)
 
     case 'w':
       output_fd = fopen("txdata.dat", "w+");
+      break;
+
+    case 'r':
+      nrnti = atoi(optarg);
       break;
 
     default:
@@ -721,6 +726,8 @@ int main(int argc, char **argv)
   snrRun = 0;
   int slot_offset = 0;
   int slot_length = 0;
+  UE_mac->crnti = nrnti;
+  printf("crnti %x\n",UE_mac->crnti);
 
   for (SNR = snr0; SNR < snr1; SNR += .2) {
 
@@ -1048,8 +1055,9 @@ int main(int argc, char **argv)
       LOG_M("rxsig0.m","rxs0", UE->common_vars.rxdata[0], frame_length_complex_samples, 1, 1);
       if (UE->frame_parms.nb_antennas_rx>1)
 	LOG_M("rxsig1.m","rxs1", UE->common_vars.rxdata[1], frame_length_complex_samples, 1, 1);
-      LOG_M("chestF0.m","chF0",UE->pdsch_vars[0][0]->dl_ch_estimates_ext,N_RB_DL*12*14,1,1);
+      LOG_M("chestF0.m","chF0",UE->pdsch_vars[0][0]->dl_ch_estimates_ext[0],N_RB_DL*12*14,1,1);
       write_output("rxF_comp.m","rxFc",&UE->pdsch_vars[0][0]->rxdataF_comp0[0][0],N_RB_DL*12*14,1,1);
+      LOG_M("pdcch_rxdata_comp.m","pdcch_comp",&UE->pdcch_vars[UE->current_thread_id[slot]][0]->rxdataF_comp[0][0],96*9,1,1);
       LOG_M("rxF_llr.m","rxFllr",UE->pdsch_vars[UE->current_thread_id[UE_proc.nr_tti_rx]][0]->llr[0],available_bits,1,0);
       break;
     }

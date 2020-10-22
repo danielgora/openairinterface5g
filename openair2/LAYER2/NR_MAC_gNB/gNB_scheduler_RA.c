@@ -751,33 +751,16 @@ void nr_generate_Msg2(module_id_t module_idP,
       "downlinkBWP_ToAddModList has %d BWP!\n", ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
     NR_BWP_Downlink_t *bwp = ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
     NR_BWP_Uplink_t *ubwp=ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id-1];
-
-#endif
-
-    uint8_t nr_of_candidates, aggregation_level;
-    find_aggregation_candidates(&aggregation_level, &nr_of_candidates, ss);
-    NR_ControlResourceSet_t *coreset = get_coreset(bwp, ss, 0 /* common */);
-    int CCEIndex = allocate_nr_CCEs(nr_mac,
-                                    bwp,
-                                    coreset,
-                                    aggregation_level,
-                                    0, // Y
-                                    0, // m
-                                    nr_of_candidates);
-
-    if (CCEIndex < 0) {
-      LOG_E(MAC, "%s(): cannot find free CCE for RA RNTI %04x!\n", __func__, ra->rnti);
-      return;
-    }
-    nr_configure_pdcch(nr_mac,
-                       pdcch_pdu_rel15,
-                       ra->RA_rnti,
-                       ss,
-                       coreset,
-                       scc,
-                       bwp,
-                       aggregation_level,
-                       CCEIndex);
+  uint8_t nr_of_candidates, aggregation_level;
+  find_aggregation_candidates(&aggregation_level, &nr_of_candidates, ss);
+  NR_ControlResourceSet_t *coreset = get_coreset(bwp, ss, 0 /* common */);
+  nr_configure_pdcch(nr_mac,
+                     pdcch_pdu_rel15,
+                     ra->RA_rnti,
+                     ss,
+                     coreset,
+                     scc,
+                     bwp);
   dl_req->nPDUs+=1; //Adding PDCCH pdu count
 
   for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
@@ -789,7 +772,6 @@ void nr_generate_Msg2(module_id_t module_idP,
 
   // check if UE is doing RA on CORESET0 , InitialBWP or configured BWP from SCD
   // get the BW of the PDCCH for PDCCH size and RAR PDSCH size
-
 
   if (ra->coreset0_configured == 1) {
     AssertFatal(1==0,"This is a standalone condition\n");
@@ -826,7 +808,6 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->pduBitmap = 0;
     pdsch_pdu_rel15->rnti = RA_rnti;
     pdsch_pdu_rel15->pduIndex = 0;
-
 
     pdsch_pdu_rel15->BWPSize  = NRRIV2BW(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
     pdsch_pdu_rel15->BWPStart = NRRIV2PRBOFFSET(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
@@ -880,15 +861,13 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->precodingAndBeamforming.PMIdx[0]        = 0;
     pdsch_pdu_rel15->precodingAndBeamforming.beamIdx[0]      = ra->beam_id;
 
-    uint8_t nr_of_candidates, aggregation_level;
-    find_aggregation_candidates(&aggregation_level, &nr_of_candidates, ss);
-    NR_ControlResourceSet_t *coreset = get_coreset(bwp, ss, 0 /* common */);
     int CCEIndex = allocate_nr_CCEs(nr_mac,
                                     bwp,
                                     coreset,
                                     aggregation_level,
-                                    0, /* n_RNTI 0: common search space */
-                                    0); // m
+                                    0, // Y
+                                    0, // m
+                                    nr_of_candidates);
 
     if (CCEIndex < 0) {
       LOG_E(MAC, "%s(): cannot find free CCE for RA RNTI %04x!\n", __func__, ra->rnti);
@@ -897,11 +876,11 @@ void nr_generate_Msg2(module_id_t module_idP,
     nr_configure_dci(nr_mac,
                      pdcch_pdu_rel15,
                      RA_rnti,
-    	             ss,
-	             coreset,
-	             scc,
-	  	     bwp,
-		     ra->beam_id,
+    	               ss,
+	                   coreset,
+	                   scc,
+	  	               bwp,
+		                 ra->beam_id,
                      aggregation_level,
                      CCEIndex);
 

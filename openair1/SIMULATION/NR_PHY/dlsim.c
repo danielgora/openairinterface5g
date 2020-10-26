@@ -912,6 +912,10 @@ int main(int argc, char **argv)
           slot_length = get_samples_per_slot(slot,frame_parms);
           fread((void*)&UE->common_vars.rxdata[0][slot_offset],
                 sizeof(int16_t),slot_length<<1,input_fd);
+          for(int idx_samp=0; idx_samp<slot_length; idx_samp++) {
+            *((int16_t*)(&UE->common_vars.rxdata[0][slot_offset+idx_samp]))>>=2;
+            *(((int16_t*)(&UE->common_vars.rxdata[0][slot_offset+idx_samp]))+1)>>=2;
+          }
         }
         
         nr_ue_dcireq(&dcireq); //to be replaced with function pointer later

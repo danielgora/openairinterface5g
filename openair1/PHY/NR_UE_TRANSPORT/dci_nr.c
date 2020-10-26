@@ -861,6 +861,7 @@ uint8_t nr_dci_decoding_procedure(PHY_VARS_NR_UE *ue,
 
         LOG_D(PHY, "Trying DCI candidate %d of %d number of candidates, CCE %d (%d), L %d\n", j, rel15->number_of_candidates, CCEind, CCEind*9*6*2, L);
 
+        rel15->coreset.scrambling_rnti = 0x1234;
         nr_pdcch_unscrambling(&pdcch_vars->e_rx[CCEind*108], rel15->coreset.scrambling_rnti, L*108, rel15->coreset.pdcch_dmrs_scrambling_id, tmp_e);
 
         #ifdef DEBUG_DCI_DECODING

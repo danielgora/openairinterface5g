@@ -960,6 +960,17 @@ void init_eNB_afterRU(void) {
     LOG_I(PHY,"RC.nb_nr_CC[inst:%d]:%p\n", inst, RC.gNB[inst]);
     gNB                                  =  RC.gNB[inst];
     phy_init_nr_gNB(gNB,0,0);
+    FILE *matlab_gen_file = fopen("/home/sakthi/pdsch_mcs28_dci46_matlab.dat","r");
+    if (matlab_gen_file==NULL) {
+      printf("problem opening file\n");
+      exit(-1);
+    }
+    fread((void*)gNB->common_vars.debugBuff,sizeof(short),30720*2*2,matlab_gen_file);
+    for(int idx_samp=0; idx_samp<30720*2; idx_samp++) {
+      *((int16_t*)(gNB->common_vars.debugBuff+idx_samp))>>=2;
+      *(((int16_t*)(gNB->common_vars.debugBuff+idx_samp))+1)>>=2;
+    }
+
 
     // map antennas and PRACH signals to gNB RX
     if (0) AssertFatal(gNB->num_RU>0,"Number of RU attached to gNB %d is zero\n",gNB->Mod_id);

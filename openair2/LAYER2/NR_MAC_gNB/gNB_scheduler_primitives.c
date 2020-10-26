@@ -1608,6 +1608,22 @@ inline void add_nr_ue_list(NR_UE_list_t *listP, int UE_id) {
   *cur = UE_id;
 }
 
+void remove_nr_ue_list(NR_UE_list_t *listP, int UE_id) {
+  int *prev = NULL;
+  int *cur = &listP->head;
+  while (*cur != UE_id) {
+    AssertFatal(*cur != -1, "UE_id %d not found in NR_UE_list!\n", UE_id);
+    prev = cur;
+    cur = &listP->next[*cur];
+  }
+  if (prev == NULL) {
+    listP->head = listP->next[*cur];
+  } else {
+    listP->next[*prev] = listP->next[*cur];
+  }
+  listP->next[*cur] = -1;
+}
+
 int find_nr_UE_id(module_id_t mod_idP, rnti_t rntiP)
 //------------------------------------------------------------------------------
 {
@@ -1741,6 +1757,7 @@ void mac_remove_nr_ue(module_id_t mod_id, rnti_t rnti)
     memset((void *) &UE_info->UE_sched_ctrl[UE_id],
            0,
            sizeof(NR_UE_sched_ctrl_t));
+    remove_nr_ue_list(&UE_info->list, UE_id);
     LOG_I(MAC, "[gNB %d] Remove NR UE_id %d : rnti %x\n",
           mod_id,
           UE_id,

@@ -37,8 +37,11 @@
 import helpreadme as HELP
 import constants as CONST
 
+
+import cls_oaicitest		#main class for OAI CI test framework
 import cls_physim           #class PhySim for physical simulators build and test
 import cls_cots_ue			#class CotsUe for Airplane mode control
+
 
 import sshconnection 
 import epc
@@ -3116,7 +3119,6 @@ class OaiCiTest():
 		logging.debug('\u001B[1m----------------------------------------\u001B[0m')
 
 
-
 #-----------------------------------------------------------
 # General Functions
 #-----------------------------------------------------------
@@ -3374,7 +3376,7 @@ with open(yaml_file,'r') as f:
 
 mode = ''
 
-CiTestObj = OaiCiTest()
+CiTestObj = cls_oaicitest.OaiCiTest()
  
 SSH = sshconnection.SSHConnection()
 EPC = epc.EPCManagement()
@@ -3400,18 +3402,11 @@ py_param_file_present, py_params, mode = args_parse.ArgsParse(sys.argv,CiTestObj
 
 
 #-----------------------------------------------------------
-# TEMPORARY params management
+# TEMPORARY params management (UNUSED)
 #-----------------------------------------------------------
 #temporary solution for testing:
 if py_param_file_present == True:
 	AssignParams(py_params)
-
-#for debug
-#print(RAN.__dict__) 
-#print(CiTestObj.__dict__) 
-#print(HTML.__dict__) 
-#print(ldpc.__dict__) 
-#for debug
 
 
 #-----------------------------------------------------------
@@ -3423,7 +3418,7 @@ COTS_UE=cls_cots_ue.CotsUe(CiTestObj.ADBIPAddress, CiTestObj.ADBUserName,CiTestO
 
 
 #-----------------------------------------------------------
-# XML class (action) analysis
+# mode amd XML class (action) analysis
 #-----------------------------------------------------------
 cwd = os.getcwd()
 
@@ -3440,13 +3435,13 @@ elif re.match('^TerminateUE$', mode, re.IGNORECASE):
 		HELP.GenericHelp(CONST.Version)
 		sys.exit('Insufficient Parameter')
 	signal.signal(signal.SIGUSR1, receive_signal)
-	CiTestObj.TerminateUE()
+	CiTestObj.TerminateUE(HTML,COTS_UE)
 elif re.match('^TerminateOAIUE$', mode, re.IGNORECASE):
 	if CiTestObj.UEIPAddress == '' or CiTestObj.UEUserName == '' or CiTestObj.UEPassword == '':
 		HELP.GenericHelp(CONST.Version)
 		sys.exit('Insufficient Parameter')
 	signal.signal(signal.SIGUSR1, receive_signal)
-	CiTestObj.TerminateOAIUE()
+	CiTestObj.TerminateOAIUE(HTML,RAN,COTS_UE)
 elif re.match('^TerminateHSS$', mode, re.IGNORECASE):
 	if EPC.IPAddress == '' or EPC.UserName == '' or EPC.Password == '' or EPC.Type == '' or EPC.SourceCodePath == '':
 		HELP.GenericHelp(CONST.Version)
@@ -3466,7 +3461,7 @@ elif re.match('^LogCollectBuild$', mode, re.IGNORECASE):
 	if (RAN.eNBIPAddress == '' or RAN.eNBUserName == '' or RAN.eNBPassword == '' or RAN.eNBSourceCodePath == '') and (CiTestObj.UEIPAddress == '' or CiTestObj.UEUserName == '' or CiTestObj.UEPassword == '' or CiTestObj.UESourceCodePath == ''):
 		HELP.GenericHelp(CONST.Version)
 		sys.exit('Insufficient Parameter')
-	CiTestObj.LogCollectBuild()
+	CiTestObj.LogCollectBuild(RAN)
 elif re.match('^LogCollecteNB$', mode, re.IGNORECASE):
 	if RAN.eNBIPAddress == '' or RAN.eNBUserName == '' or RAN.eNBPassword == '' or RAN.eNBSourceCodePath == '':
 		HELP.GenericHelp(CONST.Version)
@@ -3491,12 +3486,12 @@ elif re.match('^LogCollectPing$', mode, re.IGNORECASE):
 	if EPC.IPAddress == '' or EPC.UserName == '' or EPC.Password == '' or EPC.SourceCodePath == '':
 		HELP.GenericHelp(CONST.Version)
 		sys.exit('Insufficient Parameter')
-	CiTestObj.LogCollectPing()
+	CiTestObj.LogCollectPing(EPC)
 elif re.match('^LogCollectIperf$', mode, re.IGNORECASE):
 	if EPC.IPAddress == '' or EPC.UserName == '' or EPC.Password == '' or EPC.SourceCodePath == '':
 		HELP.GenericHelp(CONST.Version)
 		sys.exit('Insufficient Parameter')
-	CiTestObj.LogCollectIperf()
+	CiTestObj.LogCollectIperf(EPC)
 elif re.match('^LogCollectOAIUE$', mode, re.IGNORECASE):
 	if CiTestObj.UEIPAddress == '' or CiTestObj.UEUserName == '' or CiTestObj.UEPassword == '' or CiTestObj.UESourceCodePath == '':
 		HELP.GenericHelp(CONST.Version)
@@ -3538,8 +3533,8 @@ elif re.match('^FinalizeHtml$', mode, re.IGNORECASE):
 	logging.debug('\u001B[1m  Creating HTML footer \u001B[0m')
 	logging.debug('\u001B[1m----------------------------------------\u001B[0m')
 
-	CiTestObj.RetrieveSystemVersion('eNB')
-	CiTestObj.RetrieveSystemVersion('UE')
+	CiTestObj.RetrieveSystemVersion('eNB',HTML,RAN)
+	CiTestObj.RetrieveSystemVersion('UE',HTML,RAN)
 	HTML.CreateHtmlFooter(CiTestObj.finalStatus)
 elif re.match('^TesteNB$', mode, re.IGNORECASE) or re.match('^TestUE$', mode, re.IGNORECASE):
 	if re.match('^TesteNB$', mode, re.IGNORECASE):
@@ -3604,7 +3599,7 @@ elif re.match('^TesteNB$', mode, re.IGNORECASE) or re.match('^TestUE$', mode, re
 			logging.debug('ERROR: requested test is invalidly formatted: ' + test)
 			sys.exit(1)
 	if (EPC.IPAddress != '') and (EPC.IPAddress != 'none'):
-		CiTestObj.CheckFlexranCtrlInstallation()
+		CiTestObj.CheckFlexranCtrlInstallation(RAN,EPC)
 		EPC.SetMmeIPAddress()
 
 	#get the list of tests to be done
@@ -3666,47 +3661,47 @@ elif re.match('^TesteNB$', mode, re.IGNORECASE) or re.match('^TestUE$', mode, re
 				elif action == 'Initialize_eNB':
 					check_eNB = False
 					check_OAI_UE = False
-					RAN.pStatus=CiTestObj.CheckProcessExist(check_eNB, check_OAI_UE)
+					RAN.pStatus=CiTestObj.CheckProcessExist(check_eNB, check_OAI_UE,RAN,EPC)
 
 					RAN.InitializeeNB()
 				elif action == 'Terminate_eNB':
 					RAN.TerminateeNB()
 				elif action == 'Initialize_UE':
-					CiTestObj.InitializeUE()
+					CiTestObj.InitializeUE(HTML,COTS_UE)
 				elif action == 'Terminate_UE':
-					CiTestObj.TerminateUE()
+					CiTestObj.TerminateUE(HTML,COTS_UE)
 				elif action == 'Attach_UE':
-					CiTestObj.AttachUE()
+					CiTestObj.AttachUE(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Detach_UE':
-					CiTestObj.DetachUE()
+					CiTestObj.DetachUE(HTML,RAN,EPC,COTS_UE)
 				elif action == 'DataDisable_UE':
-					CiTestObj.DataDisableUE()
+					CiTestObj.DataDisableUE(HTML)
 				elif action == 'DataEnable_UE':
-					CiTestObj.DataEnableUE()
+					CiTestObj.DataEnableUE(HTML)
 				elif action == 'CheckStatusUE':
-					CiTestObj.CheckStatusUE()
+					CiTestObj.CheckStatusUE(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Build_OAI_UE':
-					CiTestObj.BuildOAIUE()
+					CiTestObj.BuildOAIUE(HTML)
 				elif action == 'Initialize_OAI_UE':
-					CiTestObj.InitializeOAIUE()
+					CiTestObj.InitializeOAIUE(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Terminate_OAI_UE':
-					CiTestObj.TerminateOAIUE()
+					CiTestObj.TerminateOAIUE(HTML,RAN,COTS_UE)
 				elif action == 'Initialize_CatM_module':
-					CiTestObj.InitializeCatM()
+					CiTestObj.InitializeCatM(HTML)
 				elif action == 'Terminate_CatM_module':
-					CiTestObj.TerminateCatM()
+					CiTestObj.TerminateCatM(HTML)
 				elif action == 'Attach_CatM_module':
-					CiTestObj.AttachCatM()
+					CiTestObj.AttachCatM(HTML,RAN,COTS_UE)
 				elif action == 'Detach_CatM_module':
-					CiTestObj.TerminateCatM()
+					CiTestObj.TerminateCatM(HTML)
 				elif action == 'Ping_CatM_module':
-					CiTestObj.PingCatM()
+					CiTestObj.PingCatM(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Ping':
-					CiTestObj.Ping()
+					CiTestObj.Ping(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Iperf':
-					CiTestObj.Iperf()
+					CiTestObj.Iperf(HTML,RAN,EPC,COTS_UE)
 				elif action == 'Reboot_UE':
-					CiTestObj.RebootUE()
+					CiTestObj.RebootUE(HTML,RAN,EPC)
 				elif action == 'Initialize_HSS':
 					EPC.InitializeHSS()
 				elif action == 'Terminate_HSS':
@@ -3720,13 +3715,13 @@ elif re.match('^TesteNB$', mode, re.IGNORECASE) or re.match('^TestUE$', mode, re
 				elif action == 'Terminate_SPGW':
 					EPC.TerminateSPGW()
 				elif action == 'Initialize_FlexranCtrl':
-					CiTestObj.InitializeFlexranCtrl()
+					CiTestObj.InitializeFlexranCtrl(HTML,RAN,EPC)
 				elif action == 'Terminate_FlexranCtrl':
-					CiTestObj.TerminateFlexranCtrl()
+					CiTestObj.TerminateFlexranCtrl(HTML,RAN,EPC)
 				elif action == 'IdleSleep':
-					CiTestObj.IdleSleep()
+					CiTestObj.IdleSleep(HTML)
 				elif action == 'Perform_X2_Handover':
-					CiTestObj.Perform_X2_Handover()
+					CiTestObj.Perform_X2_Handover(HTML,RAN,EPC)
 				elif action == 'Build_PhySim':
 					HTML=ldpc.Build_PhySim(HTML,CONST)
 					if ldpc.exitStatus==1:sys.exit()

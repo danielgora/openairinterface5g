@@ -149,6 +149,8 @@ int s1ap_eNB_encode_initiating(S1AP_S1AP_PDU_t *pdu,
   res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_S1AP_S1AP_PDU, pdu);
   *buffer = res.buffer;
   *len = res.result.encoded;
+  if (res.result.encoded == -1)
+    return -1;
   return 0;
 }
 
@@ -204,6 +206,8 @@ int s1ap_eNB_encode_successfull_outcome(S1AP_S1AP_PDU_t *pdu,
   res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_S1AP_S1AP_PDU, pdu);
   *buffer = res.buffer;
   *len = res.result.encoded;
+  if (res.result.encoded == -1)
+    return -1;
   return 0;
 }
 
@@ -236,5 +240,7 @@ int s1ap_eNB_encode_unsuccessfull_outcome(S1AP_S1AP_PDU_t *pdu,
   res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_S1AP_S1AP_PDU, pdu);
   *buffer = res.buffer;
   *len = res.result.encoded;
+  if (res.result.encoded == -1)
+    return -1;
   return 0;
 }

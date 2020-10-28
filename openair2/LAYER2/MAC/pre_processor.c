@@ -221,6 +221,8 @@ int rr_dl_run(module_id_t Mod_id,
         cur_UE = &UE_sched.next[UE_id];
       }
     }
+
+skip_ue:
     UE_id = next_ue_list_looped(UE_list, UE_id);
   } while (UE_id != *start_ue);
   *cur_UE = -1; // mark end

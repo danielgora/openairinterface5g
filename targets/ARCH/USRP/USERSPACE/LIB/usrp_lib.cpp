@@ -974,7 +974,7 @@ extern "C" {
       device->type = USRP_B200_DEV;
       usrp_master_clock = 30.72e6;
       args += boost::str(boost::format(",master_clock_rate=%f") % usrp_master_clock);
-      args += ",num_send_frames=256,num_recv_frames=256, send_frame_size=7680, recv_frame_size=7680" ;
+      //args += ",num_send_frames=256,num_recv_frames=256, send_frame_size=7680, recv_frame_size=7680" ;
     }
   
     if (device_adds[0].get("type") == "n3xx") {
@@ -1157,6 +1157,14 @@ extern "C" {
     }
   
     switch ((int)openair0_cfg[0].sample_rate) {
+      case 61440000:
+        s->usrp->set_master_clock_rate(61.44e6);
+        //openair0_cfg[0].samples_per_packet    = 1024;
+        openair0_cfg[0].tx_sample_advance     = 115;
+        openair0_cfg[0].tx_bw                 = 40e6;
+        openair0_cfg[0].rx_bw                 = 40e6;
+        break;
+
       case 46080000:
         s->usrp->set_master_clock_rate(46.08e6);
         //openair0_cfg[0].samples_per_packet    = 1024;
@@ -1258,6 +1266,8 @@ extern "C" {
    sleep(1);
   // create tx & rx streamer
   uhd::stream_args_t stream_args_rx("sc16", "sc16");
+  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))
+    uhd::stream_args_t stream_args_rx("sc16", "sc12");
   int samples=openair0_cfg[0].sample_rate;
   int max=s->usrp->get_rx_stream(stream_args_rx)->get_max_num_samps();
   samples/=10000;
@@ -1275,6 +1285,8 @@ extern "C" {
   
   s->rx_stream = s->usrp->get_rx_stream(stream_args_rx);
   uhd::stream_args_t stream_args_tx("sc16", "sc16");
+  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))
+    uhd::stream_args_t stream_args_tx("sc16", "sc12");
   
   for (int i = 0; i<openair0_cfg[0].tx_num_channels; i++)
     stream_args_tx.channels.push_back(i);

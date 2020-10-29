@@ -720,7 +720,7 @@ void nr_generate_Msg2(module_id_t module_idP,
   NR_RA_t                               *ra = &cc->ra[CC_id];
   NR_SearchSpace_t *ss = ra->ra_ss;
   nfapi_nr_dl_tti_request_body_t *dl_req = &nr_mac->DL_req[CC_id].dl_tti_request_body;
-  nfapi_nr_pdu_t *tx_req = &nr_mac->TX_req[CC_id].pdu_list[nr_mac->TX_req[CC_id].Number_of_PDUs];
+//  nfapi_nr_pdu_t *tx_req = &nr_mac->TX_req[CC_id].pdu_list[nr_mac->TX_req[CC_id].Number_of_PDUs];
 
   nfapi_nr_dl_tti_request_pdu_t *dl_tti_pdcch_pdu = &dl_req->dl_tti_pdu_list[dl_req->nPDUs];
   memset((void*)dl_tti_pdcch_pdu,0,sizeof(nfapi_nr_dl_tti_request_pdu_t));
@@ -758,6 +758,7 @@ void nr_generate_Msg2(module_id_t module_idP,
                      scc,
                      bwp);
   dl_req->nPDUs+=1; //Adding PDCCH pdu count
+  dci_pdu_rel15_t dci_pdu_rel15[MAX_DCI_CORESET];
 
   for (int i = 0; i < NR_NB_RA_PROC_MAX; i++) {
   NR_RA_t *ra = &cc->ra[i];
@@ -780,6 +781,7 @@ void nr_generate_Msg2(module_id_t module_idP,
 
   if ((ra->Msg2_frame == frameP) && (ra->Msg2_slot == slotP)) {
 
+    nfapi_nr_pdu_t *tx_req = &nr_mac->TX_req[CC_id].pdu_list[nr_mac->TX_req[CC_id].Number_of_PDUs];
     nfapi_nr_dl_tti_request_pdu_t *dl_tti_pdsch_pdu = &dl_req->dl_tti_pdu_list[dl_req->nPDUs]; //RAJU
     memset((void *)dl_tti_pdsch_pdu,0,sizeof(nfapi_nr_dl_tti_request_pdu_t));
     dl_tti_pdsch_pdu->PDUType = NFAPI_NR_DL_TTI_PDSCH_PDU_TYPE;
@@ -880,23 +882,23 @@ void nr_generate_Msg2(module_id_t module_idP,
                      aggregation_level,
                      CCEIndex);
 
-    dci_pdu_rel15_t dci_pdu_rel15;
-    dci_pdu_rel15.frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
+//    dci_pdu_rel15_t dci_pdu_rel15;
+    dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
 										     pdsch_pdu_rel15->rbStart,dci10_bw);
-    dci_pdu_rel15.time_domain_assignment.val = time_domain_assignment;
-    dci_pdu_rel15.vrb_to_prb_mapping.val = 0;
-    dci_pdu_rel15.mcs = pdsch_pdu_rel15->mcsIndex[0];
-    dci_pdu_rel15.tb_scaling = 0;
+    dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].time_domain_assignment.val = time_domain_assignment;
+    dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].vrb_to_prb_mapping.val = 0;
+    dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].mcs = pdsch_pdu_rel15->mcsIndex[0];
+    dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].tb_scaling = 0;
 
     LOG_I(MAC, "[RAPROC] DCI type 1 payload: freq_alloc %d (%d,%d,%d), time_alloc %d, vrb to prb %d, mcs %d tb_scaling %d \n",
-	  dci_pdu_rel15.frequency_domain_assignment.val,
+	  dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].frequency_domain_assignment.val,
 	  pdsch_pdu_rel15->rbStart,
 	  pdsch_pdu_rel15->rbSize,
 	  dci10_bw,
-	  dci_pdu_rel15.time_domain_assignment.val,
-	  dci_pdu_rel15.vrb_to_prb_mapping.val,
-	  dci_pdu_rel15.mcs,
-	  dci_pdu_rel15.tb_scaling);
+	  dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].time_domain_assignment.val,
+	  dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].vrb_to_prb_mapping.val,
+	  dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].mcs,
+	  dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].tb_scaling);
 
     LOG_I(MAC, "Frame %d: Subframe %d : Adding common DL DCI for RA_RNTI %x\n", frameP, slotP, RA_rnti);
 
@@ -911,7 +913,7 @@ void nr_generate_Msg2(module_id_t module_idP,
       pdcch_pdu_rel15->StartSymbolIndex,
       pdcch_pdu_rel15->DurationSymbols);
 
-    fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, &dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);
+//    fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);
 
     // Program UL processing for Msg3
     nr_get_Msg3alloc(scc, ubwp, slotP, frameP, ra);
@@ -921,7 +923,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     LOG_I(MAC,"[gNB %d][RAPROC] Frame %d, Subframe %d: RA state %d\n", module_idP, frameP, slotP, ra->state);
 
     x_Overhead = 0;
-    nr_get_tbs_dl(&dl_tti_pdsch_pdu->pdsch_pdu, x_Overhead, pdsch_pdu_rel15->numDmrsCdmGrpsNoData, dci_pdu_rel15.tb_scaling);
+    nr_get_tbs_dl(&dl_tti_pdsch_pdu->pdsch_pdu, x_Overhead, pdsch_pdu_rel15->numDmrsCdmGrpsNoData, dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].tb_scaling);
 
     // DL TX request
     tx_req->PDU_length = pdsch_pdu_rel15->TBSize[0];
@@ -939,7 +941,6 @@ void nr_generate_Msg2(module_id_t module_idP,
     T(T_GNB_MAC_DL_RAR_PDU_WITH_DATA, T_INT(module_idP), T_INT(CC_id),
       T_INT(RA_rnti), T_INT(frameP), T_INT(slotP), T_INT(0) /* harq pid, meaningful? */,
       T_BUFFER(&cc[CC_id].RAR_pdu.payload[0], tx_req->TLVs[0].length));
-
     /* mark the corresponding RBs as used */
     uint16_t *vrb_map = cc[CC_id].vrb_map;
     for (int rb = 0; rb < pdsch_pdu_rel15->rbSize; rb++)
@@ -947,6 +948,7 @@ void nr_generate_Msg2(module_id_t module_idP,
 	}
 	}
   }
+  fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);
 }
 
 void nr_clear_ra_proc(module_id_t module_idP, int CC_id, frame_t frameP){

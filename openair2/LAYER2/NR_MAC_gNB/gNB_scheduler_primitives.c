@@ -460,7 +460,6 @@ void nr_configure_dci(gNB_MAC_INST *nr_mac,
     pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].digBFInterfaces = 1;
     pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].PMIdx[0]        = 0;
     pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].beamIdx[0]      = beam_index;
-    pdcch_pdu->numDlDci++;
 
 }		
 void nr_fill_nfapi_dl_pdu(int Mod_idP,

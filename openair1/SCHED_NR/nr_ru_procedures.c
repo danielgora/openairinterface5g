@@ -168,9 +168,14 @@ void nr_feptx0(RU_t *ru,int tti_tx,int first_symbol, int num_symbols, int aa) {
     }
   }
 
+  static int ndi=0;
   if(tti_tx==1) {
     //memset((void*)(&ru->common.txdata[aa][fp->get_samples_slot_timestamp(tti_tx,fp,0)]),0,sizeof(int16_t)*2*fp->get_samples_per_slot(tti_tx,fp));
-    memcpy((void*)(&ru->common.txdata[aa][fp->get_samples_slot_timestamp(tti_tx,fp,0)]),(void*)&ru->gNB_list[0]->common_vars.debugBuff[30720],sizeof(int16_t)*2*fp->get_samples_per_slot(tti_tx,fp));
+    if(ndi==1)
+      memcpy((void*)(&ru->common.txdata[aa][fp->get_samples_slot_timestamp(tti_tx,fp,0)]),(void*)&ru->gNB_list[0]->common_vars.debugBuff[30720],sizeof(int16_t)*2*fp->get_samples_per_slot(tti_tx,fp));
+    else
+      memcpy((void*)(&ru->common.txdata[aa][fp->get_samples_slot_timestamp(tti_tx,fp,0)]),(void*)&ru->gNB_list[0]->common_vars.debugBuff[200000+30720],sizeof(int16_t)*2*fp->get_samples_per_slot(tti_tx,fp));
+    ndi^=1;
   }
         
   //VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_PHY_PROCEDURES_RU_FEPTX_OFDM+(first_symbol!=0?1:0), 0);

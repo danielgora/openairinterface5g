@@ -1265,8 +1265,8 @@ extern "C" {
   LOG_I(HW,"Actual time source %s...\n",s->usrp->get_time_source(0).c_str());
    sleep(1);
   // create tx & rx streamer
-  uhd::stream_args_t stream_args_rx("sc16", "sc16");
-  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))
+  /*uhd::stream_args_t stream_args_rx("sc16", "sc16");
+  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))*/
     uhd::stream_args_t stream_args_rx("sc16", "sc12");
   int samples=openair0_cfg[0].sample_rate;
   int max=s->usrp->get_rx_stream(stream_args_rx)->get_max_num_samps();
@@ -1284,8 +1284,8 @@ extern "C" {
     stream_args_rx.channels.push_back(i);
   
   s->rx_stream = s->usrp->get_rx_stream(stream_args_rx);
-  uhd::stream_args_t stream_args_tx("sc16", "sc16");
-  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))
+  /*uhd::stream_args_t stream_args_tx("sc16", "sc16");
+  if ((device->type == USRP_B200_DEV) && ((int)openair0_cfg[0].sample_rate==61440000))*/
     uhd::stream_args_t stream_args_tx("sc16", "sc12");
   
   for (int i = 0; i<openair0_cfg[0].tx_num_channels; i++)

@@ -79,6 +79,17 @@ void handle_nr_rach(NR_UL_IND_t *UL_info) {
   }
 }
 
+void reverse_n_bits(uint8_t *value, uint16_t bitlen) {
+  uint16_t bitlen = bitlen - 1;
+	uint8_t i;
+  for(bitlen,i = 0; bitlen > i; bitlen--, i++) {
+		if(((*value>>bitlen)&1) != ((*value>>i)&1)) {
+		  *value ^= (1<<bitlen);
+		  *value ^= (1<<i);
+		}
+  }
+}
+
 void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
                                 nfapi_nr_uci_pucch_pdu_format_2_3_4_t *uci_pdu,
                                 NR_UE_sched_ctrl_t *sched_ctrl,
@@ -98,6 +109,8 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
   uint8_t csi_report_id = 0;
 
   memcpy ( payload, uci_pdu->csi_part1.csi_part1_payload, payload_size);
+  
+  reverse_n_bits(payload, uci_pdu->csi_part1.csi_part1_bit_len);
 
   UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report = 0;
   for ( csi_report_id =0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++ ) {
@@ -162,7 +175,7 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
         *payload >>= 4;
       }
       UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report++;
-      LOG_I(MAC,"csi_payload = %d, rsrp = %d\n",payload_size, sched_ctrl->CSI_report[idx].choice.ssb_cri_report.RSRP);
+      LOG_I(MAC,"csi_payload size = %d, rsrp_id = %d\n",payload_size, sched_ctrl->CSI_report[idx].choice.ssb_cri_report.RSRP);
     }
   }
 

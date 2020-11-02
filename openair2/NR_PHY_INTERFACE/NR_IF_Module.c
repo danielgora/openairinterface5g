@@ -81,12 +81,12 @@ void handle_nr_rach(NR_UL_IND_t *UL_info) {
 
 void reverse_n_bits(uint8_t *value, uint16_t bitlen) {
   uint16_t bitlen = bitlen - 1;
-	uint8_t i;
+  uint8_t i;
   for(bitlen,i = 0; bitlen > i; bitlen--, i++) {
-		if(((*value>>bitlen)&1) != ((*value>>i)&1)) {
-		  *value ^= (1<<bitlen);
-		  *value ^= (1<<i);
-		}
+    if(((*value>>bitlen)&1) != ((*value>>i)&1)) {
+      *value ^= (1<<bitlen);
+      *value ^= (1<<i);
+    }
   }
 }
 

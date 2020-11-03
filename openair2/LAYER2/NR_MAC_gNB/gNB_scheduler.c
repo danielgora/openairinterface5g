@@ -112,8 +112,8 @@ int get_diff_rsrp(uint8_t index, int strongest_rsrp) {
 }
 
 int checkTargetSSBInFirst64TCIStates_pdschConfig(int ssb_index_t, int Mod_idP, int UE_id) {
-  NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
-  NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id] ;
+  NR_UE_info_t *UE_info = &RC.nrmac[Mod_idP]->UE_info;
+  NR_CellGroupConfig_t *secondaryCellGroup = UE_info->secondaryCellGroup[UE_id] ;
   int nb_tci_states = secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.count;
   NR_TCI_State_t *tci =NULL;
   int i;
@@ -139,8 +139,8 @@ int checkTargetSSBInFirst64TCIStates_pdschConfig(int ssb_index_t, int Mod_idP, i
 }
 
 int checkTargetSSBInTCIStates_pdcchConfig(int ssb_index_t, int Mod_idP, int UE_id) {
-  NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
-  NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id] ;
+  NR_UE_info_t *UE_info = &RC.nrmac[Mod_idP]->UE_info;
+  NR_CellGroupConfig_t *secondaryCellGroup = UE_info->secondaryCellGroup[UE_id] ;
   int nb_tci_states = secondaryCellGroup->spCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config->choice.setup->tci_StatesToAddModList->list.count;
   NR_TCI_State_t *tci =NULL;
   NR_TCI_StateId_t *tci_id = NULL;
@@ -241,15 +241,15 @@ void tci_handling(module_id_t Mod_idP, int UE_id, int CC_id, NR_UE_sched_ctrl_t 
   int ssb_rsrp[MAX_NUM_SSB] = {0};
   uint8_t idx = 0;
   int bwp_id  = 1;
-  NR_UE_list_t *UE_list = &RC.nrmac[Mod_idP]->UE_list;
+  NR_UE_info_t *UE_info = &RC.nrmac[Mod_idP]->UE_info;
   //NR_COMMON_channels_t *cc = RC.nrmac[Mod_idP]->common_channels;
-  NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id];
+  NR_CellGroupConfig_t *secondaryCellGroup = UE_info->secondaryCellGroup[UE_id];
   NR_BWP_Downlink_t *bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_id-1];
-  //NR_CSI_MeasConfig_t *csi_MeasConfig = UE_list->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
+  //NR_CSI_MeasConfig_t *csi_MeasConfig = UE_info->secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
   //bwp indicator
   int n_dl_bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count;
   uint8_t nr_ssbri_cri = 0;
-  uint8_t nb_of_csi_ssb_report = UE_list->csi_report_template[UE_id][cqi_idx].nb_of_csi_ssb_report;
+  uint8_t nb_of_csi_ssb_report = UE_info->csi_report_template[UE_id][cqi_idx].nb_of_csi_ssb_report;
   //uint8_t bitlen_ssbri = log (nb_of_csi_ssb_report)/log (2);
   //uint8_t max_rsrp_reported = -1;
   int better_rsrp_reported = -140-(-0); /*minimum_measured_RSRP_value - minimum_differntail_RSRP_value*///considering the minimum RSRP value as better RSRP initially
@@ -658,6 +658,7 @@ void copy_nr_ulreq(module_id_t module_idP, frame_t frameP, sub_frame_t slotP)
 }
 */
 
+
 void nr_schedule_pusch(int Mod_idP,
                        int UE_id,
                        int num_slots_per_tdd,
@@ -746,7 +747,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
  
   const int UE_id = 0;
   const int bwp_id = 1;
-
+  int pucch_sched, pucch_occ;
   gNB_MAC_INST *gNB = RC.nrmac[module_idP];
   NR_UE_info_t *UE_info = &gNB->UE_info;
   NR_UE_sched_ctrl_t *ue_sched_ctl = &UE_info->UE_sched_ctrl[UE_id];
@@ -760,6 +761,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
   start_meas(&RC.nrmac[module_idP]->eNB_scheduler);
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_gNB_DLSCH_ULSCH_SCHEDULER,VCD_FUNCTION_IN);
   pdcp_run(&ctxt);
+
   /* send tick to RLC and RRC every ms */
   if ((slot & ((1 << *scc->ssbSubcarrierSpacing) - 1)) == 0) {
     void nr_rlc_tick(int frame, int subframe);
@@ -838,7 +840,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
     nr_acknack_scheduling(module_idP, UE_id, frame, slot, num_slots_per_tdd,&pucch_sched,&pucch_occ);
     //TCI handling function
     //tci_handling(module_idP, UE_id, CC_id, ue_sched_ctl, frame, slot);
-    nr_schedule_uss_dlsch_phytest(module_idP, frame, slot, &UE_list->UE_sched_ctrl[UE_id].sched_pucch[pucch_sched][pucch_occ], NULL);
+    nr_schedule_uss_dlsch_phytest(module_idP, frame, slot, &UE_info->UE_sched_ctrl[UE_id].sched_pucch[pucch_sched][pucch_occ], NULL);
     ue_sched_ctl->ta_apply = false;
   }
 

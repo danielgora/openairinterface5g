@@ -315,37 +315,6 @@ typedef struct NR_UE_old_sched {
   uint8_t numDmrsCdmGrpsNoData;
 } NR_UE_ret_info_t;
 
-typedef enum {
-  INACTIVE = 0,
-  ACTIVE_NOT_SCHED,
-  ACTIVE_SCHED
-} NR_UL_harq_states_t;
-
-typedef struct NR_UE_ul_harq {
-  uint8_t ndi;
-  uint8_t round;
-  uint16_t last_tx_slot;
-  NR_UL_harq_states_t state;
-} NR_UE_ul_harq_t;
-
-
-typedef struct {
-  uint8_t nb_ssbri_cri;
-  uint8_t cri_ssbri_bitlen;
-  uint8_t rsrp_bitlen;
-  uint8_t diff_rsrp_bitlen;
-}CRI_SSBRI_RSRP_bitlen_t;
-
-
-#define MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG 16
-typedef struct nr_csi_report {
-  NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type;
-  NR_CSI_ResourceConfig__csi_RS_ResourceSetList_PR CSI_Resource_type;
-  uint8_t nb_of_nzp_csi_report;
-  uint8_t nb_of_csi_ssb_report;
-  CRI_SSBRI_RSRP_bitlen_t CSI_report_bitlen[MAX_CSI_RESOURCE_SET_IN_CSI_RESOURCE_CONFIG];
-} nr_csi_report_t;
-
 //! fixme : need to enhace for the multiple TB CQI report
 
 
@@ -394,6 +363,19 @@ typedef struct NR_UE_sr {
   bool ul_SR [MAX_SR_BITLEN];
 } NR_UE_sr_t;
 
+typedef enum {
+  INACTIVE = 0,
+  ACTIVE_NOT_SCHED,
+  ACTIVE_SCHED
+} NR_UL_harq_states_t;
+
+typedef struct NR_UE_ul_harq {
+  uint8_t ndi;
+  uint8_t round;
+  uint16_t last_tx_slot;
+  NR_UL_harq_states_t state;
+} NR_UE_ul_harq_t;
+
 typedef struct {
   uint8_t nb_ssbri_cri;
   uint8_t cri_ssbri_bitlen;
@@ -412,8 +394,6 @@ typedef struct{
 
 typedef struct nr_csi_report {
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type;
-  long periodicity;
-  uint16_t offset;
   long ** SSB_Index_list;
   long ** CSI_Index_list;
 //  uint8_t nb_of_nzp_csi_report;

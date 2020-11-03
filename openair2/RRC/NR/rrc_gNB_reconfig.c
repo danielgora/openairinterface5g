@@ -1385,7 +1385,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
    }
  }
 
-
 #if 0
 
  NR_TCI_State_t*tci0=calloc(1,sizeof(*tci0));
@@ -1786,7 +1785,6 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
      n_ssb++;
    }
  }
-
 
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->tci_StatesToReleaseList=NULL;
  bwp->bwp_Dedicated->pdsch_Config->choice.setup->vrb_ToPRB_Interleaver=NULL;

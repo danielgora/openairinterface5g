@@ -104,34 +104,28 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
   uint8_t payload_size = ceil(((double)uci_pdu->csi_part1.csi_part1_bit_len)/8);
   uint8_t *payload = calloc (payload_size, sizeof(uint8_t));
   NR_CSI_ReportConfig__reportQuantity_PR reportQuantity_type = NR_CSI_ReportConfig__reportQuantity_PR_NOTHING;
-  NR_UE_list_t *UE_list = &(RC.nrmac[Mod_idP]->UE_list);
-  long periodicity;
+  NR_UE_info_t *UE_info = &(RC.nrmac[Mod_idP]->UE_info);
   uint8_t csi_report_id = 0;
 
   memcpy ( payload, uci_pdu->csi_part1.csi_part1_payload, payload_size);
   
   reverse_n_bits(payload, uci_pdu->csi_part1.csi_part1_bit_len);
 
-  UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report = 0;
+  UE_info->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report = 0;
   for ( csi_report_id =0; csi_report_id < csi_MeasConfig->csi_ReportConfigToAddModList->list.count; csi_report_id++ ) {
     //Assuming in periodic reporting for one slot can be configured with only one CSI-ReportConfig
  //   if (csi_MeasConfig->csi_ReportConfigToAddModList->list.array[csi_report_id]->reportConfigType.present == NR_CSI_ReportConfig__reportConfigType_PR_periodic) {
       //Has to implement according to reportSlotConfig type
-    periodicity = UE_list->csi_report_template[UE_id][csi_report_id].periodicity;
-    LOG_I(PHY,"SFN/SF:%d%d \n", frame,slot);
-   /* if (((NR_SubcarrierSpacing_kHz30 == scs) && (((((frame & 0xf)+1)*20 + slot) & periodicity) == periodicity))
-       ||((NR_SubcarrierSpacing_kHz120 == scs)&&(((((frame & 0xf)+1)*80 + slot) & periodicity) == periodicity))) {*/
-    if (((slots_per_frame[scs]*frame + slot -UE_list->csi_report_template[UE_id][csi_report_id].offset)%periodicity)!=0) 
-      continue;
-
-    reportQuantity_type = UE_list->csi_report_template[UE_id][csi_report_id].reportQuantity_type;
+    /*reportQuantity must be considered according to the current scheduled
+      CSI-ReportConfig if multiple CSI-ReportConfigs present*/
+    reportQuantity_type = UE_info->csi_report_template[UE_id][csi_report_id].reportQuantity_type;
     LOG_I(PHY,"SFN/SF:%d%d reportQuantity type = %d\n",frame,slot,reportQuantity_type);
     
     if ( NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP == reportQuantity_type || 
 		    NR_CSI_ReportConfig__reportQuantity_PR_cri_RSRP == reportQuantity_type) {
       uint8_t csi_ssb_idx = 0;
       uint8_t diff_rsrp_idx = 0;
-      uint8_t cri_ssbri_bitlen = UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen.cri_ssbri_bitlen;
+      uint8_t cri_ssbri_bitlen = UE_info->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen.cri_ssbri_bitlen;
 
     /*! As per the spec 38.212 and table:  6.3.1.1.2-12 in a single UCI sequence we can have multiple CSI_report
      * the number of CSI_report will depend on number of CSI resource sets that are configured in CSI-ResourceConfig RRC IE
@@ -152,16 +146,16 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
       */
 
       idx = 0; //Since for SSB RSRP reporting in RRC can configure only one ssb resource set per one report config
-      sched_ctrl->CSI_report[idx].choice.ssb_cri_report.nr_ssbri_cri = UE_list->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen.nb_ssbri_cri;
+      sched_ctrl->CSI_report[idx].choice.ssb_cri_report.nr_ssbri_cri = UE_info->csi_report_template[UE_id][csi_report_id].CSI_report_bitlen.nb_ssbri_cri;
 
       for (csi_ssb_idx = 0; csi_ssb_idx < sched_ctrl->CSI_report[idx].choice.ssb_cri_report.nr_ssbri_cri ; csi_ssb_idx++) {
 	if (NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP == reportQuantity_type)
 
           sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = 
-		  *(UE_list->csi_report_template[UE_id][csi_report_id].SSB_Index_list[cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
+		  *(UE_info->csi_report_template[UE_id][csi_report_id].SSB_Index_list[cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
 	else
           sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx] = 
-		  *(UE_list->csi_report_template[UE_id][csi_report_id].CSI_Index_list[cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
+		  *(UE_info->csi_report_template[UE_id][csi_report_id].CSI_Index_list[cri_ssbri_bitlen>0?((*payload)&~(~1<<(cri_ssbri_bitlen-1))):cri_ssbri_bitlen]);
 	  
         *payload >>= cri_ssbri_bitlen;
 	LOG_I(PHY,"SSB_index = %d",sched_ctrl->CSI_report[idx].choice.ssb_cri_report.CRI_SSBRI [csi_ssb_idx]);
@@ -174,7 +168,7 @@ void extract_pucch_csi_report ( NR_CSI_MeasConfig_t *csi_MeasConfig,
         sched_ctrl->CSI_report[idx].choice.ssb_cri_report.diff_RSRP[diff_rsrp_idx] = (*payload) & 0x0f;
         *payload >>= 4;
       }
-      UE_list->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report++;
+      UE_info->csi_report_template[UE_id][csi_report_id].nb_of_csi_ssb_report++;
       LOG_I(MAC,"csi_payload size = %d, rsrp_id = %d\n",payload_size, sched_ctrl->CSI_report[idx].choice.ssb_cri_report.RSRP);
     }
   }
@@ -246,6 +240,7 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_
       case NFAPI_NR_UCI_PUSCH_PDU_TYPE: break;
 
       case NFAPI_NR_UCI_FORMAT_0_1_PDU_TYPE: {
+
         nfapi_nr_uci_pucch_pdu_format_0_1_t *uci_pdu = &uci_list[i].pucch_pdu_format_0_1;
 
         // tpc (power control)
@@ -267,7 +262,7 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_
       case NFAPI_NR_UCI_FORMAT_2_3_4_PDU_TYPE: {
         nfapi_nr_uci_pucch_pdu_format_2_3_4_t *uci_pdu = &uci_list[i].pucch_pdu_format_2_3_4;
         module_id_t Mod_idP = UL_info -> module_id;
-        NR_CSI_MeasConfig_t *csi_MeasConfig = RC.nrmac[Mod_idP]->UE_list.secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
+        NR_CSI_MeasConfig_t *csi_MeasConfig = RC.nrmac[Mod_idP]->UE_info.secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->csi_MeasConfig->choice.setup;
 
         // tpc (power control)
         sched_ctrl->tpc1 = nr_get_tpc(target_snrx10,uci_pdu->ul_cqi,30);
@@ -287,12 +282,12 @@ void handle_nr_uci(NR_UL_IND_t *UL_info, NR_UE_sched_ctrl_t *sched_ctrl, NR_mac_
           sched_ctrl->sr_req.nr_of_srs = uci_pdu->sr.sr_bit_len;
         }
 
-        if (uci_pdu -> pduBitmap & 0x02) 
+        if(uci_pdu->pduBitmap & 0x02)
           nr_rx_acknack(NULL,NULL,uci_pdu,UL_info,sched_ctrl,stats);
 
         if (uci_pdu -> pduBitmap & 0x04) {
           //int bwp_id =1;
-          //NR_BWP_Uplink_t *ubwp=RC.nrmac[Mod_idP]->UE_list.secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[bwp_id-1];
+          //NR_BWP_Uplink_t *ubwp=RC.nrmac[Mod_idP]->UE_info.secondaryCellGroup[UE_id]->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[bwp_id-1];
           NR_SubcarrierSpacing_t scs=*(RC.nrmac[Mod_idP]->common_channels->ServingCellConfigCommon->ssbSubcarrierSpacing);
           LOG_I(PHY,"SFN/SF:%d%d scs %ld \n",
             UL_info->frame,UL_info->slot,
@@ -398,6 +393,7 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
   NR_Sched_Rsp_t   *sched_info = &Sched_INFO[module_id][CC_id];
   NR_IF_Module_t   *ifi        = if_inst[module_id];
   gNB_MAC_INST     *mac        = RC.nrmac[module_id];
+
   LOG_D(PHY,"SFN/SF:%d%d module_id:%d CC_id:%d UL_info[rach_pdus:%d rx_ind:%d crcs:%d]\n",
         UL_info->frame,UL_info->slot,
         module_id,CC_id, UL_info->rach_ind.number_of_pdus,

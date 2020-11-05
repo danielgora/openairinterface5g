@@ -465,6 +465,133 @@ uint8_t getN_PRB_DMRS(NR_BWP_Downlink_t *bwp, int numDmrsCdmGrpsNoData) {
     return numDmrsCdmGrpsNoData * 4;
   }
 }
+void pf_dl(module_id_t module_id,
+           frame_t frame,
+           sub_frame_t slot,
+           int num_slots_per_tdd,
+           NR_UE_info_t *UE_info,
+           int n_rb_sched,
+           uint8_t *rballoc_mask,
+           int max_num_ue) {
+
+  const int UE_id = 0;
+  const int CC_id = 0;
+
+  NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
+  const uint16_t rnti = UE_info->rnti[UE_id];
+
+  /* Find a free CCE */
+  const int target_ss = NR_SearchSpace__searchSpaceType_PR_ue_Specific;
+  sched_ctrl->search_space = get_searchspace(sched_ctrl->active_bwp, target_ss);
+  uint8_t nr_of_candidates;
+  find_aggregation_candidates(&sched_ctrl->aggregation_level,
+                            &nr_of_candidates,
+                            sched_ctrl->search_space);
+  sched_ctrl->coreset = get_coreset(sched_ctrl->active_bwp, sched_ctrl->search_space, 1 /* dedicated */);
+  int cid = sched_ctrl->coreset->controlResourceSetId;
+  const uint16_t Y = UE_info->Y[UE_id][cid][slot];
+  const int m = UE_info->num_pdcch_cand[UE_id][cid];
+  sched_ctrl->cce_index = allocate_nr_CCEs(RC.nrmac[module_id],
+                                           sched_ctrl->active_bwp,
+                                           sched_ctrl->coreset,
+                                           sched_ctrl->aggregation_level,
+                                           Y,
+                                           m,
+                                           nr_of_candidates);
+  if (sched_ctrl->cce_index < 0) {
+    LOG_E(MAC, "%s(): could not find CCE for UE %d\n", __func__, UE_id);
+    return;
+  }
+  UE_info->num_pdcch_cand[UE_id][cid]++;
+
+  /* Find PUCCH occasion */
+  nr_acknack_scheduling(module_id,
+                        UE_id,
+                        frame,
+                        slot,
+                        num_slots_per_tdd,
+                        &sched_ctrl->pucch_sched_idx,
+                        &sched_ctrl->pucch_occ_idx);
+
+  AssertFatal(sched_ctrl->pucch_sched_idx >= 0, "no uplink slot for PUCCH found!\n");
+
+  uint8_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
+  const int current_harq_pid = sched_ctrl->current_harq_pid;
+  NR_UE_harq_t *harq = &sched_ctrl->harq_processes[current_harq_pid];
+  NR_UE_ret_info_t *retInfo = &sched_ctrl->retInfo[current_harq_pid];
+  const uint16_t bwpSize = NRRIV2BW(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
+  int rbStart = NRRIV2PRBOFFSET(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
+
+  if (harq->round != 0) { /* retransmission */
+    sched_ctrl->time_domain_allocation = retInfo->time_domain_allocation;
+
+    /* ensure that there is a free place for RB allocation */
+    int rbSize = 0;
+    while (rbSize < retInfo->rbSize) {
+        rbStart += rbSize; /* last iteration rbSize was not enough, skip it */
+        rbSize = 0;
+        while (rbStart < bwpSize && !rballoc_mask[rbStart]) rbStart++;
+        if (rbStart >= bwpSize) {
+            LOG_E(MAC,
+                  "cannot allocate retransmission for UE %d/RNTI %04x: no resources\n",
+                  UE_id,
+                  rnti);
+            return;
+        }
+        while (rbStart + rbSize < bwpSize
+               && rballoc_mask[rbStart + rbSize]
+               && rbSize < retInfo->rbSize)
+            rbSize++;
+    }
+    sched_ctrl->rbSize = retInfo->rbSize;
+    sched_ctrl->rbStart = rbStart;
+
+    /* MCS etc: just reuse from previous scheduling opportunity */
+    sched_ctrl->mcsTableIdx = retInfo->mcsTableIdx;
+    sched_ctrl->mcs = retInfo->mcs;
+    sched_ctrl->numDmrsCdmGrpsNoData = retInfo->numDmrsCdmGrpsNoData;
+  } else {
+      // Time-domain allocation
+      sched_ctrl->time_domain_allocation = 2;
+
+      // modulation scheme
+      sched_ctrl->mcsTableIdx = 0;
+      sched_ctrl->mcs = 9;
+      sched_ctrl->numDmrsCdmGrpsNoData = 1;
+
+      // Freq-demain allocation
+      while (rbStart < bwpSize && !rballoc_mask[rbStart]) rbStart++;
+
+      uint8_t N_PRB_DMRS =
+            getN_PRB_DMRS(sched_ctrl->active_bwp, sched_ctrl->numDmrsCdmGrpsNoData);
+      int nrOfSymbols = getNrOfSymbols(sched_ctrl->active_bwp,
+                                     sched_ctrl->time_domain_allocation);
+
+      int rbSize = 0;
+      uint32_t TBS = 0;
+      do {
+          rbSize++;
+          TBS = nr_compute_tbs(nr_get_Qm_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
+                               nr_get_code_rate_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
+                               rbSize,
+                               nrOfSymbols,
+                               N_PRB_DMRS, // FIXME // This should be multiplied by the
+                               // number of dmrs symbols
+                               0 /* N_PRB_oh, 0 for initialBWP */,
+                               0 /* tb_scaling */,
+                               1 /* nrOfLayers */)
+                >> 3;
+      } while (rbStart + rbSize < bwpSize && rballoc_mask[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes);
+      sched_ctrl->rbSize = rbSize;
+      sched_ctrl->rbStart = rbStart;
+  }
+
+  /* mark the corresponding RBs as used */
+  for (int rb = 0; rb < sched_ctrl->rbSize; rb++) {
+    vrb_map[rb + sched_ctrl->rbStart] = 1;
+    rballoc_mask[rb + sched_ctrl->rbStart] = 0;
+  }
+}
 
 void nr_simple_dlsch_preprocessor(module_id_t module_id,
                                   frame_t frame,
@@ -499,6 +626,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
     n_rb_sched += rballoc_mask[i];
   }
 
+
   /* Retrieve amount of data to send for this UE */
   sched_ctrl->num_total_bytes = 0;
   const int lcid = DL_SCH_LCID_DTCH;
@@ -523,115 +651,13 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
         lcid,
         sched_ctrl->rlc_status[lcid].bytes_in_buffer);
 
-  /* Find a free CCE */
-  const int target_ss = NR_SearchSpace__searchSpaceType_PR_ue_Specific;
-  sched_ctrl->search_space = get_searchspace(sched_ctrl->active_bwp, target_ss);
-  uint8_t nr_of_candidates;
-  find_aggregation_candidates(&sched_ctrl->aggregation_level,
-                              &nr_of_candidates,
-                              sched_ctrl->search_space);
-  sched_ctrl->coreset = get_coreset(
-      sched_ctrl->active_bwp, sched_ctrl->search_space, 1 /* dedicated */);
-  int cid = sched_ctrl->coreset->controlResourceSetId;
-  const uint16_t Y = UE_info->Y[UE_id][cid][slot];
-  const int m = UE_info->num_pdcch_cand[UE_id][cid];
-  sched_ctrl->cce_index = allocate_nr_CCEs(RC.nrmac[module_id],
-                                           sched_ctrl->active_bwp,
-                                           sched_ctrl->coreset,
-                                           sched_ctrl->aggregation_level,
-                                           Y,
-                                           m,
-                                           nr_of_candidates);
-  if (sched_ctrl->cce_index < 0) {
-    LOG_E(MAC, "%s(): could not find CCE for UE %d\n", __func__, UE_id);
-    return;
-  }
-  UE_info->num_pdcch_cand[UE_id][cid]++;
+  /* pf algo */
+  pf_dl(module_id,frame,slot,num_slots_per_tdd,
+        UE_info,
+        n_rb_sched,
+        rballoc_mask,
+        2);
 
-  /* Find PUCCH occasion */
-  nr_acknack_scheduling(module_id,
-                        UE_id,
-                        frame,
-                        slot,
-                        num_slots_per_tdd,
-                        &sched_ctrl->pucch_sched_idx,
-                        &sched_ctrl->pucch_occ_idx);
-
-  AssertFatal(sched_ctrl->pucch_sched_idx >= 0, "no uplink slot for PUCCH found!\n");
-
-  const int current_harq_pid = sched_ctrl->current_harq_pid;
-  NR_UE_harq_t *harq = &sched_ctrl->harq_processes[current_harq_pid];
-  NR_UE_ret_info_t *retInfo = &sched_ctrl->retInfo[current_harq_pid];
-
-  if (harq->round != 0) { /* retransmission */
-    sched_ctrl->time_domain_allocation = retInfo->time_domain_allocation;
-
-    /* ensure that there is a free place for RB allocation */
-    int rbSize = 0;
-    while (rbSize < retInfo->rbSize) {
-      rbStart += rbSize; /* last iteration rbSize was not enough, skip it */
-      rbSize = 0;
-      while (rbStart < bwpSize && !rballoc_mask[rbStart]) rbStart++;
-      if (rbStart >= bwpSize) {
-        LOG_E(MAC,
-              "cannot allocate retransmission for UE %d/RNTI %04x: no resources\n",
-              UE_id,
-              rnti);
-        return;
-      }
-      while (rbStart + rbSize < bwpSize
-             && rballoc_mask[rbStart + rbSize]
-             && rbSize < retInfo->rbSize)
-        rbSize++;
-    }
-    sched_ctrl->rbSize = retInfo->rbSize;
-    sched_ctrl->rbStart = rbStart;
-
-    /* MCS etc: just reuse from previous scheduling opportunity */
-    sched_ctrl->mcsTableIdx = retInfo->mcsTableIdx;
-    sched_ctrl->mcs = retInfo->mcs;
-    sched_ctrl->numDmrsCdmGrpsNoData = retInfo->numDmrsCdmGrpsNoData;
-  } else {
-    // Time-domain allocation
-    sched_ctrl->time_domain_allocation = 2;
-
-    // modulation scheme
-    sched_ctrl->mcsTableIdx = 0;
-    sched_ctrl->mcs = 9;
-    sched_ctrl->numDmrsCdmGrpsNoData = 1;
-
-    // Freq-demain allocation
-    while (rbStart < bwpSize && !rballoc_mask[rbStart]) rbStart++;
-
-    uint8_t N_PRB_DMRS =
-        getN_PRB_DMRS(sched_ctrl->active_bwp, sched_ctrl->numDmrsCdmGrpsNoData);
-    int nrOfSymbols = getNrOfSymbols(sched_ctrl->active_bwp,
-                                     sched_ctrl->time_domain_allocation);
-
-    int rbSize = 0;
-    uint32_t TBS = 0;
-    do {
-      rbSize++;
-      TBS = nr_compute_tbs(nr_get_Qm_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
-                           nr_get_code_rate_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
-                           rbSize,
-                           nrOfSymbols,
-                           N_PRB_DMRS, // FIXME // This should be multiplied by the
-                                       // number of dmrs symbols
-                           0 /* N_PRB_oh, 0 for initialBWP */,
-                           0 /* tb_scaling */,
-                           1 /* nrOfLayers */)
-            >> 3;
-    } while (rbStart + rbSize < bwpSize && rballoc_mask[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes);
-    sched_ctrl->rbSize = rbSize;
-    sched_ctrl->rbStart = rbStart;
-  }
-
-  /* mark the corresponding RBs as used */
-  for (int rb = 0; rb < sched_ctrl->rbSize; rb++) {
-    vrb_map[rb + sched_ctrl->rbStart] = 1;
-    rballoc_mask[rb + sched_ctrl->rbStart] = 0;
-  }
 }
 
 void nr_schedule_ue_spec(module_id_t module_id,

@@ -465,6 +465,37 @@ uint8_t getN_PRB_DMRS(NR_BWP_Downlink_t *bwp, int numDmrsCdmGrpsNoData) {
     return numDmrsCdmGrpsNoData * 4;
   }
 }
+void nr_store_dlsch_buffer(module_id_t module_id,
+                           frame_t frame,
+                           sub_frame_t slot) {
+
+  NR_UE_info_t *UE_info = &RC.nrmac[module_id]->UE_info;
+
+  for (int UE_id = UE_info->list.head; UE_id >= 0; UE_id = UE_info->list.next[UE_id]) {
+    NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
+
+    sched_ctrl->num_total_bytes = 0;
+    const int lcid = DL_SCH_LCID_DTCH;
+    const uint16_t rnti = UE_info->rnti[UE_id];
+    sched_ctrl->rlc_status[lcid] = mac_rlc_status_ind(module_id,
+                                                      rnti,
+                                                      module_id,
+                                                      frame,
+                                                      slot,
+                                                      ENB_FLAG_YES,
+                                                      MBMS_FLAG_NO,
+                                                      lcid,
+                                                      0,
+                                                      0);
+    sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
+    LOG_D(MAC,
+          "%d.%d, DTCH%d->DLSCH, RLC status %d bytes\n",
+          frame,
+          slot,
+          lcid,
+          sched_ctrl->rlc_status[lcid].bytes_in_buffer);
+  }
+}
 void pf_dl(module_id_t module_id,
            frame_t frame,
            sub_frame_t slot,
@@ -614,7 +645,6 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
 
   /* Calculate num of RBG and RBG size from UE_id=0 */
   const uint16_t bwpSize = NRRIV2BW(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
-  int rbStart = NRRIV2PRBOFFSET(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
 
   uint8_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
   uint8_t rballoc_mask[bwpSize];
@@ -628,28 +658,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
 
 
   /* Retrieve amount of data to send for this UE */
-  sched_ctrl->num_total_bytes = 0;
-  const int lcid = DL_SCH_LCID_DTCH;
-  const uint16_t rnti = UE_info->rnti[UE_id];
-  sched_ctrl->rlc_status[lcid] = mac_rlc_status_ind(module_id,
-                                                    rnti,
-                                                    module_id,
-                                                    frame,
-                                                    slot,
-                                                    ENB_FLAG_YES,
-                                                    MBMS_FLAG_NO,
-                                                    lcid,
-                                                    0,
-                                                    0);
-  sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
-  if (sched_ctrl->num_total_bytes == 0 && !get_softmodem_params()->phy_test)
-    return;
-  LOG_D(MAC,
-        "%d.%d, DTCH%d->DLSCH, RLC status %d bytes\n",
-        frame,
-        slot,
-        lcid,
-        sched_ctrl->rlc_status[lcid].bytes_in_buffer);
+  nr_store_dlsch_buffer(module_id,frame,slot);
 
   /* pf algo */
   pf_dl(module_id,frame,slot,num_slots_per_tdd,

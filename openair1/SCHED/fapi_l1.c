@@ -1097,6 +1097,13 @@ void schedule_response(Sched_Rsp_t *Sched_INFO, L1_rxtx_proc_t *proc) {
           ulsch_pdu_num++;
         }
       }
+      if (RC.mac[Mod_id]->scheduler_mode == SCHED_MODE_DEFAULT) {
+        //LOG_D(PHY, "UL_CONFIG to send to PNF\n");
+        UL_req->sfn_sf = frame << 4 | subframe;
+        oai_nfapi_ul_config_req(UL_req);
+        UL_req->ul_config_request_body.number_of_pdus=0;
+        number_ul_pdu=0;
+      }else if (RC.mac[Mod_id]->scheduler_mode == SCHED_MODE_FAIR_RR) {
       if(ulsch_pdu_num <= RC.rrc[Mod_id]->configuration.radioresourceconfig[CC_id].ue_multiple_max){
       //LOG_D(PHY, "UL_CONFIG to send to PNF\n");
       UL_req->sfn_sf = frame << 4 | subframe;
@@ -1106,6 +1113,7 @@ void schedule_response(Sched_Rsp_t *Sched_INFO, L1_rxtx_proc_t *proc) {
       }else{
         LOG_E(MAC,"NFAPI: frame %d subframe %d ul_req num %d ul pdu %d\n",
              frame,subframe,number_ul_pdu,ulsch_pdu_num);
+      }
       }
     }
   } else {

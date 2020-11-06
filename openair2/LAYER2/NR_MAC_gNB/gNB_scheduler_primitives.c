@@ -438,7 +438,6 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
                           NR_UE_sched_ctrl_t *sched_ctrl,
                           NR_sched_pucch *pucch_sched,
                           uint8_t mcs,
-                          uint16_t rbSize,
                           uint16_t rbStart,
                           uint8_t numDmrsCdmGrpsNoData,
                           nfapi_nr_dmrs_type_e dmrsConfigType,
@@ -511,7 +510,7 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   pdsch_pdu_rel15->dmrsPorts = 1;
   pdsch_pdu_rel15->resourceAlloc = 1;
   pdsch_pdu_rel15->rbStart = rbStart;
-  pdsch_pdu_rel15->rbSize = rbSize;
+  pdsch_pdu_rel15->rbSize = sched_ctrl->rbSize;
   pdsch_pdu_rel15->VRBtoPRBMapping = 1; // non-interleaved, check if this is ok for initialBWP
   pdsch_pdu_rel15->targetCodeRate[0] = R;
   pdsch_pdu_rel15->qamModOrder[0] = Qm;

@@ -356,7 +356,8 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
     int harq_idx_s = 0;
 
     // iterate over received harq bits
-    for (int harq_bit = 0; harq_bit < uci_01->harq->num_harq; harq_bit++) {
+    const int num_harq = uci_01->harq->num_harq;
+    for (int harq_bit = 0; harq_bit < num_harq; harq_bit++) {
       // search for the right harq process
       for (int harq_idx = harq_idx_s; harq_idx < NR_MAX_NB_HARQ_PROCESSES; harq_idx++) {
         // if the gNB received ack with a good confidence
@@ -367,12 +368,22 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
             sched_ctrl->harq_processes[harq_idx].round = 0;
           }
-          else
+          else {
+            LOG_I(MAC,
+                  "%4d.%2d harq bit %d PUCCH 0_1 NACK for harq process %d last round %d num_harq %d\n",
+                  UL_info->frame,
+                  UL_info->slot,
+                  harq_bit,
+                  harq_idx,
+                  sched_ctrl->harq_processes[harq_idx].round,
+                  num_harq);
             sched_ctrl->harq_processes[harq_idx].round++;
+          }
           sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
           harq_idx_s = harq_idx + 1;
           // if the max harq rounds was reached
           if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
+            LOG_I(MAC, "-> transmission error for harq process %d\n", harq_idx);
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
             sched_ctrl->harq_processes[harq_idx].round = 0;
             stats->dlsch_errors++;
@@ -410,12 +421,16 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
             sched_ctrl->harq_processes[harq_idx].round = 0;
           }
-          else
+          else {
+            LOG_I(MAC, "PUCCH 2_3_4 NACK for harq process %d last round %d\n", harq_idx,
+                  sched_ctrl->harq_processes[harq_idx].round);
             sched_ctrl->harq_processes[harq_idx].round++;
+          }
           sched_ctrl->harq_processes[harq_idx].is_waiting = 0;
           harq_idx_s = harq_idx + 1;
           // if the max harq rounds was reached
           if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
+            LOG_I(MAC, "PUCCH 2_3_4 transmission error for harq process %d\n", harq_idx);
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
             sched_ctrl->harq_processes[harq_idx].round = 0;
             stats->dlsch_errors++;

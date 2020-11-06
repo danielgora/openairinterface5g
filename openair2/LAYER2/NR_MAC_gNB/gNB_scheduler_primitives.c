@@ -551,6 +551,9 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   // harq pid and ndi
   dci_pdu_rel15[0].harq_pid = harq_pid;
   dci_pdu_rel15[0].ndi = ndi;
+  if (round > 0) {
+    LOG_I(MAC, "retx for UE: round %d ndi %d harq_pid %d\n", round, ndi, harq_pid);
+  }
   // DAI
   dci_pdu_rel15[0].dai[0].val = (pucch_sched->dai_c-1)&3;
 

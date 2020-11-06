@@ -38,15 +38,12 @@
 #include "openairinterface5g_limits.h"
 #include "PHY/TOOLS/time_meas.h"
 #include "defs_common.h"
-
+#include "nfapi_nr_interface_scf.h"
 
 #define MAX_BANDS_PER_RRU 4
 #define MAX_RRU_CONFIG_SIZE 1024
 
 
-#ifdef OCP_FRAMEWORK
-#include <enums.h>
-#else
 
 typedef enum {
   normal_txrx=0,
@@ -92,7 +89,6 @@ typedef enum {
   synch_to_other,          // synch to another source_(timer, other RU)
   synch_to_mobipass_standalone  // special case for mobipass in standalone mode
 } node_timing_t;
-#endif
 
 
 typedef struct {
@@ -213,6 +209,18 @@ typedef struct RU_feptx_t_s{
   int nb_antenna_ports;//number of logical port
   int index;
 }RU_feptx_t;
+
+typedef struct {
+  int frame;
+  int slot;
+  int fmt;
+  int numRA;
+  int prachStartSymbol;
+  int num_prach_ocas;
+} RU_PRACH_list_t;
+
+#define NUMBER_OF_NR_RU_PRACH_MAX 8
+#define NUMBER_OF_NR_RU_PRACH_OCCASIONS_MAX 12
 
 typedef struct RU_proc_t_s {
   /// Pointer to associated RU descriptor
@@ -499,6 +507,8 @@ typedef struct RU_t_s {
   int nb_rx;
   /// number of TX paths on device
   int nb_tx;
+  /// number of logical antennas at TX beamformer input
+  int nb_log_antennas;
   /// maximum PDSCH RS EPRE
   int max_pdschReferenceSignalPower;
   /// maximum RX gain
@@ -509,6 +519,8 @@ typedef struct RU_t_s {
   int att_tx;
   /// flag to indicate precoding operation in RU
   int do_precoding;
+  /// FAPI confiuration
+  nfapi_nr_config_request_scf_t  config;
   /// Frame parameters
   struct LTE_DL_FRAME_PARMS *frame_parms;
   struct NR_DL_FRAME_PARMS *nr_frame_parms;
@@ -569,6 +581,8 @@ typedef struct RU_t_s {
   void (*wakeup_prach_gNB)(struct PHY_VARS_gNB_s *gNB, struct RU_t_s *ru, int frame, int subframe);
   /// function pointer to wakeup routine in lte-enb.
   void (*wakeup_prach_eNB_br)(struct PHY_VARS_eNB_s *eNB, struct RU_t_s *ru, int frame, int subframe);
+  /// function pointer to start a thread of tx write for USRP.
+  int (*start_write_thread)(struct RU_t_s *ru);
 
   /// function pointer to NB entry routine
   void (*eNB_top)(struct PHY_VARS_eNB_s *eNB, int frame_rx, int subframe_rx, char *string, struct RU_t_s *ru);
@@ -609,8 +623,12 @@ typedef struct RU_t_s {
   int32_t *bw_list[NUMBER_OF_eNB_MAX+1];
   /// beamforming weight vectors
   int32_t **beam_weights[NUMBER_OF_eNB_MAX+1][15];
-  /// received frequency-domain signal for PRACH (IF4p5 RRU)
-  int16_t **prach_rxsigF;
+  /// prach commands
+  RU_PRACH_list_t prach_list[NUMBER_OF_NR_RU_PRACH_MAX];
+  /// mutex for prach_list access
+  pthread_mutex_t prach_list_mutex;
+  /// received frequency-domain signal for PRACH (IF4p5 RRU) 
+  int16_t **prach_rxsigF[NUMBER_OF_NR_RU_PRACH_OCCASIONS_MAX];
   /// received frequency-domain signal for PRACH BR (IF4p5 RRU)
   int16_t **prach_rxsigF_br[4];
   /// sequence number for IF5
@@ -635,6 +653,8 @@ typedef struct RU_t_s {
   int wakeup_L1_sleeptime;
   /// maximum number of sleeps
   int wakeup_L1_sleep_cnt_max;
+  /// DL IF frequency in Hz
+  uint64_t if_frequency;
 } RU_t;
 
 

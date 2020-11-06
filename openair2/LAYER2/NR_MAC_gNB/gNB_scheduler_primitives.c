@@ -496,7 +496,7 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   pdsch_pdu_rel15->NrOfCodewords = 1;
   pdsch_pdu_rel15->targetCodeRate[0] = nr_get_code_rate_dl(mcs,0);
   pdsch_pdu_rel15->qamModOrder[0] = 2;
-  LOG_I(MAC, "allocate with MCS %d\n", mcs);
+  LOG_D(MAC, "allocate with MCS %d\n", mcs);
   pdsch_pdu_rel15->mcsIndex[0] = mcs;
   pdsch_pdu_rel15->mcsTable[0] = table_idx;
   pdsch_pdu_rel15->rvIndex[0] = nr_rv_round_map[round];

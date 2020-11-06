@@ -459,6 +459,8 @@ static void* L1_thread_rx( void* param ) {
 
     LOG_D(PHY,"Running L1 thread rx procedures\n");
 
+    T(T_ENB_MASTER_TICK, T_INT(0), T_INT(proc->frame_rx), T_INT(proc->subframe_rx));
+
     if (rxtx(eNB,proc,string) < 0) LOG_E(PHY,"eNB %d CC_id %d failed during execution\n",eNB->Mod_id,eNB->CC_id);
 
     if (release_thread(&proc->mutex,&proc->instance_cnt,string) < 0) break;

@@ -437,7 +437,12 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
                           NR_CellGroupConfig_t *secondaryCellGroup,
                           NR_UE_sched_ctrl_t *sched_ctrl,
                           NR_sched_pucch *pucch_sched,
+                          uint8_t mcs,
+                          uint16_t rbSize,
+                          uint16_t rbStart,
+                          uint8_t numDmrsCdmGrpsNoData,
                           nfapi_nr_dmrs_type_e dmrsConfigType,
+                          uint8_t table_idx,
                           uint16_t R,
                           uint8_t Qm,
                           uint32_t TBS,
@@ -451,8 +456,6 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   NR_ServingCellConfigCommon_t        *scc     = cc->ServingCellConfigCommon;
 
   const int bwp_id = sched_ctrl->active_bwp->bwp_Id;
-  const int nrOfLayers = 1;
-  const int mcs = sched_ctrl->mcs;
 
   AssertFatal(secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
 	      "downlinkBWP_ToAddModList has %d BWP!\n",
@@ -493,26 +496,26 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   pdsch_pdu_rel15->NrOfCodewords = 1;
   pdsch_pdu_rel15->targetCodeRate[0] = nr_get_code_rate_dl(mcs,0);
   pdsch_pdu_rel15->qamModOrder[0] = 2;
+  LOG_I(MAC, "allocate with MCS %d\n", mcs);
   pdsch_pdu_rel15->mcsIndex[0] = mcs;
-  pdsch_pdu_rel15->mcsTable[0] = 0;
+  pdsch_pdu_rel15->mcsTable[0] = table_idx;
   pdsch_pdu_rel15->rvIndex[0] = nr_rv_round_map[round];
   pdsch_pdu_rel15->dataScramblingId = *scc->physCellId;
-  pdsch_pdu_rel15->nrOfLayers = nrOfLayers;
+  pdsch_pdu_rel15->nrOfLayers = 1;
   pdsch_pdu_rel15->transmissionScheme = 0;
   pdsch_pdu_rel15->refPoint = 0; // Point A
   pdsch_pdu_rel15->dmrsConfigType = dmrsConfigType;
   pdsch_pdu_rel15->dlDmrsScramblingId = *scc->physCellId;
   pdsch_pdu_rel15->SCID = 0;
-  pdsch_pdu_rel15->numDmrsCdmGrpsNoData = sched_ctrl->numDmrsCdmGrpsNoData;
+  pdsch_pdu_rel15->numDmrsCdmGrpsNoData = numDmrsCdmGrpsNoData;
   pdsch_pdu_rel15->dmrsPorts = 1;
   pdsch_pdu_rel15->resourceAlloc = 1;
-  pdsch_pdu_rel15->rbStart = sched_ctrl->rbStart;
-  pdsch_pdu_rel15->rbSize = sched_ctrl->rbSize;
+  pdsch_pdu_rel15->rbStart = rbStart;
+  pdsch_pdu_rel15->rbSize = rbSize;
   pdsch_pdu_rel15->VRBtoPRBMapping = 1; // non-interleaved, check if this is ok for initialBWP
   pdsch_pdu_rel15->targetCodeRate[0] = R;
   pdsch_pdu_rel15->qamModOrder[0] = Qm;
   pdsch_pdu_rel15->TBSize[0] = TBS;
-  pdsch_pdu_rel15->mcsTable[0] = sched_ctrl->mcsTableIdx;
   pdsch_pdu_rel15->StartSymbolIndex = StartSymbolIndex;
   pdsch_pdu_rel15->NrOfSymbols      = NrOfSymbols;
 

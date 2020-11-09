@@ -498,7 +498,7 @@ void nr_store_dlsch_buffer(module_id_t module_id,
   }
 }
 
-void find_free_CCE(module_id_t module_id,
+bool find_free_CCE(module_id_t module_id,
                    sub_frame_t slot,
                    NR_UE_info_t *UE_info,
                    int UE_id){
@@ -522,12 +522,13 @@ void find_free_CCE(module_id_t module_id,
                                            nr_of_candidates);
   if (sched_ctrl->cce_index < 0) {
     LOG_E(MAC, "%s(): could not find CCE for UE %d\n", __func__, UE_id);
-    return;
+    return false;
   }
   UE_info->num_pdcch_cand[UE_id][cid]++;
+  return true;
 }
 
-void allocate_retransmission(module_id_t module_id,
+bool allocate_retransmission(module_id_t module_id,
                              uint8_t *rballoc_mask,
                              int *n_rb_sched,
                              NR_UE_info_t *UE_info,
@@ -552,7 +553,7 @@ void allocate_retransmission(module_id_t module_id,
             "cannot allocate retransmission for UE %d/RNTI %04x: no resources\n",
             UE_id,
             rnti);
-      return;
+      return false;
     }
     while (rbStart + rbSize < bwpSize
            && rballoc_mask[rbStart + rbSize]
@@ -569,13 +570,9 @@ void allocate_retransmission(module_id_t module_id,
 
   /* retransmissions: directly allocate */
   *n_rb_sched -= sched_ctrl->rbSize;
-  int n_rb_ret = sched_ctrl->rbSize;
-  for (int i = sched_ctrl->rbStart; n_rb_ret > 0; i++) {
-    if (!rballoc_mask[i])
-      continue;
-    rballoc_mask[i] = 0;
-    n_rb_ret--;
-  }
+  for (int rb = 0; rb < sched_ctrl->rbSize; rb++)
+    rballoc_mask[rb+sched_ctrl->rbStart] = 0;
+  return true;
 }
 
 void pf_dl(module_id_t module_id,
@@ -600,10 +597,10 @@ void pf_dl(module_id_t module_id,
 
     /* retransmission */
     if (harq->round != 0) {
-
       /* Find a free CCE */
-      find_free_CCE(module_id, slot, UE_info, UE_id);
-
+      bool freeCCEE = find_free_CCE(module_id, slot, UE_info, UE_id);
+      if (!freeCCEE)
+        continue;
       /* Find PUCCH occasion */
       nr_acknack_scheduling(module_id,
                             UE_id,
@@ -614,10 +611,8 @@ void pf_dl(module_id_t module_id,
                             &sched_ctrl->pucch_occ_idx);
 
       AssertFatal(sched_ctrl->pucch_sched_idx >= 0, "no uplink slot for PUCCH found!\n");
-
       /* Allocate retransmission */
-      allocate_retransmission(module_id, rballoc_mask, &n_rb_sched, UE_info, UE_id);
-
+      bool r = allocate_retransmission(module_id, rballoc_mask, &n_rb_sched, UE_info, UE_id);
     } else {
       /* Check DL buffer */
 
@@ -641,8 +636,9 @@ void pf_dl(module_id_t module_id,
     /* Find max coeff from UE_sched*/
 
     /* Find a free CCE */
-    find_free_CCE(module_id, slot, UE_info, UE_id);
-
+    bool freeCCEE = find_free_CCE(module_id, slot, UE_info, UE_id);
+    if (!freeCCEE)
+      return;
     /* Find PUCCH occasion */
     nr_acknack_scheduling(module_id,
                           UE_id,
@@ -680,11 +676,11 @@ void pf_dl(module_id_t module_id,
                            rbSize,
                            nrOfSymbols,
                            N_PRB_DMRS, // FIXME // This should be multiplied by the
-                           // number of dmrs symbols
+              // number of dmrs symbols
                            0 /* N_PRB_oh, 0 for initialBWP */,
                            0 /* tb_scaling */,
                            1 /* nrOfLayers */)
-            >> 3;
+              >> 3;
     } while (rbStart + rbSize < bwpSize && rballoc_mask[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes);
     sched_ctrl->rbSize = rbSize;
     sched_ctrl->rbStart = rbStart;

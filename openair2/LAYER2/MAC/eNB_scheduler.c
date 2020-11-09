@@ -1173,6 +1173,6 @@ void update_ue_timers(module_id_t module_idP,frame_t frameP, sub_frame_t subfram
   } // end RB_FOREACH
 
 
-  select_ul_ue_candidate( module_idP, frameP, subframeP);
-  select_dl_ue_candidate( module_idP, frameP, subframeP);
+//  select_ul_ue_candidate( module_idP, frameP, subframeP);
+//  select_dl_ue_candidate( module_idP, frameP, subframeP);
 }

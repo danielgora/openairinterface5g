@@ -1439,7 +1439,7 @@ void dlsch_scheduler_pre_processor_fairRR (module_id_t   Mod_id,
       }
     }
   }
-
+  select_dl_ue_candidate( Mod_id, frameP, subframeP);
   dlsch_scheduler_pre_ue_select_fairRR(Mod_id,frameP,subframeP, mbsfn_flag,nb_rbs_required,dlsch_ue_select);
   for (CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
     average_rbs_per_user[CC_id] = 0;
@@ -4238,6 +4238,7 @@ void ulsch_scheduler_pre_processor_fairRR(module_id_t module_idP,
   COMMON_channels_t *cc;
   LOG_D(MAC,"In ulsch_preprocessor: ulsch ue select\n");
   //ue select
+  select_ul_ue_candidate( module_idP, frameP, subframeP);
   ulsch_scheduler_pre_ue_select_fairRR(module_idP,frameP,subframeP,sched_subframeP,ulsch_ue_select);
 
   // MCS and RB assgin

@@ -3593,19 +3593,27 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
     MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.measTimingConfig_r15.periodicityAndOffset_r15.present = LTE_MTC_SSB_NR_r15__periodicityAndOffset_r15_PR_sf20_r15;
     MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.measTimingConfig_r15.periodicityAndOffset_r15.choice.sf20_r15 = 0;
     MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.measTimingConfig_r15.ssb_Duration_r15 = LTE_MTC_SSB_NR_r15__ssb_Duration_r15_sf4;
-    MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.subcarrierSpacingSSB_r15 = LTE_RS_ConfigSSB_NR_r15__subcarrierSpacingSSB_r15_kHz30;
+    if (rrc_inst->nr_scg_ssb_freq > 2016666) //FR2
+      MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.subcarrierSpacingSSB_r15 = LTE_RS_ConfigSSB_NR_r15__subcarrierSpacingSSB_r15_kHz120;
+    else
+      MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.subcarrierSpacingSSB_r15 = LTE_RS_ConfigSSB_NR_r15__subcarrierSpacingSSB_r15_kHz30;      
     MeasObj2->measObject.choice.measObjectNR_r15.quantityConfigSet_r15 = 1;
     MeasObj2->measObject.choice.measObjectNR_r15.ext1 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__ext1));
 
     if (MeasObj2->measObject.choice.measObjectNR_r15.ext1 == NULL) exit(1);
 
-      MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__ext1__bandNR_r15));
+    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__ext1__bandNR_r15));
 
-      if (MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 == NULL) exit(1);
+    if (MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 == NULL) exit(1);
 
-      MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->present = LTE_MeasObjectNR_r15__ext1__bandNR_r15_PR_setup;
+    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->present = LTE_MeasObjectNR_r15__ext1__bandNR_r15_PR_setup;
+    if (rrc_inst->nr_scg_ssb_freq > 2016666) //FR2
+      MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = 261;
+    else 
       MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = 78;
-      ASN_SEQUENCE_ADD(&MeasObj_list->list, MeasObj2);
+
+    ASN_SEQUENCE_ADD(&MeasObj_list->list, MeasObj2);
+  }
     }
 
     if (!ue_context_pP->ue_context.measurement_info->events) {
@@ -3768,7 +3776,6 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
     ue_context_pP->ue_context.measurement_info->events->a3_event->hysteresis = ReportConfig_A3->reportConfig.choice.reportConfigEUTRA.triggerType.choice.event.hysteresis;
     ue_context_pP->ue_context.measurement_info->events->a3_event->timeToTrigger = ReportConfig_A3->reportConfig.choice.reportConfigEUTRA.triggerType.choice.event.timeToTrigger;
     ue_context_pP->ue_context.measurement_info->events->a3_event->maxReportCells = ReportConfig_A3->reportConfig.choice.reportConfigEUTRA.maxReportCells;
-  }
 
 #if 0
   /* TODO: set a proper value.
@@ -4502,7 +4509,6 @@ flexran_rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt
   MeasObj->measObject.choice.measObjectEUTRA.neighCellConfig.buf[0] = 0;
   MeasObj->measObject.choice.measObjectEUTRA.neighCellConfig.size = 1;
   MeasObj->measObject.choice.measObjectEUTRA.neighCellConfig.bits_unused = 6;
-  //<<<<<<< HEAD
   MeasObj->measObject.choice.measObjectEUTRA.offsetFreq = NULL;   // Default is 15 or 0dB
 
   if (rrc_inst->carrier[0].sib1->tdd_Config!=NULL) {
@@ -5113,6 +5119,7 @@ rrc_eNB_process_MeasurementReport(
 
       case 7:
         LOG_D(RRC, "NR event frame %d subframe %d\n", ctxt_pP->frame, ctxt_pP->subframe);
+        printf("NR event frame %d subframe %d\n", ctxt_pP->frame, ctxt_pP->subframe);
         break;
 
       default:
@@ -7926,7 +7933,38 @@ rrc_eNB_decode_ccch(
                "reconfigurationFailure"));
         {
           uint16_t                          c_rnti = 0;
-          c_rnti = BIT_STRING_to_uint16(&rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI);
+
+          if (rrcConnectionReestablishmentRequest->ue_Identity.physCellId != RC.rrc[ctxt_pP->module_id]->carrier[CC_id].physCellId) {
+            /* UE was moving from previous cell so quickly that RRCConnectionReestablishment for previous cell was recieved in this cell */
+            LOG_E(RRC,
+                  PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest ue_Identity.physCellId(%ld) is not equal to current physCellId(%d), let's reject the UE\n",
+                  PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
+                  rrcConnectionReestablishmentRequest->ue_Identity.physCellId,
+                  RC.rrc[ctxt_pP->module_id]->carrier[CC_id].physCellId);
+            rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
+                 CC_id);
+            break;
+          }
+
+          LOG_D(RRC, "physCellId is %ld\n", rrcConnectionReestablishmentRequest->ue_Identity.physCellId);
+
+          for (i = 0; i < rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.size; i++) {
+            LOG_D(RRC, "rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.buf[%d] = %x\n",
+	          i, rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.buf[i]);
+	  }
+
+	  if (rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI.size == 0 ||
+	      rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI.size > 2) {
+	    /* c_RNTI range error should not happen */
+	    LOG_E(RRC,
+	          PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest c_RNTI range error, let's reject the UE\n",
+	          PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
+	    rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
+                  CC_id);
+	    break;
+	  }
+
+	  c_rnti = BIT_STRING_to_uint16(&rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI);
           LOG_D(RRC, "c_rnti is %x\n", c_rnti);
           ue_context_p = rrc_eNB_get_ue_context(RC.rrc[ctxt_pP->module_id], c_rnti);
 
@@ -7945,25 +7983,9 @@ rrc_eNB_decode_ccch(
                   PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP),
                   rrcConnectionReestablishmentRequest->ue_Identity.physCellId,
                   RC.rrc[ctxt_pP->module_id]->carrier[CC_id].physCellId);
-            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
-            break;
-          }
-
-          LOG_D(RRC, "physCellId is %ld\n", rrcConnectionReestablishmentRequest->ue_Identity.physCellId);
-
-          for (i = 0; i < rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.size; i++) {
-            LOG_D(RRC, "rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.buf[%d] = %x\n",
-                  i, rrcConnectionReestablishmentRequest->ue_Identity.shortMAC_I.buf[i]);
-          }
-
-          if (rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI.size == 0 ||
-              rrcConnectionReestablishmentRequest->ue_Identity.c_RNTI.size > 2) {
-            /* c_RNTI range error should not happen */
-            LOG_E(RRC,
-                  PROTOCOL_RRC_CTXT_UE_FMT" LTE_RRCConnectionReestablishmentRequest c_RNTI range error, let's reject the UE\n",
-                  PROTOCOL_RRC_CTXT_UE_ARGS(ctxt_pP));
-            rrc_eNB_generate_RRCConnectionReestablishmentReject(ctxt_pP, NULL, CC_id);
-            break;
+            rrc_eNB_generate_RRCConnectionReestablishmentReject_unknown_UE(ctxt_pP,
+	          CC_id);
+	    break;
           }
 
           int UE_id = find_UE_id(ctxt_pP->module_id, c_rnti);

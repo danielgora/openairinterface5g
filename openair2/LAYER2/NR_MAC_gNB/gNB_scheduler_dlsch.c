@@ -482,6 +482,8 @@ bool allocate_retransmission(module_id_t module_id,
   return true;
 }
 
+float thr_ue[MAX_MOBILES_PER_GNB];
+
 void pf_dl(module_id_t module_id,
            frame_t frame,
            sub_frame_t slot,
@@ -492,6 +494,9 @@ void pf_dl(module_id_t module_id,
            int max_num_ue) {
 
   const int UE_id = 0;
+  float coeff_ue[MAX_MOBILES_PER_GNB];
+  NR_UE_list_t UE_sched; // UEs that could be scheduled
+  int *uep = &UE_sched.head;
 
   /* Loop UE_info->list to check retransmission */
   for (int UE_id = UE_info->list.head; UE_id >= 0; UE_id = UE_info->list.next[UE_id]) {
@@ -501,7 +506,10 @@ void pf_dl(module_id_t module_id,
     const rnti_t rnti = UE_info->rnti[UE_id];
 
     /* Calculate Throughput */
-
+    const float a = 0.0005f; // corresponds to 200ms window
+    const uint32_t b = UE_info->mac_stats[UE_id].dlsch_current_bytes;
+    thr_ue[UE_id] = (1 - a) * thr_ue[UE_id] + a * b;
+    LOG_I(MAC,"thr_ue[%d] %f\n",UE_id, thr_ue[UE_id]);
 
     /* retransmission */
     if (harq->round != 0) {
@@ -660,6 +668,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
   NR_UE_list_t *UE_list = &UE_info->list;
   for (int UE_id = UE_list->head; UE_id >= 0; UE_id = UE_list->next[UE_id]) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
+    UE_info->mac_stats[UE_id].dlsch_current_bytes = 0;
 
     /* update TA and set ta_apply every 10 frames.
      * Possible improvement: take the periodicity from input file.
@@ -822,6 +831,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
       }
 
       UE_info->mac_stats[UE_id].dlsch_total_bytes += TBS;
+      UE_info->mac_stats[UE_id].dlsch_current_bytes = TBS;
       UE_info->mac_stats[UE_id].lc_bytes_tx[lcid] += sdu_length_total;
 
       const int post_padding = TBS > header_length_total + sdu_length_total + ta_len;

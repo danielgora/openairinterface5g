@@ -321,9 +321,9 @@ typedef enum {
 #define ENB_MBMS_SYNC_AREA_IDX     0
 
 #define MBMS_CONFIG_PARAMS_DESC {                                                                  \
-/*   optname                              helpstr               paramflags XXXptr     def val          type    numelt */ \
-  {ENB_CONFIG_STRING_MBMS_SYNC_AREA           , NULL,        0, uptr:NULL, defuintval:0, TYPE_UINT, 0},    \
-}
+    /*   optname                              helpstr               paramflags XXXptr     def val          type    numelt */ \
+    {ENB_CONFIG_STRING_MBMS_SYNC_AREA           , NULL,        0, uptr:NULL, defuintval:0, TYPE_UINT, 0},    \
+  }
 
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -334,9 +334,9 @@ typedef enum {
 #define ENB_MBMS_SERVICE_AREA_IDX     0
 
 #define MBMSPARAMS_DESC {                                                                  \
-/*   optname                              helpstr               paramflags XXXptr     def val          type    numelt */ \
-  {ENB_CONFIG_STRING_MBMS_SERVICE_AREA, NULL,        0, uptr:NULL, defuintval:0, TYPE_UINT, 0},    \
-}
+    /*   optname                              helpstr               paramflags XXXptr     def val          type    numelt */ \
+    {ENB_CONFIG_STRING_MBMS_SERVICE_AREA, NULL,        0, uptr:NULL, defuintval:0, TYPE_UINT, 0},    \
+  }
 
 
 /* component carries configuration parameters name */
@@ -440,7 +440,7 @@ typedef enum {
 
 #define ENB_CONFIG_STRING_PUSCH_MAX_NUM_REPETITION_CE_MODE_A_R13        "pusch_maxNumRepetitionCEmodeA_r13"
 #define ENB_CONFIG_STRING_PUSCH_MAX_NUM_REPETITION_CE_MODE_B_R13        "pusch_maxNumRepetitionCEmodeB_r13"
-#define ENB_CONFIG_STRING_PUSCH_REPETITION_LEVEL_CE_MODE_A_R13			"pusch_repetitionLevelCEmodeA_r13"
+#define ENB_CONFIG_STRING_PUSCH_REPETITION_LEVEL_CE_MODE_A_R13          "pusch_repetitionLevelCEmodeA_r13"
 #define ENB_CONFIG_STRING_PUSCH_HOPPING_OFFSET_V1310                    "pusch_HoppingOffset_v1310"
 
 
@@ -585,209 +585,209 @@ typedef struct ccparams_lte_s {
 } ccparams_lte_t;
 
 #define CCPARAMS_CHECK {                             \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
     { { NULL } } ,                             \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
-    { { NULL } } ,						     \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
+    { { NULL } } ,                 \
     { .s1a= { config_check_modify_integer, UETIMER_T300_OKVALUES, UETIMER_T300_MODVALUES,8}} ,\
     { .s1a= { config_check_modify_integer, UETIMER_T301_OKVALUES, UETIMER_T301_MODVALUES,8}} ,\
     { .s1a= { config_check_modify_integer, UETIMER_T310_OKVALUES, UETIMER_T310_MODVALUES,7}} ,\
     { .s1a= { config_check_modify_integer, UETIMER_T311_OKVALUES, UETIMER_T311_MODVALUES,7}} ,\
     { .s1a= { config_check_modify_integer, UETIMER_N310_OKVALUES, UETIMER_N310_MODVALUES,8}} ,\
     { .s1a= { config_check_modify_integer, UETIMER_N311_OKVALUES, UETIMER_N311_MODVALUES,8}} ,\
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
-    {  { NULL } } ,						     \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
+    {  { NULL } } ,                 \
     {  { NULL } }                               \
-}
+  }
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*                                     component carriers configuration parameters                                                                                                               */
 /*   optname                                                    helpstr    paramflags   XXXptr                                                   defXXXval                  type        numelt   */
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-#define CCPARAMS_DESC(ccparams) {					\
-  {ENB_CONFIG_STRING_FRAME_TYPE,                                   NULL,   0,           strptr:&ccparams.frame_type,                             defstrval:"FDD",           TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_TDD_CONFIG,                                   NULL,   0,           iptr:&ccparams.tdd_config,                               defintval:3,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_TDD_CONFIG_S,                                 NULL,   0,           iptr:&ccparams.tdd_config_s,                             defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PREFIX_TYPE,                                  NULL,   0,           strptr:&ccparams.prefix_type,                            defstrval:"NORMAL",        TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PBCH_REPETITION,                              NULL,   0,           strptr:&ccparams.pbch_repetition,                        defstrval:"FALSE",         TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_EUTRA_BAND,                                   NULL,   0,           iptr:&ccparams.eutra_band,                               defintval:7,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_DOWNLINK_FREQUENCY,                           NULL,   0,           i64ptr:(int64_t *)&ccparams.downlink_frequency,          defint64val:2680000000,    TYPE_UINT64,     0},  \
-  {ENB_CONFIG_STRING_UPLINK_FREQUENCY_OFFSET,                      NULL,   0,           iptr:&ccparams.uplink_frequency_offset,                  defintval:-120000000,      TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_NID_CELL,                                     NULL,   0,           iptr:&ccparams.Nid_cell,                                 defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_N_RB_DL,                                      NULL,   0,           iptr:&ccparams.N_RB_DL,                                  defintval:25,              TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_CELL_MBSFN,                                   NULL,   0,           iptr:&ccparams.Nid_cell_mbsfn,                           defintval:0,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_NB_ANT_PORTS,                                 NULL,   0,           iptr:&ccparams.nb_antenna_ports,                         defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PRACH_ROOT,                                   NULL,   0,           iptr:&ccparams.prach_root,                               defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PRACH_CONFIG_INDEX,                           NULL,   0,           iptr:&ccparams.prach_config_index,                       defintval:0,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PRACH_HIGH_SPEED,                             NULL,   0,           strptr:&ccparams.prach_high_speed,                       defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PRACH_ZERO_CORRELATION,                       NULL,   0,           iptr:&ccparams.prach_zero_correlation,                   defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PRACH_FREQ_OFFSET,                            NULL,   0,           iptr:&ccparams.prach_freq_offset,                        defintval:2,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTA_SHIFT,                            NULL,   0,           iptr:&ccparams.pucch_delta_shift,                        defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUCCH_NRB_CQI,                                NULL,   0,           iptr:&ccparams.pucch_nRB_CQI,                            defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUCCH_NCS_AN,                                 NULL,   0,           iptr:&ccparams.pucch_nCS_AN,                             defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUCCH_N1_AN,                                  NULL,   0,           iptr:&ccparams.pucch_n1_AN,                              defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PDSCH_RS_EPRE,                                NULL,   0,           iptr:&ccparams.pdsch_referenceSignalPower,               defintval:-29,             TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PDSCH_PB,                                     NULL,   0,           iptr:&ccparams.pdsch_p_b,                                defintval:0,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PUSCH_N_SB,                                   NULL,   0,           iptr:&ccparams.pusch_n_SB,                               defintval:1,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PUSCH_HOPPINGMODE,                            NULL,   0,           strptr:&ccparams.pusch_hoppingMode,                      defstrval:"interSubFrame", TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUSCH_HOPPINGOFFSET,                          NULL,   0,           iptr:&ccparams.pusch_hoppingOffset,                      defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUSCH_ENABLE64QAM,                            NULL,   0,           strptr:&ccparams.pusch_enable64QAM,                      defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUSCH_GROUP_HOPPING_EN,                       NULL,   0,           strptr:&ccparams.pusch_groupHoppingEnabled,              defstrval:"ENABLE",        TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUSCH_GROUP_ASSIGNMENT,                       NULL,   0,           iptr:&ccparams.pusch_groupAssignment,                    defintval:0,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PUSCH_SEQUENCE_HOPPING_EN,                    NULL,   0,           strptr:&ccparams.pusch_sequenceHoppingEnabled,           defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUSCH_NDMRS1,                                 NULL,   0,           iptr:&ccparams.pusch_nDMRS1,                             defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PHICH_DURATION,                               NULL,   0,           strptr:&ccparams.phich_duration,                         defstrval:"NORMAL",        TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PHICH_RESOURCE,                               NULL,   0,           strptr:&ccparams.phich_resource,                         defstrval:"ONESIXTH",      TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_SRS_ENABLE,                                   NULL,   0,           strptr:&ccparams.srs_enable,                             defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_SRS_BANDWIDTH_CONFIG,                         NULL,   0,           iptr:&ccparams.srs_BandwidthConfig,                      defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_SRS_SUBFRAME_CONFIG,                          NULL,   0,           iptr:&ccparams.srs_SubframeConfig,                       defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_SRS_ACKNACKST_CONFIG,                         NULL,   0,           strptr:&ccparams.srs_ackNackST,                          defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_SRS_MAXUPPTS,                                 NULL,   0,           strptr:&ccparams.srs_MaxUpPts,                           defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUSCH_PO_NOMINAL,                             NULL,   0,           iptr:&ccparams.pusch_p0_Nominal,                         defintval:-90,             TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PUSCH_ALPHA,                                  NULL,   0,           strptr:&ccparams.pusch_alpha,                            defstrval:"AL1",           TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUCCH_PO_NOMINAL,                             NULL,   0,           iptr:&ccparams.pucch_p0_Nominal,                         defintval:-96,             TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_MSG3_DELTA_PREAMBLE,                          NULL,   0,           iptr:&ccparams.msg3_delta_Preamble,                      defintval:6,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT1,                         NULL,   0,           strptr:&ccparams.pucch_deltaF_Format1,                   defstrval:"DELTAF2",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT1b,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format1b,                  defstrval:"deltaF3",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2,                         NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2,                   defstrval:"deltaF0",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2A,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2a,                  defstrval:"deltaF0",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2B,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2b,                  defstrval:"deltaF0",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_RACH_NUM_RA_PREAMBLES,                        NULL,   0,           iptr:&ccparams.rach_numberOfRA_Preambles,                defintval:4,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_RACH_PREAMBLESGROUPACONFIG,                   NULL,   0,           strptr:&ccparams.rach_preamblesGroupAConfig,             defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_RACH_SIZEOFRA_PREAMBLESGROUPA,                NULL,   0,           iptr:&ccparams.rach_sizeOfRA_PreamblesGroupA,            defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_RACH_MESSAGESIZEGROUPA,                       NULL,   0,           iptr:&ccparams.rach_messageSizeGroupA,                   defintval:56,              TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_RACH_MESSAGEPOWEROFFSETGROUPB,                NULL,   0,           strptr:&ccparams.rach_messagePowerOffsetGroupB,          defstrval:"minusinfinity", TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_RACH_POWERRAMPINGSTEP,                        NULL,   0,           iptr:&ccparams.rach_powerRampingStep,                    defintval:4,               TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_RACH_PREAMBLEINITIALRECEIVEDTARGETPOWER,      NULL,   0,           iptr:&ccparams.rach_preambleInitialReceivedTargetPower,  defintval:-100,            TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_RACH_PREAMBLETRANSMAX,                        NULL,   0,           iptr:&ccparams.rach_preambleTransMax,                    defintval:10,              TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_RACH_RARESPONSEWINDOWSIZE,                    NULL,   0,           iptr:&ccparams.rach_raResponseWindowSize,                defintval:10,              TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_RACH_MACCONTENTIONRESOLUTIONTIMER,            NULL,   0,           iptr:&ccparams.rach_macContentionResolutionTimer,        defintval:48,              TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_RACH_MAXHARQMSG3TX,                           NULL,   0,           iptr:&ccparams.rach_maxHARQ_Msg3Tx,                      defintval:4,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_PCCH_DEFAULT_PAGING_CYCLE,                    NULL,   0,           iptr:&ccparams.pcch_defaultPagingCycle,                  defintval:128,             TYPE_INT,        0},  \
-  {ENB_CONFIG_STRING_PCCH_NB,                                      NULL,   0,           strptr:&ccparams.pcch_nB,                                defstrval:"oneT",          TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_CONFIG_PRESENT,                           NULL,   0,           strptr:&ccparams.drx_Config_present,                     defstrval:"prNothing",     TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_ONDURATIONTIMER,                          NULL,   0,           strptr:&ccparams.drx_onDurationTimer,                    defstrval:"psf10",         TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_INACTIVITYTIMER,                          NULL,   0,           strptr:&ccparams.drx_InactivityTimer,                    defstrval:"psf10",         TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_RETRANSMISSIONTIMER,                      NULL,   0,           strptr:&ccparams.drx_RetransmissionTimer,                defstrval:"psf8",          TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_LONGDRX_CYCLESTARTOFFSET_PRESENT,         NULL,   0,           strptr:&ccparams.drx_longDrx_CycleStartOffset_present,   defstrval:"prSf128",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_LONGDRX_CYCLESTARTOFFSET,                 NULL,   0,           iptr:&ccparams.drx_longDrx_CycleStartOffset,             defintval:0,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_DRX_SHORTDRX_CYCLE,                           NULL,   0,           strptr:&ccparams.drx_shortDrx_Cycle,                     defstrval:"sf32",          TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_DRX_SHORTDRX_SHORTCYCLETIMER,                 NULL,   0,           iptr:&ccparams.drx_shortDrx_ShortCycleTimer,             defintval:3,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_BCCH_MODIFICATIONPERIODCOEFF,                 NULL,   0,           iptr:&ccparams.bcch_modificationPeriodCoeff,             defintval:2,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_T300,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t300,               defintval:1000,            TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_T301,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t301,               defintval:1000,            TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_T310,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t310,               defintval:1000,            TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_T311,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t311,               defintval:10000,           TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_N310,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_n310,               defintval:20,              TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UETIMERS_N311,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_n311,               defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UE_TRANSMISSION_MODE,                         NULL,   0,           iptr:&ccparams.ue_TransmissionMode,                      defintval:1,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_UE_MULTIPLE_MAX,                              NULL,   0,           iptr:&ccparams.ue_multiple_max,                          defintval:4,               TYPE_UINT,       0},  \
-  {ENB_CONFIG_STRING_MBMS_DEDICATED_SERVING_CELL,                  NULL,   0,           strptr:&ccparams.mbms_dedicated_serving_cell,            defstrval:"DISABLE",       TYPE_STRING,     0},  \
-  {ENB_CONFIG_STRING_NR_SCG_SSB_FREQ,                              NULL,   0,           iptr:&ccparams.nr_scg_ssb_freq,                        defintval:641272,          TYPE_INT,        0}   \
-}
+#define CCPARAMS_DESC(ccparams) {          \
+    {ENB_CONFIG_STRING_FRAME_TYPE,                                   NULL,   0,           strptr:&ccparams.frame_type,                             defstrval:"FDD",           TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_TDD_CONFIG,                                   NULL,   0,           iptr:&ccparams.tdd_config,                               defintval:3,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_TDD_CONFIG_S,                                 NULL,   0,           iptr:&ccparams.tdd_config_s,                             defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PREFIX_TYPE,                                  NULL,   0,           strptr:&ccparams.prefix_type,                            defstrval:"NORMAL",        TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PBCH_REPETITION,                              NULL,   0,           strptr:&ccparams.pbch_repetition,                        defstrval:"FALSE",         TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_EUTRA_BAND,                                   NULL,   0,           iptr:&ccparams.eutra_band,                               defintval:7,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_DOWNLINK_FREQUENCY,                           NULL,   0,           i64ptr:(int64_t *)&ccparams.downlink_frequency,          defint64val:2680000000,    TYPE_UINT64,     0},  \
+    {ENB_CONFIG_STRING_UPLINK_FREQUENCY_OFFSET,                      NULL,   0,           iptr:&ccparams.uplink_frequency_offset,                  defintval:-120000000,      TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_NID_CELL,                                     NULL,   0,           iptr:&ccparams.Nid_cell,                                 defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_N_RB_DL,                                      NULL,   0,           iptr:&ccparams.N_RB_DL,                                  defintval:25,              TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_CELL_MBSFN,                                   NULL,   0,           iptr:&ccparams.Nid_cell_mbsfn,                           defintval:0,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_NB_ANT_PORTS,                                 NULL,   0,           iptr:&ccparams.nb_antenna_ports,                         defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PRACH_ROOT,                                   NULL,   0,           iptr:&ccparams.prach_root,                               defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PRACH_CONFIG_INDEX,                           NULL,   0,           iptr:&ccparams.prach_config_index,                       defintval:0,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PRACH_HIGH_SPEED,                             NULL,   0,           strptr:&ccparams.prach_high_speed,                       defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PRACH_ZERO_CORRELATION,                       NULL,   0,           iptr:&ccparams.prach_zero_correlation,                   defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PRACH_FREQ_OFFSET,                            NULL,   0,           iptr:&ccparams.prach_freq_offset,                        defintval:2,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTA_SHIFT,                            NULL,   0,           iptr:&ccparams.pucch_delta_shift,                        defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUCCH_NRB_CQI,                                NULL,   0,           iptr:&ccparams.pucch_nRB_CQI,                            defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUCCH_NCS_AN,                                 NULL,   0,           iptr:&ccparams.pucch_nCS_AN,                             defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUCCH_N1_AN,                                  NULL,   0,           iptr:&ccparams.pucch_n1_AN,                              defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PDSCH_RS_EPRE,                                NULL,   0,           iptr:&ccparams.pdsch_referenceSignalPower,               defintval:-29,             TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PDSCH_PB,                                     NULL,   0,           iptr:&ccparams.pdsch_p_b,                                defintval:0,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PUSCH_N_SB,                                   NULL,   0,           iptr:&ccparams.pusch_n_SB,                               defintval:1,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PUSCH_HOPPINGMODE,                            NULL,   0,           strptr:&ccparams.pusch_hoppingMode,                      defstrval:"interSubFrame", TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUSCH_HOPPINGOFFSET,                          NULL,   0,           iptr:&ccparams.pusch_hoppingOffset,                      defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUSCH_ENABLE64QAM,                            NULL,   0,           strptr:&ccparams.pusch_enable64QAM,                      defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUSCH_GROUP_HOPPING_EN,                       NULL,   0,           strptr:&ccparams.pusch_groupHoppingEnabled,              defstrval:"ENABLE",        TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUSCH_GROUP_ASSIGNMENT,                       NULL,   0,           iptr:&ccparams.pusch_groupAssignment,                    defintval:0,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PUSCH_SEQUENCE_HOPPING_EN,                    NULL,   0,           strptr:&ccparams.pusch_sequenceHoppingEnabled,           defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUSCH_NDMRS1,                                 NULL,   0,           iptr:&ccparams.pusch_nDMRS1,                             defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PHICH_DURATION,                               NULL,   0,           strptr:&ccparams.phich_duration,                         defstrval:"NORMAL",        TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PHICH_RESOURCE,                               NULL,   0,           strptr:&ccparams.phich_resource,                         defstrval:"ONESIXTH",      TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_SRS_ENABLE,                                   NULL,   0,           strptr:&ccparams.srs_enable,                             defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_SRS_BANDWIDTH_CONFIG,                         NULL,   0,           iptr:&ccparams.srs_BandwidthConfig,                      defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_SRS_SUBFRAME_CONFIG,                          NULL,   0,           iptr:&ccparams.srs_SubframeConfig,                       defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_SRS_ACKNACKST_CONFIG,                         NULL,   0,           strptr:&ccparams.srs_ackNackST,                          defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_SRS_MAXUPPTS,                                 NULL,   0,           strptr:&ccparams.srs_MaxUpPts,                           defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUSCH_PO_NOMINAL,                             NULL,   0,           iptr:&ccparams.pusch_p0_Nominal,                         defintval:-90,             TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PUSCH_ALPHA,                                  NULL,   0,           strptr:&ccparams.pusch_alpha,                            defstrval:"AL1",           TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUCCH_PO_NOMINAL,                             NULL,   0,           iptr:&ccparams.pucch_p0_Nominal,                         defintval:-96,             TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_MSG3_DELTA_PREAMBLE,                          NULL,   0,           iptr:&ccparams.msg3_delta_Preamble,                      defintval:6,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT1,                         NULL,   0,           strptr:&ccparams.pucch_deltaF_Format1,                   defstrval:"DELTAF2",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT1b,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format1b,                  defstrval:"deltaF3",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2,                         NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2,                   defstrval:"deltaF0",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2A,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2a,                  defstrval:"deltaF0",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_PUCCH_DELTAF_FORMAT2B,                        NULL,   0,           strptr:&ccparams.pucch_deltaF_Format2b,                  defstrval:"deltaF0",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_RACH_NUM_RA_PREAMBLES,                        NULL,   0,           iptr:&ccparams.rach_numberOfRA_Preambles,                defintval:4,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_RACH_PREAMBLESGROUPACONFIG,                   NULL,   0,           strptr:&ccparams.rach_preamblesGroupAConfig,             defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_RACH_SIZEOFRA_PREAMBLESGROUPA,                NULL,   0,           iptr:&ccparams.rach_sizeOfRA_PreamblesGroupA,            defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_RACH_MESSAGESIZEGROUPA,                       NULL,   0,           iptr:&ccparams.rach_messageSizeGroupA,                   defintval:56,              TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_RACH_MESSAGEPOWEROFFSETGROUPB,                NULL,   0,           strptr:&ccparams.rach_messagePowerOffsetGroupB,          defstrval:"minusinfinity", TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_RACH_POWERRAMPINGSTEP,                        NULL,   0,           iptr:&ccparams.rach_powerRampingStep,                    defintval:4,               TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_RACH_PREAMBLEINITIALRECEIVEDTARGETPOWER,      NULL,   0,           iptr:&ccparams.rach_preambleInitialReceivedTargetPower,  defintval:-100,            TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_RACH_PREAMBLETRANSMAX,                        NULL,   0,           iptr:&ccparams.rach_preambleTransMax,                    defintval:10,              TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_RACH_RARESPONSEWINDOWSIZE,                    NULL,   0,           iptr:&ccparams.rach_raResponseWindowSize,                defintval:10,              TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_RACH_MACCONTENTIONRESOLUTIONTIMER,            NULL,   0,           iptr:&ccparams.rach_macContentionResolutionTimer,        defintval:48,              TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_RACH_MAXHARQMSG3TX,                           NULL,   0,           iptr:&ccparams.rach_maxHARQ_Msg3Tx,                      defintval:4,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_PCCH_DEFAULT_PAGING_CYCLE,                    NULL,   0,           iptr:&ccparams.pcch_defaultPagingCycle,                  defintval:128,             TYPE_INT,        0},  \
+    {ENB_CONFIG_STRING_PCCH_NB,                                      NULL,   0,           strptr:&ccparams.pcch_nB,                                defstrval:"oneT",          TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_CONFIG_PRESENT,                           NULL,   0,           strptr:&ccparams.drx_Config_present,                     defstrval:"prNothing",     TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_ONDURATIONTIMER,                          NULL,   0,           strptr:&ccparams.drx_onDurationTimer,                    defstrval:"psf10",         TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_INACTIVITYTIMER,                          NULL,   0,           strptr:&ccparams.drx_InactivityTimer,                    defstrval:"psf10",         TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_RETRANSMISSIONTIMER,                      NULL,   0,           strptr:&ccparams.drx_RetransmissionTimer,                defstrval:"psf8",          TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_LONGDRX_CYCLESTARTOFFSET_PRESENT,         NULL,   0,           strptr:&ccparams.drx_longDrx_CycleStartOffset_present,   defstrval:"prSf128",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_LONGDRX_CYCLESTARTOFFSET,                 NULL,   0,           iptr:&ccparams.drx_longDrx_CycleStartOffset,             defintval:0,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_DRX_SHORTDRX_CYCLE,                           NULL,   0,           strptr:&ccparams.drx_shortDrx_Cycle,                     defstrval:"sf32",          TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_DRX_SHORTDRX_SHORTCYCLETIMER,                 NULL,   0,           iptr:&ccparams.drx_shortDrx_ShortCycleTimer,             defintval:3,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_BCCH_MODIFICATIONPERIODCOEFF,                 NULL,   0,           iptr:&ccparams.bcch_modificationPeriodCoeff,             defintval:2,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_T300,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t300,               defintval:1000,            TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_T301,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t301,               defintval:1000,            TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_T310,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t310,               defintval:1000,            TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_T311,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_t311,               defintval:10000,           TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_N310,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_n310,               defintval:20,              TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UETIMERS_N311,                                NULL,   0,           iptr:&ccparams.ue_TimersAndConstants_n311,               defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UE_TRANSMISSION_MODE,                         NULL,   0,           iptr:&ccparams.ue_TransmissionMode,                      defintval:1,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_UE_MULTIPLE_MAX,                              NULL,   0,           iptr:&ccparams.ue_multiple_max,                          defintval:4,               TYPE_UINT,       0},  \
+    {ENB_CONFIG_STRING_MBMS_DEDICATED_SERVING_CELL,                  NULL,   0,           strptr:&ccparams.mbms_dedicated_serving_cell,            defstrval:"DISABLE",       TYPE_STRING,     0},  \
+    {ENB_CONFIG_STRING_NR_SCG_SSB_FREQ,                              NULL,   0,           iptr:&ccparams.nr_scg_ssb_freq,                          defintval:641272,          TYPE_INT,        0}   \
+  }
 
 
 #define ENB_CONFIG_FRAME_TYPE_IDX                                  0
@@ -919,13 +919,13 @@ typedef struct srb1_params_s {
 /*   optname                                           helpstr    paramflags XXXptr       defXXXval            type            numelt  */
 /*-------------------------------------------------------------------------------------------------------------------------------------*/
 #define S1PARAMS_DESC {  \
-  {ENB_CONFIG_STRING_MME_IPV4_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
-  {ENB_CONFIG_STRING_MME_IPV6_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
-  {ENB_CONFIG_STRING_MME_IP_ADDRESS_ACTIVE,              NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
-  {ENB_CONFIG_STRING_MME_IP_ADDRESS_PREFERENCE,          NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
-  {ENB_CONFIG_STRING_MME_BROADCAST_PLMN_INDEX,           NULL,      0,         uptr:NULL,   defintarrayval:NULL, TYPE_UINTARRAY, 6},    \
-  {ENB_CONFIG_STRING_MME_PORT,                           NULL,      0,         u16ptr:NULL, defuintval:S1AP_PORT_NUMBER, TYPE_UINT16, 0},    \
-}
+    {ENB_CONFIG_STRING_MME_IPV4_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
+    {ENB_CONFIG_STRING_MME_IPV6_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
+    {ENB_CONFIG_STRING_MME_IP_ADDRESS_ACTIVE,              NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
+    {ENB_CONFIG_STRING_MME_IP_ADDRESS_PREFERENCE,          NULL,      0,         uptr:NULL,   defstrval:NULL,      TYPE_STRING,    0},    \
+    {ENB_CONFIG_STRING_MME_BROADCAST_PLMN_INDEX,           NULL,      0,         uptr:NULL,   defintarrayval:NULL, TYPE_UINTARRAY, 6},    \
+    {ENB_CONFIG_STRING_MME_PORT,                           NULL,      0,         u16ptr:NULL, defuintval:S1AP_PORT_NUMBER, TYPE_UINT16, 0},    \
+  }
 
 
 
@@ -955,10 +955,10 @@ typedef struct srb1_params_s {
 /*   optname                                          helpstr   paramflags    XXXptr       defXXXval         type           numelt     */
 /*-------------------------------------------------------------------------------------------------------------------------------------*/
 #define X2PARAMS_DESC {  \
-  {ENB_CONFIG_STRING_TARGET_ENB_X2_IPV4_ADDRESS,             NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
-  {ENB_CONFIG_STRING_TARGET_ENB_X2_IPV6_ADDRESS,             NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
-  {ENB_CONFIG_STRING_TARGET_ENB_X2_IP_ADDRESS_PREFERENCE,    NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
-}
+    {ENB_CONFIG_STRING_TARGET_ENB_X2_IPV4_ADDRESS,             NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
+    {ENB_CONFIG_STRING_TARGET_ENB_X2_IPV6_ADDRESS,             NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
+    {ENB_CONFIG_STRING_TARGET_ENB_X2_IP_ADDRESS_PREFERENCE,    NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},   \
+  }
 
 #define ENB_X2_IPV4_ADDRESS_IDX          0
 #define ENB_X2_IPV6_ADDRESS_IDX          1
@@ -986,10 +986,10 @@ typedef struct srb1_params_s {
 /*   optname                                          helpstr   paramflags    XXXptr       defXXXval         type           numelt     */
 /*-------------------------------------------------------------------------------------------------------------------------------------*/
 #define M2PARAMS_DESC {  \
-{ENB_CONFIG_STRING_TARGET_MCE_M2_IPV4_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
-{ENB_CONFIG_STRING_TARGET_MCE_M2_IPV6_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
-{ENB_CONFIG_STRING_TARGET_MCE_M2_IP_ADDRESS_PREFERENCE,          NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
-}
+    {ENB_CONFIG_STRING_TARGET_MCE_M2_IPV4_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
+    {ENB_CONFIG_STRING_TARGET_MCE_M2_IPV6_ADDRESS,                   NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
+    {ENB_CONFIG_STRING_TARGET_MCE_M2_IP_ADDRESS_PREFERENCE,          NULL,      0,         uptr:NULL,   defstrval:NULL,   TYPE_STRING,   0},          \
+  }
 
 #define ENB_M2_IPV4_ADDRESS_IDX          0
 #define ENB_M2_IPV6_ADDRESS_IDX          1
@@ -1117,17 +1117,17 @@ typedef struct srb1_params_s {
 /*----------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------------------------------*/
 /* CU/DU configuration section names*/
-#define CONFIG_STRING_DU_LIST			            "DU"
-#define CONFIG_STRING_CU_LIST			            "CU"
+#define CONFIG_STRING_DU_LIST                       "DU"
+#define CONFIG_STRING_CU_LIST                       "CU"
 #define DU_TYPE_LTE                                 0
 #define DU_TYPE_WIFI                                1
-#define ENB_CONFIG_STRING_CU_INTERFACES_CONFIG		"CU_INTERFACES"
+#define ENB_CONFIG_STRING_CU_INTERFACES_CONFIG      "CU_INTERFACES"
 #define ENB_CONFIG_STRING_CU_INTERFACE_NAME_FOR_F1U "CU_INTERFACE_NAME_FOR_F1U"
 #define ENB_CONFIG_STRING_CU_IPV4_ADDRESS_FOR_F1U   "CU_IPV4_ADDRESS_FOR_F1U"
 #define ENB_CONFIG_STRING_CU_PORT_FOR_F1U           "CU_PORT_FOR_F1U"
-#define ENB_CONFIG_STRING_DU_TYPE	                "DU_TYPE"
+#define ENB_CONFIG_STRING_DU_TYPE                   "DU_TYPE"
 #define ENB_CONFIG_STRING_F1_U_CU_TRANSPORT_TYPE    "F1_U_CU_TRANSPORT_TYPE"
-#define ENB_CONFIG_STRING_DU_INTERFACES_CONFIG		"DU_INTERFACES"
+#define ENB_CONFIG_STRING_DU_INTERFACES_CONFIG      "DU_INTERFACES"
 #define ENB_CONFIG_STRING_DU_INTERFACE_NAME_FOR_F1U "DU_INTERFACE_NAME_FOR_F1U"
 #define ENB_CONFIG_STRING_DU_IPV4_ADDRESS_FOR_F1U   "DU_IPV4_ADDRESS_FOR_F1U"
 #define ENB_CONFIG_STRING_DU_PORT_FOR_F1U           "DU_PORT_FOR_F1U"
@@ -1136,28 +1136,28 @@ typedef struct srb1_params_s {
 #define CONFIG_STRING_CU_BALANCING      "CU_BALANCING"
 
 #define CUPARAMS_DESC { \
-  {ENB_CONFIG_STRING_CU_INTERFACE_NAME_FOR_F1U, NULL,   0,   strptr:NULL,   defstrval:"eth0",         TYPE_STRING,   0}, \
-  {ENB_CONFIG_STRING_CU_IPV4_ADDRESS_FOR_F1U,   NULL,   0,   strptr:NULL,   defstrval:"127.0.0.1",    TYPE_STRING,   0}, \
-  {ENB_CONFIG_STRING_CU_PORT_FOR_F1U,           NULL,   0,   uptr:NULL,     defintval:2210,           TYPE_UINT,     0}, \
-  {ENB_CONFIG_STRING_F1_U_CU_TRANSPORT_TYPE,    NULL,   0,   strptr:NULL,   defstrval:"TCP",          TYPE_STRING,   0}, \
-  {ENB_CONFIG_STRING_DU_TYPE,                   NULL,   0,   strptr:NULL,   defstrval:"LTE",          TYPE_STRING,   0}, \
-}
+    {ENB_CONFIG_STRING_CU_INTERFACE_NAME_FOR_F1U, NULL,   0,   strptr:NULL,   defstrval:"eth0",         TYPE_STRING,   0}, \
+    {ENB_CONFIG_STRING_CU_IPV4_ADDRESS_FOR_F1U,   NULL,   0,   strptr:NULL,   defstrval:"127.0.0.1",    TYPE_STRING,   0}, \
+    {ENB_CONFIG_STRING_CU_PORT_FOR_F1U,           NULL,   0,   uptr:NULL,     defintval:2210,           TYPE_UINT,     0}, \
+    {ENB_CONFIG_STRING_F1_U_CU_TRANSPORT_TYPE,    NULL,   0,   strptr:NULL,   defstrval:"TCP",          TYPE_STRING,   0}, \
+    {ENB_CONFIG_STRING_DU_TYPE,                   NULL,   0,   strptr:NULL,   defstrval:"LTE",          TYPE_STRING,   0}, \
+  }
 
 #define DUPARAMS_DESC { \
-  {ENB_CONFIG_STRING_DU_INTERFACE_NAME_FOR_F1U, NULL,   0,   strptr:NULL,   defstrval:"eth0",       TYPE_STRING,   0}, \
-  {ENB_CONFIG_STRING_DU_IPV4_ADDRESS_FOR_F1U,   NULL,   0,   strptr:NULL,   defstrval:"127.0.0.1",  TYPE_STRING,   0}, \
-  {ENB_CONFIG_STRING_DU_PORT_FOR_F1U,           NULL,   0,   uptr:NULL,     defintval:2210,   		TYPE_UINT,     0}, \
-  {ENB_CONFIG_STRING_F1_U_DU_TRANSPORT_TYPE,    NULL,   0,   strptr:NULL,   defstrval:"TCP",   		TYPE_STRING,   0}, \
-}
+    {ENB_CONFIG_STRING_DU_INTERFACE_NAME_FOR_F1U, NULL,   0,   strptr:NULL,   defstrval:"eth0",       TYPE_STRING,   0}, \
+    {ENB_CONFIG_STRING_DU_IPV4_ADDRESS_FOR_F1U,   NULL,   0,   strptr:NULL,   defstrval:"127.0.0.1",  TYPE_STRING,   0}, \
+    {ENB_CONFIG_STRING_DU_PORT_FOR_F1U,           NULL,   0,   uptr:NULL,     defintval:2210,       TYPE_UINT,     0}, \
+    {ENB_CONFIG_STRING_F1_U_DU_TRANSPORT_TYPE,    NULL,   0,   strptr:NULL,   defstrval:"TCP",       TYPE_STRING,   0}, \
+  }
 
 #define CU_BAL_DESC { \
-  {CONFIG_STRING_CU_BALANCING,                  NULL,   0,   strptr:NULL,   defstrval:"ALL",        TYPE_STRING,   0}, \
-}
+    {CONFIG_STRING_CU_BALANCING,                  NULL,   0,   strptr:NULL,   defstrval:"ALL",        TYPE_STRING,   0}, \
+  }
 
-#define CU_INTERFACE_F1U 	                     0
+#define CU_INTERFACE_F1U                         0
 #define CU_ADDRESS_F1U                           1
-#define CU_PORT_F1U 	              		     2
-#define CU_TYPE_F1U 	              		     3
+#define CU_PORT_F1U                              2
+#define CU_TYPE_F1U                              3
 
 #define DU_INTERFACE_F1U                         0
 #define DU_ADDRESS_F1U                           1

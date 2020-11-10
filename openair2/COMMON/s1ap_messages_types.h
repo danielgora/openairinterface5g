@@ -235,9 +235,9 @@ typedef struct transport_layer_addr_s {
 
 #define TRANSPORT_LAYER_ADDR_COPY(dEST,sOURCE)        \
   do {                                                \
-      AssertFatal(sOURCE.len <= 20);                  \
-      memcpy(dEST.buffer, sOURCE.buffer, sOURCE.len); \
-      dEST.length = sOURCE.length;                    \
+    AssertFatal(sOURCE.len <= 20);                  \
+    memcpy(dEST.buffer, sOURCE.buffer, sOURCE.len); \
+    dEST.length = sOURCE.length;                    \
   } while (0)
 
 typedef struct e_rab_level_qos_parameter_s {
@@ -622,7 +622,7 @@ typedef struct s1ap_path_switch_req_s {
 
   uint16_t ue_initial_id;
 
-   /* Security algorithms */
+  /* Security algorithms */
   security_capabilities_t security_capabilities;
 
 } s1ap_path_switch_req_t;
@@ -663,7 +663,7 @@ typedef struct s1ap_e_rab_modification_ind_s {
   unsigned  eNB_ue_s1ap_id:24;
 
   /* MME UE id  */
-    uint32_t mme_ue_s1ap_id;
+  uint32_t mme_ue_s1ap_id;
 
   /* Number of e_rab setup-ed in the list */
   uint8_t       nb_of_e_rabs_tobemodified;

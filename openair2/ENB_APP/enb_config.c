@@ -184,7 +184,7 @@ void RCconfig_L1(void) {
     if (RC.eNB[j] == NULL) {
       RC.eNB[j]                       = (PHY_VARS_eNB **)malloc((1+MAX_NUM_CCs)*sizeof(PHY_VARS_eNB **));
       LOG_I(PHY,"RC.eNB[%d] = %p\n",j,RC.eNB[j]);
-      memset(RC.eNB[j],0,(1+MAX_NUM_CCs)*sizeof(PHY_VARS_eNB***));
+      memset(RC.eNB[j],0,(1+MAX_NUM_CCs)*sizeof(PHY_VARS_eNB ***));
     }
 
     for (i=0; i<RC.nb_L1_CC[j]; i++) {
@@ -286,7 +286,6 @@ int RCconfig_RRC(uint32_t i, eNB_RRC_INST *rrc, int macrlc_has_f1) {
   int               nb_cc                         = 0;
   int32_t           offsetMaxLimit                = 0;
   int32_t           cycleNb                       = 0;
-   
   MessageDef *msg_p = itti_alloc_new_message(TASK_RRC_ENB, RRC_CONFIGURATION_REQ);
   ccparams_lte_t ccparams_lte;
   ccparams_sidelink_t SLconfig;
@@ -436,8 +435,8 @@ int RCconfig_RRC(uint32_t i, eNB_RRC_INST *rrc, int macrlc_has_f1) {
         else
           RRC_CONFIGURATION_REQ (msg_p).enable_x2 = 0;
 
-       /* m2 enabled */
-       if (ENBParamList.paramarray[i][ENB_ENABLE_ENB_M2].strptr != NULL &&
+        /* m2 enabled */
+        if (ENBParamList.paramarray[i][ENB_ENABLE_ENB_M2].strptr != NULL &&
             *(ENBParamList.paramarray[i][ENB_ENABLE_ENB_M2].strptr) != NULL &&
             !strcmp(*(ENBParamList.paramarray[i][ENB_ENABLE_ENB_M2].strptr), "yes"))
           RRC_CONFIGURATION_REQ (msg_p).eMBMS_M2_configured = 1;
@@ -2078,11 +2077,10 @@ int RCconfig_M2(MessageDef *msg_p, uint32_t i) {
   paramdef_t CCsParams[] = CCPARAMS_DESC(ccparams_lte);
   paramlist_def_t CCsParamList = {ENB_CONFIG_STRING_COMPONENT_CARRIERS, NULL, 0};
 
- // ccparams_MCE_t MCEconfig;
- // memset((void *)&MCEconfig,0,sizeof(ccparams_MCE_t));
- // paramdef_t MCEParams[]              = MCEPARAMS_DESC((&MCEconfig));
- // checkedparam_t config_check_MCEparams[] = MCEPARAMS_CHECK;
-
+  // ccparams_MCE_t MCEconfig;
+  // memset((void *)&MCEconfig,0,sizeof(ccparams_MCE_t));
+  // paramdef_t MCEParams[]              = MCEPARAMS_DESC((&MCEconfig));
+  // checkedparam_t config_check_MCEparams[] = MCEPARAMS_CHECK;
 
   /* map parameter checking array instances to parameter definition array instances */
   for (I = 0; I < (sizeof(CCsParams) / sizeof(paramdef_t)); I++) {
@@ -2129,8 +2127,8 @@ int RCconfig_M2(MessageDef *msg_p, uint32_t i) {
             paramdef_t NETParams[]  =  NETPARAMS_DESC;
             paramdef_t MBMSConfigParams[]  = MBMS_CONFIG_PARAMS_DESC;
             paramdef_t MBMSParams[]  = MBMSPARAMS_DESC;
-           paramlist_def_t MBMSConfigParamList = {ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST,NULL,0};
-           paramlist_def_t MBMSParamList = {ENB_CONFIG_STRING_MBMS_SERVICE_AREA_LIST,NULL,0};
+            paramlist_def_t MBMSConfigParamList = {ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST,NULL,0};
+            paramlist_def_t MBMSParamList = {ENB_CONFIG_STRING_MBMS_SERVICE_AREA_LIST,NULL,0};
             /* TODO: fix the size - if set lower we have a crash (MAX_OPTNAME_SIZE was 64 when this code was written) */
             /* this is most probably a problem with the config module */
             char aprefix[MAX_OPTNAME_SIZE*80 + 8];
@@ -2151,42 +2149,41 @@ int RCconfig_M2(MessageDef *msg_p, uint32_t i) {
             M2AP_REGISTER_ENB_REQ (msg_p).eNB_name         = strdup(*(ENBParamList.paramarray[k][ENB_ENB_NAME_IDX].strptr));
             M2AP_REGISTER_ENB_REQ (msg_p).tac              = *ENBParamList.paramarray[k][ENB_TRACKING_AREA_CODE_IDX].uptr;
             config_getlist(&PLMNParamList, PLMNParams, sizeof(PLMNParams)/sizeof(paramdef_t), aprefix);
-
-
-
-//            char aprefix2[MAX_OPTNAME_SIZE*80 + 8];
-//            sprintf(aprefix2,"%s.[%i].%s.[0]",ENB_CONFIG_STRING_ENB_LIST,k,ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST);
-//            config_getlist(&MBMSParamList, MBMSParams, sizeof(MBMSParams)/sizeof(paramdef_t), aprefix2);
-//         if (MBMSParamList.numelt < 1 || MBMSParamList.numelt > 8)
-//              AssertFatal(0, "The number of MBMS Areas must be in [1,8], but is %d\n",
-//                          MBMSParamList.numelt);
-//         M2AP_REGISTER_ENB_REQ (msg_p).num_mbms_service_area_list = MBMSParamList.numelt;
-//         for(J=0; J<MBMSParamList.numelt;J++){
-//             M2AP_REGISTER_ENB_REQ (msg_p).mbms_service_area_list[J] = *MBMSParamList.paramarray[J][ENB_MBMS_SERVICE_AREA_IDX].uptr;
-//         }
-//
-
+            //            char aprefix2[MAX_OPTNAME_SIZE*80 + 8];
+            //            sprintf(aprefix2,"%s.[%i].%s.[0]",ENB_CONFIG_STRING_ENB_LIST,k,ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST);
+            //            config_getlist(&MBMSParamList, MBMSParams, sizeof(MBMSParams)/sizeof(paramdef_t), aprefix2);
+            //         if (MBMSParamList.numelt < 1 || MBMSParamList.numelt > 8)
+            //              AssertFatal(0, "The number of MBMS Areas must be in [1,8], but is %d\n",
+            //                          MBMSParamList.numelt);
+            //         M2AP_REGISTER_ENB_REQ (msg_p).num_mbms_service_area_list = MBMSParamList.numelt;
+            //         for(J=0; J<MBMSParamList.numelt;J++){
+            //             M2AP_REGISTER_ENB_REQ (msg_p).mbms_service_area_list[J] = *MBMSParamList.paramarray[J][ENB_MBMS_SERVICE_AREA_IDX].uptr;
+            //         }
+            //
             char aprefix2[MAX_OPTNAME_SIZE*80 + 8];
             sprintf(aprefix2,"%s.[%i]",ENB_CONFIG_STRING_ENB_LIST,k);
             config_getlist(&MBMSConfigParamList, MBMSConfigParams, sizeof(MBMSConfigParams)/sizeof(paramdef_t), aprefix2);
+
             if (MBMSConfigParamList.numelt < 1 || MBMSConfigParamList.numelt > 8)
               AssertFatal(0, "The number of MBMS Config Data must be in [1,8], but is %d\n",
                           MBMSConfigParamList.numelt);
+
             M2AP_REGISTER_ENB_REQ (msg_p).num_mbms_configuration_data_list = MBMSConfigParamList.numelt;
-           for(int I=0; I < MBMSConfigParamList.numelt; I++){
 
-                   sprintf(aprefix2,"%s.[%i].%s.[%i]",ENB_CONFIG_STRING_ENB_LIST,k,ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST,I);
-                   config_getlist(&MBMSParamList, MBMSParams, sizeof(MBMSParams)/sizeof(paramdef_t), aprefix2);
-                   if (MBMSParamList.numelt < 1 || MBMSParamList.numelt > 8)
-                     AssertFatal(0, "The number of MBMS Areas must be in [1,8], but is %d\n",
-                                 MBMSParamList.numelt);
-                   M2AP_REGISTER_ENB_REQ (msg_p).mbms_configuration_data_list[I].num_mbms_service_area_list = MBMSParamList.numelt;
-                   for(J=0; J<MBMSParamList.numelt;J++){
-                       M2AP_REGISTER_ENB_REQ (msg_p).mbms_configuration_data_list[I].mbms_service_area_list[J] = *MBMSParamList.paramarray[J][ENB_MBMS_SERVICE_AREA_IDX].uptr;
-                   }
+            for(int I=0; I < MBMSConfigParamList.numelt; I++) {
+              sprintf(aprefix2,"%s.[%i].%s.[%i]",ENB_CONFIG_STRING_ENB_LIST,k,ENB_CONFIG_STRING_MBMS_CONFIGURATION_DATA_LIST,I);
+              config_getlist(&MBMSParamList, MBMSParams, sizeof(MBMSParams)/sizeof(paramdef_t), aprefix2);
 
-          }
+              if (MBMSParamList.numelt < 1 || MBMSParamList.numelt > 8)
+                AssertFatal(0, "The number of MBMS Areas must be in [1,8], but is %d\n",
+                            MBMSParamList.numelt);
 
+              M2AP_REGISTER_ENB_REQ (msg_p).mbms_configuration_data_list[I].num_mbms_service_area_list = MBMSParamList.numelt;
+
+              for(J=0; J<MBMSParamList.numelt; J++) {
+                M2AP_REGISTER_ENB_REQ (msg_p).mbms_configuration_data_list[I].mbms_service_area_list[J] = *MBMSParamList.paramarray[J][ENB_MBMS_SERVICE_AREA_IDX].uptr;
+              }
+            }
 
             if (PLMNParamList.numelt < 1 || PLMNParamList.numelt > 6)
               AssertFatal(0, "The number of PLMN IDs must be in [1,6], but is %d\n",
@@ -2268,6 +2265,7 @@ int RCconfig_M2(MessageDef *msg_p, uint32_t i) {
                 M2AP_REGISTER_ENB_REQ (msg_p).target_mce_m2_ip_address[l].ipv6 = 1;
               }
             }
+
             // timers
             //{
             //  int t_reloc_prep = 0;
@@ -2277,13 +2275,11 @@ int RCconfig_M2(MessageDef *msg_p, uint32_t i) {
             //    { "tx2_reloc_overall", "tx2_reloc_overall", 0, iptr:&tx2_reloc_overall, defintval:0, TYPE_INT, 0 }
             //  };
             //  config_get(p, sizeof(p)/sizeof(paramdef_t), aprefix);
-
             //  if (t_reloc_prep <= 0 || t_reloc_prep > 10000 ||
             //      tx2_reloc_overall <= 0 || tx2_reloc_overall > 20000) {
             //    LOG_E(M2AP, "timers in configuration file have wrong values. We must have [0 < t_reloc_prep <= 10000] and [0 < tx2_reloc_overall <= 20000]\n");
             //    exit(1);
             //  }
-
             //  M2AP_REGISTER_ENB_REQ (msg_p).t_reloc_prep = t_reloc_prep;
             //  M2AP_REGISTER_ENB_REQ (msg_p).tx2_reloc_overall = tx2_reloc_overall;
             //}
@@ -2477,8 +2473,7 @@ int RCconfig_S1(
               }
 
               default: {
-                LOG_E(S1AP, "Default I-DRX value in conf file is invalid (%i). Should be 32, 64, 128 or 256. \
-                       Default DRX set to 32 in MME configuration\n",
+                LOG_E(S1AP, "Default I-DRX value in conf file is invalid (%i). Should be 32, 64, 128 or 256. Default DRX set to 32 in MME configuration\n",
                       ccparams_lte.pcch_defaultPagingCycle);
                 S1AP_REGISTER_ENB_REQ(msg_p).default_drx = 0;
               }
@@ -2513,7 +2508,6 @@ int RCconfig_S1(
 
               /* set S1-mme port (sctp) */
               S1AP_REGISTER_ENB_REQ(msg_p).mme_port[l] = *S1ParamList.paramarray[l][ENB_MME_PORT_IDX].u16ptr;
-
               AssertFatal(S1AP_REGISTER_ENB_REQ(msg_p).broadcast_plmn_num[l] <= S1AP_REGISTER_ENB_REQ(msg_p).num_plmn,
                           "List of broadcast PLMN to be sent to MME can not be longer than actual "
                           "PLMN list (max %d, but is %d)\n",
@@ -2639,7 +2633,7 @@ int RCconfig_X2(MessageDef *msg_p, uint32_t i) {
               X2AP_REGISTER_ENB_REQ (msg_p).cell_type = CELL_MACRO_ENB;
             } else  if (strcmp(*(ENBParamList.paramarray[k][ENB_CELL_TYPE_IDX].strptr), "CELL_HOME_ENB") == 0) {
               X2AP_REGISTER_ENB_REQ (msg_p).cell_type = CELL_HOME_ENB;
-            }else {
+            } else {
               AssertFatal (0,
                            "Failed to parse eNB configuration file %s, enb %u unknown value \"%s\" for cell_type choice: CELL_MACRO_ENB or CELL_HOME_ENB !\n",
                            RC.config_file_name, i, *(ENBParamList.paramarray[k][ENB_CELL_TYPE_IDX].strptr));
@@ -2750,7 +2744,8 @@ int RCconfig_X2(MessageDef *msg_p, uint32_t i) {
                   tx2_reloc_overall <= 0 || tx2_reloc_overall > 20000 ||
                   t_dc_prep <= 0 || t_dc_prep > 10000 ||
                   t_dc_overall <= 0 || t_dc_overall > 20000) {
-                LOG_E(X2AP, "timers in configuration file have wrong values. We must have [0 < t_reloc_prep <= 10000] and [0 < tx2_reloc_overall <= 20000] and [0 < t_dc_prep <= 10000] and [0 < t_dc_overall <= 20000]\n");
+                LOG_E(X2AP,
+                      "timers in configuration file have wrong values. We must have [0 < t_reloc_prep <= 10000] and [0 < tx2_reloc_overall <= 20000] and [0 < t_dc_prep <= 10000] and [0 < t_dc_overall <= 20000]\n");
                 exit(1);
               }
 
@@ -3066,7 +3061,7 @@ void configure_du_mac(int inst) {
                          (struct LTE_NonMBSFN_SubframeConfig_r14 *) NULL,
                          (LTE_SystemInformationBlockType1_MBMS_r14_t *) NULL,
                          (LTE_MBSFN_AreaInfoList_r9_t *) NULL,
-			 (LTE_MBSFNAreaConfiguration_r9_t*) NULL
+                         (LTE_MBSFNAreaConfiguration_r9_t *) NULL
                         );
 }
 

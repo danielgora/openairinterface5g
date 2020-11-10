@@ -749,7 +749,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
       unsigned char sdu_lcids[NB_RB_MAX] = {0};
       const int lcid = DL_SCH_LCID_DTCH;
       if (sched_ctrl->num_total_bytes > 0) {
-#if 0        
+#if 1        
         LOG_D(MAC,
               "[gNB %d][USER-PLANE DEFAULT DRB] Frame %d : DTCH->DLSCH, Requesting "
               "%d bytes from RLC (lcid %d total hdr len %d), TBS: %d \n \n",

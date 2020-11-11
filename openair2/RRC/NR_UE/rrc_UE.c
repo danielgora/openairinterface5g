@@ -1755,11 +1755,11 @@ void rrc_ue_generate_RRCSetupRequest( const protocol_ctxt_t *const ctxt_pP, cons
     }
 
     LOG_T(NR_RRC,"\n");
-    // NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size =
-    //   do_RRCSetupRequest(
-    //     ctxt_pP->module_id,
-    //     (uint8_t *)NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload,
-    //     rv);
+    NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size =
+      do_RRCSetupRequest(
+        ctxt_pP->module_id,
+        (uint8_t *)NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload,
+        rv);
     LOG_I(NR_RRC,"[UE %d] : Frame %d, Logical Channel UL-CCCH (SRB0), Generating RRCSetupRequest (bytes %d, eNB %d)\n",
           ctxt_pP->module_id, ctxt_pP->frame, NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size, gNB_index);
 
@@ -1770,6 +1770,17 @@ void rrc_ue_generate_RRCSetupRequest( const protocol_ctxt_t *const ctxt_pP, cons
     LOG_T(NR_RRC,"\n");
     /*UE_rrc_inst[ue_mod_idP].Srb0[Idx].Tx_buffer.Payload[i] = taus()&0xff;
     UE_rrc_inst[ue_mod_idP].Srb0[Idx].Tx_buffer.payload_size =i; */
+
+    log_dump(RRC,NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload,NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size,
+    LOG_DUMP_CHAR,"   Received bytes:\n");
+    rrc_data_req_ue (
+      ctxt_pP,
+      DCCH,
+      nr_rrc_mui++,
+      SDU_CONFIRM_NO,
+      NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size,
+      (uint8_t *)NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload,
+      PDCP_TRANSMISSION_MODE_CONTROL);
 
 #ifdef ITTI_SIM
     MessageDef *message_p;
@@ -2385,7 +2396,7 @@ void *rrc_nrue_task( void *args_p ) {
                                    NR_RRC_MAC_BCCH_DATA_IND (msg_p).rsrp);
 
       case NR_RRC_MAC_CCCH_DATA_IND:
-        LOG_I(NR_RRC, "[UE %d] RNTI %x Received %s: frameP %d, gNB %d\n",
+        LOG_D(NR_RRC, "[UE %d] RNTI %x Received %s: frameP %d, gNB %d\n",
               ue_mod_id,
               NR_RRC_MAC_CCCH_DATA_IND (msg_p).rnti,
               ITTI_MSG_NAME (msg_p),

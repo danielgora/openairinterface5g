@@ -777,7 +777,10 @@ int main( int argc, char **argv ) {
   
   // wait for end of program
   printf("TYPE <CTRL-C> TO TERMINATE\n");
-
+  protocol_ctxt_t ctxt_pP = {0};
+  ctxt_pP.enb_flag = ENB_FLAG_NO;
+  ctxt_pP.rnti = 0x1234;
+  rrc_ue_generate_RRCSetupRequest(&ctxt_pP, 0);
   while(true)
     sleep(3600);
 

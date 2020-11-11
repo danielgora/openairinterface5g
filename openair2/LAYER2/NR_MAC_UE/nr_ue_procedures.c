@@ -1451,7 +1451,14 @@ NR_UE_L2_STATE_t nr_ue_scheduler(nr_downlink_indication_t *dl_info, nr_uplink_in
     }
   } else if (ul_info) {
     NR_UE_MAC_INST_t *mac = get_mac_inst(ul_info->module_id);
-    if (((get_softmodem_params()->phy_test) || ((mac->ra_state == RA_SUCCEEDED)) ) && ul_info->slot_tx == 8) { // ULSCH is handled only in phy-test mode (consistently with OAI gNB)
+    //if (get_softmodem_params()->phy_test && ul_info->slot_tx == 8) { // ULSCH is handled only in phy-test mode (consistently with OAI gNB)
+    if ((mac->ra_state == RA_SUCCEEDED) && ( ul_info->slot_tx == 8)) { 
+      static int skip_the_first = 0;
+      if (skip_the_first == 0)
+      {
+        skip_the_first = 1;
+        return UE_CONNECTION_OK;
+      }
 
       uint8_t nb_dmrs_re_per_rb;
       uint8_t ulsch_input_buffer[MAX_ULSCH_PAYLOAD_BYTES];

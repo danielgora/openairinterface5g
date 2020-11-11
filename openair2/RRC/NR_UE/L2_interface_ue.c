@@ -91,7 +91,7 @@ rrc_data_req_ue(
     message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_ENB : TASK_RRC_UE, RRC_DCCH_DATA_REQ);
     RRC_DCCH_DATA_REQ (message_p).frame     = ctxt_pP->frame;
     RRC_DCCH_DATA_REQ (message_p).enb_flag  = ctxt_pP->enb_flag;
-    RRC_DCCH_DATA_REQ (message_p).rb_id     = rb_idP;
+    RRC_DCCH_DATA_REQ (message_p).rb_id     = 1;
     RRC_DCCH_DATA_REQ (message_p).muip      = muiP;
     RRC_DCCH_DATA_REQ (message_p).confirmp  = confirmP;
     RRC_DCCH_DATA_REQ (message_p).sdu_size  = sdu_sizeP;

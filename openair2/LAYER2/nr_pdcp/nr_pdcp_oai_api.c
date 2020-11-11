@@ -92,6 +92,64 @@ extern rlc_op_status_t nr_rrc_rlc_config_asn1_req (const protocol_ctxt_t   * con
     const LTE_PMCH_InfoList_r9_t * const pmch_InfoList_r9_pP,
     struct NR_CellGroupConfig__rlc_BearerToAddModList *rlc_bearer2add_list);
 
+//------------------------------------------------------------------------------
+void
+nr_rrc_data_ind(
+  const protocol_ctxt_t *const ctxt_pP,
+  const rb_id_t                Srb_id,
+  const sdu_size_t             sdu_sizeP,
+  const uint8_t   *const       buffer_pP
+)
+//------------------------------------------------------------------------------
+{
+  rb_id_t    DCCH_index = Srb_id;
+  LOG_I(RRC, "[UE %x] Frame %d: received a DCCH %ld message on SRB %ld with Size %d from eNB %d\n",
+        ctxt_pP->module_id, ctxt_pP->frame, DCCH_index,Srb_id,sdu_sizeP,  ctxt_pP->eNB_index);
+  {
+    MessageDef *message_p;
+    // Uses a new buffer to avoid issue with PDCP buffer content that could be changed by PDCP (asynchronous message handling).
+    uint8_t *message_buffer;
+    message_buffer = itti_malloc (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, sdu_sizeP);
+    memcpy (message_buffer, buffer_pP, sdu_sizeP);
+    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, RRC_DCCH_DATA_IND);
+    RRC_DCCH_DATA_IND (message_p).frame      = ctxt_pP->frame;
+    RRC_DCCH_DATA_IND (message_p).dcch_index = DCCH_index;
+    RRC_DCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
+    RRC_DCCH_DATA_IND (message_p).sdu_p      = message_buffer;
+    RRC_DCCH_DATA_IND (message_p).rnti       = ctxt_pP->rnti;
+    RRC_DCCH_DATA_IND (message_p).module_id  = ctxt_pP->module_id;
+    RRC_DCCH_DATA_IND (message_p).eNB_index  = ctxt_pP->eNB_index;
+    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->instance, message_p);
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+nr_rrc_data_ind_ccch(
+  const protocol_ctxt_t *const ctxt_pP,
+  const rb_id_t                Srb_id,
+  const sdu_size_t             sdu_sizeP,
+  const uint8_t   *const       buffer_pP
+)
+//------------------------------------------------------------------------------
+{
+  rb_id_t    DCCH_index = Srb_id;
+  LOG_I(RRC, "[UE %x] Frame %d: received a CCCH %ld message on SRB 0 with Size %d from gNB %d\n",
+        ctxt_pP->module_id, ctxt_pP->frame, DCCH_index,Srb_id,sdu_sizeP,  ctxt_pP->eNB_index);
+  {
+    MessageDef *message_p;
+    // Uses a new buffer to avoid issue with PDCP buffer content that could be changed by PDCP (asynchronous message handling).
+    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, NR_RRC_MAC_CCCH_DATA_IND);
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).frame      = ctxt_pP->frame;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).sub_frame  = 0;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).gnb_index  = 0;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).CC_id      = 0;
+    memcpy(NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu,buffer_pP,sdu_sizeP);
+    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->instance, message_p);
+  }
+}
+
 static void *rlc_data_req_thread(void *_)
 {
   int i;
@@ -407,11 +465,26 @@ static void deliver_sdu_drb(void *_ue, nr_pdcp_entity_t *entity,
   int i;
 
   if(IS_SOFTMODEM_NOS1){
+    #if 1
+    log_dump(PDCP,buf,size,LOG_DUMP_CHAR,"   PDCP Received SDU:\n");
+    if (size > 47)
+    {
+      LOG_I(PDCP,"maybe ip data \n");
+    }
+    else
+    {
+      LOG_I(PDCP,"send to gNB RRC \n");
+      protocol_ctxt_t  ctxt_pP = {0};
+      ctxt_pP.enb_flag = ENB_FLAG_YES;
+      nr_rrc_data_ind_ccch( &ctxt_pP, 1, size, buf);
+    }
+    #else
     len = write(nas_sock_fd[0], buf, size);
     if (len != size) {
       LOG_E(PDCP, "%s:%d:%s: fatal\n", __FILE__, __LINE__, __FUNCTION__);
       exit(1);
     }
+    #endif
   }
   else{
     for (i = 0; i < 5; i++) {

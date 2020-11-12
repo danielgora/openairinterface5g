@@ -114,6 +114,16 @@ int8_t mac_rrc_nr_data_req_ue(const module_id_t Mod_idP,
                               const rb_id_t     Srb_id,
                               uint8_t *const    buffer_pP);
 
+
+/**\brief RRC UE task.
+   \param void *args_p Pointer on arguments to start the task. */
+void *rrc_nrue_task(void *args_p);
+
+/**\brief RRC UE generate RRCSetupRequest message.
+   \param ctxt_pP    protocol context 
+   \param gNB_index  gNB index  */
+void rrc_ue_generate_RRCSetupRequest( const protocol_ctxt_t *const ctxt_pP, const uint8_t gNB_index );
+
 /** @}*/
 #endif
 

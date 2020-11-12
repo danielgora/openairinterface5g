@@ -99,6 +99,10 @@ uint8_t do_NR_SecurityModeCommand(
                     const uint8_t cipheringAlgorithm,
                     NR_IntegrityProtAlgorithm_t *integrityProtAlgorithm);
 
+uint8_t do_NR_SA_UECapabilityEnquiry( const protocol_ctxt_t *const ctxt_pP,
+                                   uint8_t               *const buffer,
+                                   const uint8_t                Transaction_id);
+
 uint8_t do_NR_RRCConnectionRelease(uint8_t *buffer,
                                    uint8_t Transaction_id);
 uint16_t do_RRCReconfiguration(
@@ -107,3 +111,18 @@ uint16_t do_RRCReconfiguration(
                     uint8_t                      *buffer,
                     uint8_t                      Transaction_id,
                     gNB_RRC_INST                 *gnb_rrc_inst);
+                    
+uint8_t do_RRCSetupComplete(uint8_t Mod_id, 
+                            uint8_t *buffer, 
+                            const uint8_t Transaction_id, 
+                            uint8_t sel_plmn_id, 
+                            const int dedicatedInfoNASLength, 
+                            const char *dedicatedInfoNAS);
+
+uint8_t do_RRCSetupRequest(uint8_t Mod_id, uint8_t *buffer,uint8_t *rv);
+
+uint8_t do_NR_RRCReconfigurationComplete(
+                        const protocol_ctxt_t *const ctxt_pP,
+                        uint8_t *buffer,
+                        const uint8_t Transaction_id
+                      );

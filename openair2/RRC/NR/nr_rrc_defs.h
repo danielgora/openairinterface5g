@@ -134,8 +134,6 @@ typedef enum UE_STATE_NR_e {
 /* TS 36.331: RRC-TransactionIdentifier ::= INTEGER (0..3) */
 #define NR_RRC_TRANSACTION_IDENTIFIER_NUMBER             3
 
-#define ENABLE_SECURITY 1
-
 typedef struct {
   unsigned short                                      transport_block_size;      /*!< \brief Minimum PDU size in bytes provided by RLC to MAC layer interface */
   unsigned short                                      max_transport_blocks;      /*!< \brief Maximum PDU size in bytes provided by RLC to MAC layer interface */
@@ -152,7 +150,7 @@ typedef struct UE_RRC_INFO_NR_s {
   uint32_t                                            SIStatus;
   uint32_t                                            SIcnt;
   uint8_t                                             MCCHStatus[8];             // MAX_MBSFN_AREA
-  uint8_t                                             SIwindowsize;              //!< Corresponds to the SIB1 si-WindowLength parameter. The unit is ms. Possible values are (final): 1,2,5,10,15,20,40
+  uint16_t                                            SIwindowsize;              //!< Corresponds to the SIB1 si-WindowLength parameter. The unit is ms. Possible values are (final): 1,2,5,10,15,20,40
   uint8_t                                             handoverTarget;
   //HO_STATE_t ho_state;
   uint16_t
@@ -289,13 +287,12 @@ typedef struct gNB_RRC_UE_s {
 
   ImsiMobileIdentity_t               imsi;
 
-#if defined(ENABLE_SECURITY)
-  /* KeNB as derived from KASME received from EPC */
-  uint8_t kenb[32];
-  int8_t  kenb_ncc;
+  /* KgNB as derived from KASME received from EPC */
+  uint8_t kgnb[32];
+  int8_t  kgnb_ncc;
   uint8_t nh[32];
   int8_t  nh_ncc;
-#endif
+
   /* Used integrity/ciphering algorithms */
   NR_CipheringAlgorithm_t            ciphering_algorithm;
   e_NR_IntegrityProtAlgorithm        integrity_algorithm;
@@ -322,7 +319,7 @@ typedef struct gNB_RRC_UE_s {
   uint64_t                           amf_ue_ngap_id:40;
   nr_rrc_guami_t                     ue_guami;
 
-  security_capabilities_t            security_capabilities;
+  ngap_security_capabilities_t       security_capabilities;
 
   /* Total number of e_rab already setup in the list */
   uint8_t                           setup_e_rabs;

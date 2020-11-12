@@ -69,6 +69,8 @@ void rrc_parse_ue_capabilities(gNB_RRC_INST *rrc,LTE_UE_CapabilityRAT_ContainerL
 
 void rrc_add_nsa_user(gNB_RRC_INST *rrc,struct rrc_gNB_ue_context_s *ue_context_p, x2ap_ENDC_sgnb_addition_req_t *m);
 
+void rrc_remove_nsa_user(gNB_RRC_INST *rrc, int rnti);
+
 void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellconfigcommon,
 				     NR_CellGroupConfig_t *secondaryCellGroup,
 				     int scg_id,
@@ -108,7 +110,27 @@ rrc_gNB_generate_UECapabilityEnquiry(
   rrc_gNB_ue_context_t  *const ue_context_pP
 );
 
+void nr_rrc_rx_tx(void);
+
 /**\brief RRC eNB task.
    \param void *args_p Pointer on arguments to start the task. */
 void *rrc_gnb_task(void *args_p);
+
+/* Trigger RRC periodic processing. To be called once per ms. */
+void nr_rrc_trigger(protocol_ctxt_t *ctxt, int CC_id, int frame, int subframe);
+
+uint8_t
+nr_rrc_data_req(
+  const protocol_ctxt_t   *const ctxt_pP,
+  const rb_id_t                  rb_idP,
+  const mui_t                    muiP,
+  const confirm_t                confirmP,
+  const sdu_size_t               sdu_size,
+  uint8_t                 *const buffer_pP,
+  const pdcp_transmission_mode_t modeP
+);
+
+int
+nr_rrc_mac_remove_ue(module_id_t mod_idP,
+                  rnti_t rntiP);
 

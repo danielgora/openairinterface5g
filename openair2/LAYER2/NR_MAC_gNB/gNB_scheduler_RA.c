@@ -727,7 +727,7 @@ void nr_generate_Msg2(module_id_t module_idP,
   dl_tti_pdcch_pdu->PDUType = NFAPI_NR_DL_TTI_PDCCH_PDU_TYPE;
   dl_tti_pdcch_pdu->PDUSize = (uint8_t)(2+sizeof(nfapi_nr_dl_tti_pdcch_pdu));
   uint8_t dci_pdu_index = 0;
-  int dci10_bw;
+  int dci10_bw = 0;
   nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu_rel15 = &dl_tti_pdcch_pdu->pdcch_pdu.pdcch_pdu_rel15;
   NR_ServingCellConfigCommon_t *scc = cc->ServingCellConfigCommon;
 #if 0
@@ -739,7 +739,7 @@ void nr_generate_Msg2(module_id_t module_idP,
       "downlinkBWP_ToAddModList has %d BWP!\n", secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
     NR_BWP_Downlink_t *bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
     NR_BWP_Uplink_t *ubwp=secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id-1];
-#else
+#endif
     AssertFatal(ra->secondaryCellGroup,
                 "no secondaryCellGroup for RNTI %04x\n",
                 ra->crnti);
@@ -874,11 +874,11 @@ void nr_generate_Msg2(module_id_t module_idP,
     nr_configure_dci(nr_mac,
                      pdcch_pdu_rel15,
                      RA_rnti,
-    	               ss,
-	                   coreset,
-	                   scc,
-	  	               bwp,
-		                 ra->beam_id,
+    	             ss,
+	             coreset,
+	             scc,
+	  	     bwp,
+		     ra->beam_id,
                      aggregation_level,
                      CCEIndex);
 
@@ -913,8 +913,6 @@ void nr_generate_Msg2(module_id_t module_idP,
       pdcch_pdu_rel15->StartSymbolIndex,
       pdcch_pdu_rel15->DurationSymbols);
 
-//    fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);
-
     // Program UL processing for Msg3
     nr_get_Msg3alloc(scc, ubwp, slotP, frameP, ra);
     LOG_I(MAC, "Frame %d, Subframe %d: Setting Msg3 reception for Frame %d Subframe %d\n", frameP, slotP, ra->Msg3_frame, ra->Msg3_slot);
@@ -934,17 +932,18 @@ void nr_generate_Msg2(module_id_t module_idP,
     nr_mac->TX_req[CC_id].Number_of_PDUs++;
     nr_mac->TX_req[CC_id].Slot = slotP;
     memcpy((void*)&tx_req->TLVs[0].value.direct[0], (void*)&cc[CC_id].RAR_pdu[dci_pdu_index].payload, tx_req->TLVs[0].length);
-		dci_pdu_index+=1;
-    dl_req->nPDUs+=1; //Adding PDSCH pdu count
-    pdcch_pdu_rel15->numDlDci++;
 
     T(T_GNB_MAC_DL_RAR_PDU_WITH_DATA, T_INT(module_idP), T_INT(CC_id),
       T_INT(RA_rnti), T_INT(frameP), T_INT(slotP), T_INT(0) /* harq pid, meaningful? */,
-      T_BUFFER(&cc[CC_id].RAR_pdu.payload[0], tx_req->TLVs[0].length));
+      T_BUFFER(&cc[CC_id].RAR_pdu[dci_pdu_index].payload[0], tx_req->TLVs[0].length));
     /* mark the corresponding RBs as used */
     uint16_t *vrb_map = cc[CC_id].vrb_map;
     for (int rb = 0; rb < pdsch_pdu_rel15->rbSize; rb++)
       vrb_map[rb + pdsch_pdu_rel15->rbStart] = 1;
+    
+		dci_pdu_index+=1;
+    dl_req->nPDUs+=1; //Adding PDSCH pdu count
+    pdcch_pdu_rel15->numDlDci++;
 	}
 	}
   }

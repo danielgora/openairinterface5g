@@ -128,25 +128,26 @@ static inline uint8_t get_max_cces(uint8_t scs) {
 
 NR_ControlResourceSet_t *get_coreset(NR_BWP_Downlink_t *bwp,
                                      NR_SearchSpace_t *ss,
-																		 int ss_type) {
-		NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
-		if (ss_type == 0) { // common search space
-		  AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
-			NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
-			AssertFatal(coreset_id == coreset->controlResourceSetId,
-			            "ID of common ss coreset does not correspond to id set in the "
-															                "search space\n");
-			return coreset;
-		} else {
-		  const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
-		  for (int i = 0; i < n; i++) {
-			  NR_ControlResourceSet_t *coreset = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
-				if (coreset_id == coreset->controlResourceSetId) {
-				  return coreset;
-				}
-			}
-		  AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
+				     int ss_type) {
+  NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
+  if (ss_type == 0) { // common search space
+    AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
+    NR_ControlResourceSet_t *coreset = bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonControlResourceSet;
+    AssertFatal(coreset_id == coreset->controlResourceSetId,
+                "ID of common ss coreset does not correspond to id set in the "
+                "search space\n");
+    return coreset;
+  } else {
+    const int n = bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.count;
+    for (int i = 0; i < n; i++) {
+      NR_ControlResourceSet_t *coreset =
+          bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list.array[i];
+      if (coreset_id == coreset->controlResourceSetId) {
+        return coreset;
+      }
     }
+    AssertFatal(0, "Couldn't find coreset with id %ld\n", coreset_id);
+  }
 }
 
 NR_SearchSpace_t *get_searchspace(
@@ -476,11 +477,12 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
                           int NrOfSymbols,
                           int harq_pid,
                           int ndi,
-                          int round) {
+                          int round,
+                          int UE_beam_index) {
   gNB_MAC_INST                        *nr_mac  = RC.nrmac[Mod_idP];
   NR_COMMON_channels_t                *cc      = nr_mac->common_channels;
   NR_ServingCellConfigCommon_t        *scc     = cc->ServingCellConfigCommon;
-
+  
   const int bwp_id = sched_ctrl->active_bwp->bwp_Id;
   const int nrOfLayers = 1;
   const int mcs = sched_ctrl->mcs;
@@ -629,15 +631,15 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
                      bwp);
     nr_configure_dci(nr_mac,
                      pdcch_pdu_rel15,
-                     RA_rnti,
-    	               ss,
-	                   coreset,
-	                   scc,
-	  	               bwp,
-		                 ra->beam_id,
+                     rnti,
+    	             sched_ctrl->search_space,
+	             sched_ctrl->coreset,
+	             scc,
+	  	     bwp,
+		     UE_beam_index,
                      sched_ctrl->aggregation_level,
                      sched_ctrl->cce_index);
-
+  pdcch_pdu_rel15->numDlDci++;
   int dci_formats[2];
   int rnti_types[2];
 

@@ -619,9 +619,9 @@ typedef struct {
   uint16_t prgSize;
   /// Number of STD ant ports (parallel streams) feeding into the digBF Value: 0->255
   uint8_t digBFInterfaces;
-	// Depends on numPRGs
+  // Depends on numPRGs
   uint16_t PMIdx[275];
-	// Depends on digBFInterfaces
+  // Depends on digBFInterfaces
   uint16_t beamIdx[256];
 } nfapi_nr_tx_precoding_and_beamforming_t;
 

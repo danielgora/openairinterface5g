@@ -372,7 +372,6 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
       LOG_I(PHY,"Added new UE_id %d/%x with initial secondaryCellGroup\n",UE_id,rnti);
     } else if (add_ue == 1 && !get_softmodem_params()->phy_test) {
       const int CC_id = 0;
-#if 1
       NR_COMMON_channels_t *cc = &RC.nrmac[Mod_idP]->common_channels[CC_id];
       uint8_t ra_index = 0;
       /* checking for free RA process */
@@ -399,6 +398,7 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
 	      }
       }
       }
+			}
       LOG_I(PHY,"Added new RA process for UE RNTI %04x with initial secondaryCellGroup\n", rnti);
     } else { // secondaryCellGroup has been updated
       const int UE_id = find_nr_UE_id(Mod_idP,rnti);

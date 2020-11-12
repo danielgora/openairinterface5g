@@ -803,6 +803,7 @@ void schedule_fapi_ul_pdu(int Mod_idP,
 		       UE_info->UE_beam_index[UE_id],
                        aggregation_level,
                        CCEIndex);
+      pdcch_pdu_rel15->numDlDci++;
 
       dci_pdu_rel15_t *dci_pdu_rel15 = calloc(MAX_DCI_CORESET,sizeof(dci_pdu_rel15_t));
       config_uldci(ubwp,pusch_pdu,pdcch_pdu_rel15,&dci_pdu_rel15[0],dci_formats,rnti_types,time_domain_assignment,UE_info->UE_sched_ctrl[UE_id].tpc0,n_ubwp,bwp_id);

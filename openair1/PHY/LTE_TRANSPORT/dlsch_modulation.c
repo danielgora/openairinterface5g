@@ -2249,7 +2249,6 @@ int dlsch_modulation(PHY_VARS_eNB* phy_vars_eNB,
   uint8_t Nl1;
 #endif
 
-
   if ((dlsch0 != NULL) && (dlsch1 != NULL)){
 
     harq_pid = dlsch0->harq_ids[frame%2][subframe_offset];

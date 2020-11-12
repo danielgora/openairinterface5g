@@ -874,11 +874,11 @@ void nr_generate_Msg2(module_id_t module_idP,
     nr_configure_dci(nr_mac,
                      pdcch_pdu_rel15,
                      RA_rnti,
-    	               ss,
-	                   coreset,
-	                   scc,
-	  	               bwp,
-		                 ra->beam_id,
+    	             ss,
+	             coreset,
+	             scc,
+	  	     bwp,
+		     ra->beam_id,
                      aggregation_level,
                      CCEIndex);
 
@@ -942,7 +942,6 @@ void nr_generate_Msg2(module_id_t module_idP,
     dci_pdu_index+=1;
     dl_req->nPDUs+=1; //Adding PDSCH pdu count
     pdcch_pdu_rel15->numDlDci++;
-  }
   }
   }
   fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);

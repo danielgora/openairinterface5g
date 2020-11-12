@@ -493,7 +493,6 @@ void pf_dl(module_id_t module_id,
            uint8_t *rballoc_mask,
            int max_num_ue) {
 
-  const int UE_id = 0;
   float coeff_ue[MAX_MOBILES_PER_GNB];
   NR_UE_list_t UE_sched; // UEs that could be scheduled
   int *uep = &UE_sched.head;
@@ -562,22 +561,35 @@ void pf_dl(module_id_t module_id,
   }
   *uep = -1;
 
-  NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
-  const uint16_t bwpSize = NRRIV2BW(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
-  int rbStart = NRRIV2PRBOFFSET(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
-  const int current_harq_pid = sched_ctrl->current_harq_pid;
-  NR_UE_harq_t *harq = &sched_ctrl->harq_processes[current_harq_pid];
-
   /* Loop UE_sched to find max coeff and allocate transmission */
-  //while(n_rb_sched > 0 && UE_sched.head >= 0){
-  if (harq->round == 0) { // temp
+  while (max_num_ue > 0 && n_rb_sched > 0 && UE_sched.head >= 0) {
 
     /* Find max coeff from UE_sched*/
+    int *max = &UE_sched.head; /* assume head is max */
+    int *p = &UE_sched.next[*max];
+    while (*p >= 0) {
+      /* if the current one has larger coeff, save for later */
+      if (coeff_ue[*p] > coeff_ue[*max])
+        max = p;
+      p = &UE_sched.next[*p];
+    }
+    /* remove the max one */
+    const int UE_id = *max;
+    p = &UE_sched.next[*max];
+    *max = UE_sched.next[*max];
+    *p = -1;
+
+    NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
+    const uint16_t bwpSize = NRRIV2BW(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
+    int rbStart = NRRIV2PRBOFFSET(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, 275);
 
     /* Find a free CCE */
     bool freeCCEE = find_free_CCE(module_id, slot, UE_info, UE_id);
     if (!freeCCEE)
-      return;
+      continue;
+
+    max_num_ue--;
+
     /* Find PUCCH occasion */
     nr_acknack_scheduling(module_id,
                           UE_id,

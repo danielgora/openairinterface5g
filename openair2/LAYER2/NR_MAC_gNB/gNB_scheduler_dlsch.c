@@ -613,7 +613,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
                          current_harq_pid,
                          harq->ndi,
                          harq->round,
-												 UE_info->UE_beam_index[UE_id]);
+                         UE_info->UE_beam_index[UE_id]);
 
     NR_UE_ret_info_t *retInfo = &sched_ctrl->retInfo[current_harq_pid];
     if (harq->round != 0) { /* retransmission */

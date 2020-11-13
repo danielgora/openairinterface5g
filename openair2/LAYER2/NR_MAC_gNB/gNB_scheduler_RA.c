@@ -449,6 +449,9 @@ void nr_initiate_ra_proc(module_id_t module_idP,
                 			      preamble_index,
                                               freq_index,
 	   				      symbol);
+
+    // the UE sent a RACH either for starting RA procedure or RA procedure failed and UE retries
+    if (ra->cfra) {
     int pr_found=0;
     if (preamble_index == ra->preambles.preamble_list[beam_index]) {
       pr_found=1;
@@ -458,7 +461,7 @@ void nr_initiate_ra_proc(module_id_t module_idP,
 			module_idP, preamble_index);
       return; // if the PRACH preamble does not correspond to any of the ones sent through RRC abort RA proc
     }
-
+    }
     int loop = 0;
     LOG_D(MAC, "Frame %d, Slot %d: Activating RA process \n", frameP, slotP);
     ra->state = Msg2;
@@ -622,7 +625,7 @@ void nr_add_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t 
 
   AssertFatal(ra->secondaryCellGroup,
               "no secondaryCellGroup for RNTI %04x\n",
-              ra->crnti);
+              ra->rnti);
   AssertFatal(ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
     "downlinkBWP_ToAddModList has %d BWP!\n", ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
   NR_BWP_Uplink_t *ubwp = ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
@@ -730,23 +733,15 @@ void nr_generate_Msg2(module_id_t module_idP,
   int dci10_bw = 0;
   nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu_rel15 = &dl_tti_pdcch_pdu->pdcch_pdu.pdcch_pdu_rel15;
   NR_ServingCellConfigCommon_t *scc = cc->ServingCellConfigCommon;
-#if 0
-    // This code from this point on will not work on initialBWP or CORESET0
-    AssertFatal(ra->bwp_id>0,"cannot work on initialBWP for now\n");
-
-    NR_CellGroupConfig_t *secondaryCellGroup = UE_list->secondaryCellGroup[UE_id];
-    AssertFatal(secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
-      "downlinkBWP_ToAddModList has %d BWP!\n", secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
-    NR_BWP_Downlink_t *bwp = secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
-    NR_BWP_Uplink_t *ubwp=secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id-1];
-#endif
-    AssertFatal(ra->secondaryCellGroup,
+  // This code from this point on will not work on initialBWP or CORESET0
+  AssertFatal(ra->bwp_id>0,"cannot work on initialBWP for now\n");
+  AssertFatal(ra->secondaryCellGroup,
                 "no secondaryCellGroup for RNTI %04x\n",
-                ra->crnti);
-    AssertFatal(ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
-      "downlinkBWP_ToAddModList has %d BWP!\n", ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
-    NR_BWP_Downlink_t *bwp = ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
-    NR_BWP_Uplink_t *ubwp=ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id-1];
+                ra->rnti);
+  AssertFatal(ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
+    "downlinkBWP_ToAddModList has %d BWP!\n", ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count);
+  NR_BWP_Downlink_t *bwp = ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
+  NR_BWP_Uplink_t *ubwp=ra->secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id-1];
   uint8_t nr_of_candidates, aggregation_level;
   find_aggregation_candidates(&aggregation_level, &nr_of_candidates, ss);
   NR_ControlResourceSet_t *coreset = get_coreset(bwp, ss, 0 /* common */);
@@ -777,6 +772,11 @@ void nr_generate_Msg2(module_id_t module_idP,
     locationAndBandwidth = scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth;
     dci10_bw = NRRIV2BW(locationAndBandwidth,275); 
   }
+
+  uint16_t *vrb_map = cc[CC_id].vrb_map;
+  int rbStart = NRRIV2PRBOFFSET(locationAndBandwidth, 275);
+  while (rbStart < dci10_bw && vrb_map[rbStart]) rbStart++;
+
   LOG_I(MAC, "[RAPROC] Scheduling common search space DCI type 1 dlBWP BW %d\n", dci10_bw);
 
   if ((ra->Msg2_frame == frameP) && (ra->Msg2_slot == slotP)) {
@@ -834,7 +834,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->numDmrsCdmGrpsNoData = 2;
     pdsch_pdu_rel15->dmrsPorts = 1;
     pdsch_pdu_rel15->resourceAlloc = 1;
-    pdsch_pdu_rel15->rbStart = 0;
+    pdsch_pdu_rel15->rbStart = rbStart; //0;
     pdsch_pdu_rel15->rbSize = 6;
     pdsch_pdu_rel15->VRBtoPRBMapping = 0; // non interleaved
 
@@ -882,7 +882,6 @@ void nr_generate_Msg2(module_id_t module_idP,
                      aggregation_level,
                      CCEIndex);
 
-//    dci_pdu_rel15_t dci_pdu_rel15;
     dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
 										     pdsch_pdu_rel15->rbStart,dci10_bw);
     dci_pdu_rel15[pdcch_pdu_rel15->numDlDci].time_domain_assignment.val = time_domain_assignment;
@@ -937,15 +936,14 @@ void nr_generate_Msg2(module_id_t module_idP,
       T_INT(RA_rnti), T_INT(frameP), T_INT(slotP), T_INT(0) /* harq pid, meaningful? */,
       T_BUFFER(&cc[CC_id].RAR_pdu[dci_pdu_index].payload[0], tx_req->TLVs[0].length));
     /* mark the corresponding RBs as used */
-    uint16_t *vrb_map = cc[CC_id].vrb_map;
     for (int rb = 0; rb < pdsch_pdu_rel15->rbSize; rb++)
       vrb_map[rb + pdsch_pdu_rel15->rbStart] = 1;
-    
-		dci_pdu_index+=1;
+
+    dci_pdu_index+=1;
     dl_req->nPDUs+=1; //Adding PDSCH pdu count
     pdcch_pdu_rel15->numDlDci++;
-	}
-	}
+  }
+  }
   }
   fill_dci_pdu_rel15(scc,ra->secondaryCellGroup,pdcch_pdu_rel15, dci_pdu_rel15, dci_formats, rnti_types,dci10_bw,ra->bwp_id);
 }

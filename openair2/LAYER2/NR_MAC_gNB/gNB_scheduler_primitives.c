@@ -128,7 +128,7 @@ static inline uint8_t get_max_cces(uint8_t scs) {
 
 NR_ControlResourceSet_t *get_coreset(NR_BWP_Downlink_t *bwp,
                                      NR_SearchSpace_t *ss,
-				     int ss_type) {
+                                     int ss_type) {
   NR_ControlResourceSetId_t coreset_id = *ss->controlResourceSetId;
   if (ss_type == 0) { // common search space
     AssertFatal(coreset_id != 0, "coreset0 currently not supported\n");
@@ -482,7 +482,7 @@ void nr_fill_nfapi_dl_pdu(int Mod_idP,
   gNB_MAC_INST                        *nr_mac  = RC.nrmac[Mod_idP];
   NR_COMMON_channels_t                *cc      = nr_mac->common_channels;
   NR_ServingCellConfigCommon_t        *scc     = cc->ServingCellConfigCommon;
-  
+
   const int bwp_id = sched_ctrl->active_bwp->bwp_Id;
   const int nrOfLayers = 1;
   const int mcs = sched_ctrl->mcs;

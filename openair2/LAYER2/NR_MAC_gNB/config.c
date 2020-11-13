@@ -376,7 +376,7 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
       uint8_t ra_index = 0;
       /* checking for free RA process */
       for(; ra_index < NR_NB_RA_PROC_MAX; ra_index++) {
-	if(cc->ra[ra_index].state == RA_IDLE) break;
+	      if(cc->ra[ra_index].state == RA_IDLE) break;
       }
       NR_RA_t *ra = &cc->ra[ra_index];
       ra->secondaryCellGroup = secondaryCellGroup;

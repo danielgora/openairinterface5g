@@ -294,6 +294,7 @@ void nr_processULSegment(void* arg) {
   int Kr_bytes;
   int K_bytes_F;
   uint8_t crc_type;
+  int crc_len;
   int i;
   int j;
   int r = rdata->segment_r;
@@ -388,15 +389,19 @@ void nr_processULSegment(void* arg) {
   memset(ulsch_harq->c[r],0,Kr_bytes);
 
   if (ulsch_harq->C == 1) {
-    if (A > 3824)
+    if (A > 3824) {
       crc_type = CRC24_A;
-    else
+      crc_len = 3;
+    } else {
       crc_type = CRC16;
+      crc_len = 2;
+    }
 
     length_dec = ulsch_harq->B;
   }
   else {
     crc_type = CRC24_B;
+    crc_len = 3;
     length_dec = (ulsch_harq->B+24*ulsch_harq->C)/ulsch_harq->C;
   }
 
@@ -433,6 +438,8 @@ void nr_processULSegment(void* arg) {
                                      llrProcBuf,
                                      ulsch_harq->p_nrLDPC_procBuf[r],
                                      p_procTime);
+
+  rdata->data_size = (length_dec>>3) - crc_len;
 
   if (check_crc((uint8_t*)llrProcBuf,length_dec,ulsch_harq->F,crc_type)) {
 #ifdef PRINT_CRC_CHECK

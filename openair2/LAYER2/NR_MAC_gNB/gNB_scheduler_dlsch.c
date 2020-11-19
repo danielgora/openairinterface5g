@@ -761,7 +761,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
               TBS);
 
         sdu_lengths[num_sdus] = mac_rlc_data_req(module_id,
-            rnti,
+            0x1234,
             module_id,
             frame,
             ENB_FLAG_YES,

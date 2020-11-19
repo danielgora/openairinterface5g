@@ -109,17 +109,17 @@ nr_rrc_data_ind(
     MessageDef *message_p;
     // Uses a new buffer to avoid issue with PDCP buffer content that could be changed by PDCP (asynchronous message handling).
     uint8_t *message_buffer;
-    message_buffer = itti_malloc (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, sdu_sizeP);
+    message_buffer = itti_malloc (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, sdu_sizeP);
     memcpy (message_buffer, buffer_pP, sdu_sizeP);
-    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, RRC_DCCH_DATA_IND);
-    RRC_DCCH_DATA_IND (message_p).frame      = ctxt_pP->frame;
-    RRC_DCCH_DATA_IND (message_p).dcch_index = DCCH_index;
-    RRC_DCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
-    RRC_DCCH_DATA_IND (message_p).sdu_p      = message_buffer;
-    RRC_DCCH_DATA_IND (message_p).rnti       = ctxt_pP->rnti;
-    RRC_DCCH_DATA_IND (message_p).module_id  = ctxt_pP->module_id;
-    RRC_DCCH_DATA_IND (message_p).eNB_index  = ctxt_pP->eNB_index;
-    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->instance, message_p);
+    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, NR_RRC_DCCH_DATA_IND);
+    NR_RRC_DCCH_DATA_IND (message_p).frame      = ctxt_pP->frame;
+    NR_RRC_DCCH_DATA_IND (message_p).dcch_index = DCCH_index;
+    NR_RRC_DCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
+    NR_RRC_DCCH_DATA_IND (message_p).sdu_p      = message_buffer;
+    NR_RRC_DCCH_DATA_IND (message_p).rnti       = ctxt_pP->rnti;
+    NR_RRC_DCCH_DATA_IND (message_p).module_id  = ctxt_pP->module_id;
+    NR_RRC_DCCH_DATA_IND (message_p).gNB_index  = ctxt_pP->eNB_index;
+    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, ctxt_pP->instance, message_p);
   }
 }
 
@@ -139,14 +139,15 @@ nr_rrc_data_ind_ccch(
   {
     MessageDef *message_p;
     // Uses a new buffer to avoid issue with PDCP buffer content that could be changed by PDCP (asynchronous message handling).
-    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, NR_RRC_MAC_CCCH_DATA_IND);
+    message_p = itti_alloc_new_message (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, NR_RRC_MAC_CCCH_DATA_IND);
     NR_RRC_MAC_CCCH_DATA_IND (message_p).frame      = ctxt_pP->frame;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).sub_frame  = 0;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).gnb_index  = 0;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).CC_id      = 0;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).rnti   = 0x1234;
     memcpy(NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu,buffer_pP,sdu_sizeP);
-    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_UE, ctxt_pP->instance, message_p);
+    itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, ctxt_pP->instance, message_p);
   }
 }
 
@@ -294,9 +295,9 @@ printf("\n\n\n########## nas_sock_fd read returns len %d\n", len);
 
     ctxt.rnti = rnti;
 
-    pdcp_data_req(&ctxt, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED,
-                  RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
-                  PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
+    // pdcp_data_req(&ctxt, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED,
+    //               RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
+    //               PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
   }
 
   return NULL;
@@ -338,9 +339,9 @@ printf("\n\n\n########## nas_sock_fd read returns len %d\n", len);
 
     ctxt.rnti = rnti;
 
-    pdcp_data_req(&ctxt, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED,
-                  RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
-                  PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
+    // pdcp_data_req(&ctxt, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED,
+    //               RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
+    //               PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
   }
 
   return NULL;
@@ -452,8 +453,8 @@ uint64_t pdcp_module_init(uint64_t _pdcp_optmask)
   }
   return pdcp_optmask ;
 }
-
-static void deliver_sdu_drb(void *_ue, nr_pdcp_entity_t *entity,
+static int liuyu=0;
+static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t *entity,
                             char *buf, int size)
 {
   extern int nas_sock_fd[];
@@ -464,19 +465,26 @@ static void deliver_sdu_drb(void *_ue, nr_pdcp_entity_t *entity,
   int rb_id;
   int i;
 
-  if(IS_SOFTMODEM_NOS1){
+  if (1) { //(IS_SOFTMODEM_NOS1){
     #if 1
     log_dump(PDCP,buf,size,LOG_DUMP_CHAR,"   PDCP Received SDU:\n");
-    if (size > 47)
+    if (size > 4700)
     {
       LOG_I(PDCP,"maybe ip data \n");
     }
     else
     {
       LOG_I(PDCP,"send to gNB RRC \n");
-      protocol_ctxt_t  ctxt_pP = {0};
-      ctxt_pP.enb_flag = ENB_FLAG_YES;
-      nr_rrc_data_ind_ccch( &ctxt_pP, 1, size, buf);
+      
+      if(liuyu==2)
+          liuyu=1;
+      if(liuyu==0)
+          nr_rrc_data_ind_ccch( ctxt_pP, 1, size, buf);
+      if(liuyu==1)
+          nr_rrc_data_ind( ctxt_pP, 1, size, buf);
+      
+      liuyu++;
+      
     }
     #else
     len = write(nas_sock_fd[0], buf, size);
@@ -601,7 +609,7 @@ boolean_t pdcp_data_ind(
   }
 
   if (rb != NULL) {
-    rb->recv_pdu(rb, (char *)sdu_buffer->data, sdu_buffer_size);
+    rb->recv_pdu(ctxt_pP,rb, (char *)sdu_buffer->data, sdu_buffer_size);
   } else {
     LOG_E(PDCP, "%s:%d:%s: fatal: no RB found (rb_id %ld, srb_flag %d)\n",
           __FILE__, __LINE__, __FUNCTION__, rb_id, srb_flagP);
@@ -1043,7 +1051,7 @@ boolean_t pdcp_data_req(
 #endif
   )
 {
-  if (srb_flagP) { TODO; }
+  //if (srb_flagP) { TODO; }
   return pdcp_data_req_drb(ctxt_pP, rb_id, muiP, confirmP, sdu_buffer_size,
                            sdu_buffer);
 }

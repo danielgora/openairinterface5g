@@ -130,6 +130,8 @@ typedef struct pdcp_enb_s {
   // used for eNB stats generation
   uint16_t uid[MAX_MOBILES_PER_ENB];
   rnti_t rnti[MAX_MOBILES_PER_ENB];
+  rb_id_t  rb_id[NB_RB_MAX];
+  
   uint16_t num_ues;
 
   uint64_t sfn;

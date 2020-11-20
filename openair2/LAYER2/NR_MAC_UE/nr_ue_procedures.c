@@ -1450,8 +1450,8 @@ NR_UE_L2_STATE_t nr_ue_scheduler(nr_downlink_indication_t *dl_info, nr_uplink_in
       */
     }
   } else if (ul_info) {
-
-    if (get_softmodem_params()->phy_test && ul_info->slot_tx == 8) { // ULSCH is handled only in phy-test mode (consistently with OAI gNB)
+    NR_UE_MAC_INST_t *mac = get_mac_inst(ul_info->module_id);
+    if (((get_softmodem_params()->phy_test) || ((mac->ra_state == RA_SUCCEEDED)) ) && ul_info->slot_tx == 8) { // ULSCH is handled only in phy-test mode (consistently with OAI gNB)
 
       uint8_t nb_dmrs_re_per_rb;
       uint8_t ulsch_input_buffer[MAX_ULSCH_PAYLOAD_BYTES];
@@ -1488,6 +1488,13 @@ NR_UE_L2_STATE_t nr_ue_scheduler(nr_downlink_indication_t *dl_info, nr_uplink_in
       uint8_t  nrOfLayers         = 1;
       uint8_t  mcs_index          = ulcfg_pdu->pusch_config_pdu.mcs_index;
       uint8_t  mcs_table          = ulcfg_pdu->pusch_config_pdu.mcs_table;
+
+      rb_size = 106;
+      rb_start = 0;
+      nr_of_symbols = 11;
+      start_symbol_index = 0;
+      mcs_index = 9;
+
       uint8_t  harq_process_id    = ulcfg_pdu->pusch_config_pdu.pusch_data.harq_process_id;
       uint8_t  rv_index           = ulcfg_pdu->pusch_config_pdu.pusch_data.rv_index;
       uint16_t l_prime_mask       = get_l_prime(nr_of_symbols, typeB, pusch_dmrs_pos0, pusch_len1);

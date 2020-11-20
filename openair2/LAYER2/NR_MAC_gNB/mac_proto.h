@@ -201,6 +201,9 @@ void nr_schedule_pucch(int Mod_idP,
                        frame_t frameP,
                        sub_frame_t slotP);
 
+void csi_period_offset(NR_CSI_ReportConfig_t *csirep,
+                       int *period, int *offset);
+
 void nr_csi_meas_reporting(int Mod_idP,
                            int UE_id,
                            frame_t frameP,
@@ -218,6 +221,22 @@ void nr_acknack_scheduling(int Mod_idP,
                            int *pucch_occ);
 
 int get_pucch_resource(NR_UE_info_t *UE_info,int UE_id,int k,int l);
+
+int checkTargetSSBInTCIStates_pdcchConfig(int ssb_index_t, int Mod_idP, int UE_id);
+
+int checkTargetSSBInFirst64TCIStates_pdschConfig(int ssb_index_t, int Mod_idP, int UE_id);
+
+int get_measured_rsrp(uint8_t index);
+
+int get_diff_rsrp(uint8_t index, int strongest_rsrp);
+
+void extract_pucch_csi_report (NR_CSI_MeasConfig_t *csi_MeasConfig,
+                               nfapi_nr_uci_pucch_pdu_format_2_3_4_t *uci_pdu,
+                               NR_UE_sched_ctrl_t *sched_ctrl,
+                               frame_t frame,
+                               slot_t slot,
+                               NR_SubcarrierSpacing_t scs, int UE_id,
+                               module_id_t Mod_idP);
 
 void get_pdsch_to_harq_feedback(int Mod_idP,
                                 int UE_id,

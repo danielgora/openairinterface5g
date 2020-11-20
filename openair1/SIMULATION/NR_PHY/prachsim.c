@@ -119,9 +119,6 @@ int main(int argc, char **argv){
   uint16_t Nid_cell = 0, preamble_tx = 0, preamble_delay, format, format0, format1;
   uint32_t tx_lev = 10000, prach_errors = 0, samp_count; //,tx_lev_dB;
   uint64_t SSB_positions = 0x01, absoluteFrequencyPointA = 640000;
-  uint16_t RA_sfn_index;
-  uint8_t N_RA_slot;
-  uint8_t config_period;
   int prachOccasion = 0;
   double DS_TDL = .03;
   uint16_t RA_sfn_index = -1;

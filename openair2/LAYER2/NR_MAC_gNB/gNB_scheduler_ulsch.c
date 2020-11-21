@@ -50,7 +50,7 @@ void nr_process_mac_pdu(
     int pdu_len = mac_pdu_len;
     uint16_t mac_ce_len, mac_subheader_len, mac_sdu_len;
 
-
+    log_dump(MAC, pduP, 16, LOG_DUMP_CHAR, "gNB ULSCH payload: ");
     //  For both DL/UL-SCH
     //  Except:
     //   - UL/DL-SCH: fixed-size MAC CE(known by LCID)

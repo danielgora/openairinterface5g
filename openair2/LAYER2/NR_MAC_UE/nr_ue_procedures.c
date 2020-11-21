@@ -5083,6 +5083,8 @@ nr_ue_get_sdu(module_id_t module_idP, int CC_id, frame_t frameP,
   		  ulsch_buffer[j] = 0;
   }
 
+  log_dump(MAC, ulsch_buffer, 16, LOG_DUMP_CHAR, "UE ULSCH payload : ");
+
 #if defined(ENABLE_MAC_PAYLOAD_DEBUG)
   LOG_I(MAC, "Printing UL MAC payload UE side, payload_offset: %d \n", payload_offset);
   for (int i = 0; i < buflen ; i++) {

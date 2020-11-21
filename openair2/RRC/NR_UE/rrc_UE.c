@@ -1416,6 +1416,7 @@ int8_t nr_rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const NR_SRB
     return -1;
   }
   
+  NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].State = NR_RRC_SI_RECEIVED;
   if (dl_ccch_msg->message.present == NR_DL_CCCH_MessageType_PR_c1) {
     if (NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].State == NR_RRC_SI_RECEIVED) {
       switch (dl_ccch_msg->message.choice.c1->present) {

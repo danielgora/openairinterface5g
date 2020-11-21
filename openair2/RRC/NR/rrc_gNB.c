@@ -402,6 +402,15 @@ rrc_gNB_generate_RRCSetup(
   ue_context_pP->ue_context.ue_release_timer_thres = 1000;
   /* init timers */
   //   ue_context_pP->ue_context.ue_rrc_inactivity_timer = 0;
+
+  nr_rrc_data_req(ctxt_pP,
+            DCCH,
+            rrc_gNB_mui++,
+            SDU_CONFIRM_NO,
+            ue_p->Srb0.Tx_buffer.payload_size,
+            ue_p->Srb0.Tx_buffer.Payload,
+            PDCP_TRANSMISSION_MODE_CONTROL);
+
 #ifdef ITTI_SIM
   MessageDef *message_p;
   uint8_t *message_buffer;
@@ -1298,13 +1307,14 @@ void *rrc_gnb_task(void *args_p) {
 
       /* Messages from MAC */
       case NR_RRC_MAC_CCCH_DATA_IND:
-      // PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt,
-      //                               NR_RRC_MAC_CCCH_DATA_IND(msg_p).gnb_index,
-      //                               GNB_FLAG_YES,
-      //                               NR_RRC_MAC_CCCH_DATA_IND(msg_p).rnti,
-      //                               msg_p->ittiMsgHeader.lte_time.frame,
-      //                               msg_p->ittiMsgHeader.lte_time.slot);
-        LOG_I(NR_RRC,"Decoding CCCH : inst %d, CC_id %d, ctxt %p, sib_info_p->Rx_buffer.payload_size %d\n",
+        PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt,
+                                    NR_RRC_MAC_CCCH_DATA_IND(msg_p).gnb_index,
+                                    GNB_FLAG_YES,
+                                    NR_RRC_MAC_CCCH_DATA_IND(msg_p).rnti,
+                                    msg_p->ittiMsgHeader.lte_time.frame,
+                                    msg_p->ittiMsgHeader.lte_time.slot);
+        LOG_I(NR_RRC,"Decoding CCCH : ue %d, inst %d, CC_id %d, ctxt %p, size %d\n",
+                ctxt.rnti,
                 instance,
                 NR_RRC_MAC_CCCH_DATA_IND(msg_p).CC_id,
                 &ctxt,
@@ -1324,12 +1334,17 @@ void *rrc_gnb_task(void *args_p) {
 
       /* Messages from PDCP */
       case NR_RRC_DCCH_DATA_IND:
-        // PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt,
-        //                               instance,
-        //                               ENB_FLAG_YES,
-        //                               RRC_DCCH_DATA_IND(msg_p).rnti,
-        //                               msg_p->ittiMsgHeader.lte_time.frame,
-        //                               msg_p->ittiMsgHeader.lte_time.slot);
+        PROTOCOL_CTXT_SET_BY_INSTANCE(&ctxt,
+                                      instance,
+                                      ENB_FLAG_YES,
+                                      RRC_DCCH_DATA_IND(msg_p).rnti,
+                                      msg_p->ittiMsgHeader.lte_time.frame,
+                                      msg_p->ittiMsgHeader.lte_time.slot);
+        LOG_I(NR_RRC,"Decoding DCCH : ue %d, inst %d, ctxt %p, size %d\n",
+                ctxt.rnti,
+                instance,
+                &ctxt,
+                NR_RRC_DCCH_DATA_IND(msg_p).sdu_size);
         LOG_D(NR_RRC, PROTOCOL_NR_RRC_CTXT_UE_FMT" Received on DCCH %d %s\n",
                 PROTOCOL_NR_RRC_CTXT_UE_ARGS(&ctxt),
                 NR_RRC_DCCH_DATA_IND(msg_p).dcch_index,

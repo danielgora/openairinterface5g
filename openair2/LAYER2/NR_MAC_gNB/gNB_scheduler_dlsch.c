@@ -498,7 +498,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                                                     lcid,
                                                     0,
                                                     0);
-sched_ctrl->rlc_status[lcid].bytes_in_buffer = 500;
+//sched_ctrl->rlc_status[lcid].bytes_in_buffer = 500;
   LOG_I(MAC,
         "%d.%d, DTCH%d->DLSCH, RLC status %d bytes\n",
         frame,

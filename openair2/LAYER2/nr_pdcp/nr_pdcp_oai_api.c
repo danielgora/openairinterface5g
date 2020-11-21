@@ -145,7 +145,7 @@ nr_rrc_data_ind_ccch(
     NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu_size   = sdu_sizeP;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).gnb_index  = 0;
     NR_RRC_MAC_CCCH_DATA_IND (message_p).CC_id      = 0;
-    NR_RRC_MAC_CCCH_DATA_IND (message_p).rnti   = 0x1234;
+    NR_RRC_MAC_CCCH_DATA_IND (message_p).rnti       = ctxt_pP->rnti;
     memcpy(NR_RRC_MAC_CCCH_DATA_IND (message_p).sdu,buffer_pP,sdu_sizeP);
     itti_send_msg_to_task (ctxt_pP->enb_flag ? TASK_RRC_GNB : TASK_RRC_NRUE, ctxt_pP->instance, message_p);
   }

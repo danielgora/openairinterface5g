@@ -540,9 +540,13 @@ nwGtpv1uProcessGpdu( NwGtpv1uStackT *thiz,
 
   tunnelEndPointKey.teid = ntohl(msgHdr->teid);
 
-  pTunnelEndPoint = RB_FIND(NwGtpv1uTunnelEndPointIdentifierMap,
-                            &(thiz->teidMap), &tunnelEndPointKey);
-
+  //pTunnelEndPoint = RB_FIND(NwGtpv1uTunnelEndPointIdentifierMap,
+  //                          &(thiz->teidMap), &tunnelEndPointKey);
+  pTunnelEndPoint=(char*)malloc(1024);
+  pTunnelEndPoint->teid=0x01;
+  pTunnelEndPoint->peerAddr=peerIp; 
+  pTunnelEndPoint->hUlpSession = 0x12;
+  //pTunnelEndPoint->pStack->ulp.hUlp = 0x34;
   if(pTunnelEndPoint) {
     NwGtpv1uMsgHandleT hMsg;
 
@@ -550,7 +554,7 @@ nwGtpv1uProcessGpdu( NwGtpv1uStackT *thiz,
                                    (uint8_t *)gpdu,
                                    gpduLen,
                                    &hMsg);
-
+    rc=NW_GTPV1U_OK;
     /*
       uint8_t*        msgBuf;
       uint32_t        msgBufLen;
@@ -558,10 +562,13 @@ nwGtpv1uProcessGpdu( NwGtpv1uStackT *thiz,
      */
     if(NW_GTPV1U_OK == rc) {
       NwGtpv1uMsgT *pMsg = (NwGtpv1uMsgT *) hMsg;
-#if defined(LOG_GTPU) && LOG_GTPU > 0
+//#if defined(LOG_GTPU) && LOG_GTPU > 0
       GTPU_DEBUG("Received T-PDU over tunnel end-point '%x' of size %u (%u) (decapsulated %u)from "NW_IPV4_ADDR"\n",
                  ntohl(msgHdr->teid), gpduLen, pMsg->msgLen, pMsg->msgBufLen, NW_IPV4_ADDR_FORMAT((peerIp)));
-#endif
+      printf("Received T-PDU over tunnel end-point '%x' of size %u (%u) (decapsulated %u)from "NW_IPV4_ADDR"\n",
+                 ntohl(msgHdr->teid), gpduLen, pMsg->msgLen, pMsg->msgBufLen, NW_IPV4_ADDR_FORMAT((peerIp)));
+
+//#endif
       MSC_LOG_RX_MESSAGE(
         (thiz->stackType == GTPU_STACK_ENB) ? MSC_GTPU_ENB:MSC_GTPU_SGW,
         (thiz->stackType == GTPU_STACK_ENB) ? MSC_GTPU_SGW:MSC_GTPU_ENB,
@@ -570,7 +577,7 @@ nwGtpv1uProcessGpdu( NwGtpv1uStackT *thiz,
         " G-PDU ltid %u size %u",
         tunnelEndPointKey.teid,
         gpduLen);
-
+      //pTunnelEndPoint->pStack->ulp.ulpReqCallback = gtpv1u_gNB_process_stack_req;
       rc = nwGtpSessionSendMsgApiToUlpEntity(pTunnelEndPoint, pMsg);
     }
   } else {
@@ -861,8 +868,8 @@ nwGtpv1uProcessUdpReq( NW_IN NwGtpv1uStackHandleT hGtpuStackHandle,
 #endif
   thiz = (NwGtpv1uStackT *) hGtpuStackHandle;
 
-  NW_ASSERT(thiz);
 
+  NW_ASSERT(thiz);
   msgType = *((uint8_t *)(udpData + 1));
 
   switch(msgType) {
@@ -891,10 +898,15 @@ nwGtpv1uProcessUdpReq( NW_IN NwGtpv1uStackHandleT hGtpuStackHandle,
     break;
 
   case NW_GTP_GPDU:
-#if defined(LOG_GTPU) && LOG_GTPU > 0
+//#if defined(LOG_GTPU) && LOG_GTPU > 0
+    for(int i =1; i<= udpDataLen; i++){
+      printf("%02x ", udpData[i-1]);
+      if(i % 20 == 0)printf("\n");
+    }
     GTPU_DEBUG("NW_GTP_GPDU: DATA COMING FROM UDP\n");
-#endif
+    printf("NW_GTP_GPDU: DATA COMING FROM UDP len%d\n,port=%u,address%x",udpDataLen,peerPort,peerIp);
     ret = nwGtpv1uProcessGpdu(thiz, udpData, udpDataLen, peerIp);
+//#endif
     break;
 
   case NW_GTP_END_MARKER:

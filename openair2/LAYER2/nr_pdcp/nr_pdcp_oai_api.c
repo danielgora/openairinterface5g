@@ -481,7 +481,37 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
       if(liuyu==0)
           nr_rrc_data_ind_ccch( ctxt_pP, 1, size, buf);
       if(liuyu==1)
-          nr_rrc_data_ind( ctxt_pP, 1, size, buf);
+      {
+        for (i = 0; i < 5; i++) {
+           if (entity == ue->drb[i]) {
+              rb_id = i+1;
+              goto rb_found;
+           }
+        }
+
+      LOG_I(PDCP, "%s:%d:%s: fatal, no RB found for ue %d\n",
+            __FILE__, __LINE__, __FUNCTION__, ue->rnti);
+      exit(1);
+
+    rb_found:
+      gtpu_buffer_p = itti_malloc(TASK_PDCP_ENB, TASK_GTPV1_U,
+                                  size + GTPU_HEADER_OVERHEAD_MAX);
+      AssertFatal(gtpu_buffer_p != NULL, "OUT OF MEMORY");
+      memcpy(&gtpu_buffer_p[GTPU_HEADER_OVERHEAD_MAX], buf, size);
+      message_p = itti_alloc_new_message(TASK_PDCP_ENB, GTPV1U_ENB_TUNNEL_DATA_REQ);
+      AssertFatal(message_p != NULL, "OUT OF MEMORY");
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).buffer       = gtpu_buffer_p;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).length       = size;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).offset       = GTPU_HEADER_OVERHEAD_MAX;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = ue->rnti;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = 0x1234;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rab_id       = rb_id + 4;
+      LOG_I(PDCP, "%s() (drb %d) sending message to gtp size %d\n", __func__, rb_id, size);
+      //for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)buf[i]);
+      //printf("\n");
+      itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p); 
+      }
+          //nr_rrc_data_ind( ctxt_pP, 1, size, buf);
       
       liuyu++;
       
@@ -506,22 +536,22 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
             __FILE__, __LINE__, __FUNCTION__, ue->rnti);
       exit(1);
 
-    rb_found:
-      gtpu_buffer_p = itti_malloc(TASK_PDCP_ENB, TASK_GTPV1_U,
-                                  size + GTPU_HEADER_OVERHEAD_MAX);
-      AssertFatal(gtpu_buffer_p != NULL, "OUT OF MEMORY");
-      memcpy(&gtpu_buffer_p[GTPU_HEADER_OVERHEAD_MAX], buf, size);
-      message_p = itti_alloc_new_message(TASK_PDCP_ENB, GTPV1U_ENB_TUNNEL_DATA_REQ);
-      AssertFatal(message_p != NULL, "OUT OF MEMORY");
-      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).buffer       = gtpu_buffer_p;
-      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).length       = size;
-      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).offset       = GTPU_HEADER_OVERHEAD_MAX;
-      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = ue->rnti;
-      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rab_id       = rb_id + 4;
-      LOG_D(PDCP, "%s() (drb %d) sending message to gtp size %d\n", __func__, rb_id, size);
-      //for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)buf[i]);
-      //printf("\n");
-      itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p);
+    // rb_found:
+    //   gtpu_buffer_p = itti_malloc(TASK_PDCP_ENB, TASK_GTPV1_U,
+    //                               size + GTPU_HEADER_OVERHEAD_MAX);
+    //   AssertFatal(gtpu_buffer_p != NULL, "OUT OF MEMORY");
+    //   memcpy(&gtpu_buffer_p[GTPU_HEADER_OVERHEAD_MAX], buf, size);
+    //   message_p = itti_alloc_new_message(TASK_PDCP_ENB, GTPV1U_ENB_TUNNEL_DATA_REQ);
+    //   AssertFatal(message_p != NULL, "OUT OF MEMORY");
+    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).buffer       = gtpu_buffer_p;
+    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).length       = size;
+    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).offset       = GTPU_HEADER_OVERHEAD_MAX;
+    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = ue->rnti;
+    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rab_id       = rb_id + 4;
+    //   LOG_D(PDCP, "%s() (drb %d) sending message to gtp size %d\n", __func__, rb_id, size);
+    //   //for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)buf[i]);
+    //   //printf("\n");
+    //   itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p);
 
   }
 }

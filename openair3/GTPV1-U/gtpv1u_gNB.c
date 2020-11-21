@@ -127,6 +127,7 @@ NwGtpv1uRcT gtpv1u_gNB_process_stack_req(
      * - END-MARKER
      */
     case NW_GTPV1U_ULP_API_RECV_TPDU: {
+      printf("-----liuyu---welcome  NW_GTPV1U_ULP_API_RECV_TPDU-----------\n");
       uint8_t              buffer[4096];
       uint32_t             buffer_len;
       //uint16_t             msgType = NW_GTP_GPDU;
@@ -143,19 +144,23 @@ NwGtpv1uRcT gtpv1u_gNB_process_stack_req(
         LOG_E(GTPU, "Error while retrieving T-PDU");
       }
 
-      itti_free(TASK_UDP, ((NwGtpv1uMsgT *)pUlpApi->apiInfo.recvMsgInfo.hMsg)->msgBuf);
+     // itti_free(TASK_UDP, ((NwGtpv1uMsgT *)pUlpApi->apiInfo.recvMsgInfo.hMsg)->msgBuf);
 #if defined(GTP_DUMP_SOCKET) && GTP_DUMP_SOCKET > 0
       gtpv1u_eNB_write_dump_socket(buffer,buffer_len);
 #endif
-      rc = nwGtpv1uMsgDelete(RC.gtpv1u_data_g->gtpv1u_stack,
-                             pUlpApi->apiInfo.recvMsgInfo.hMsg);
+      //rc = nwGtpv1uMsgDelete(RC.gtpv1u_data_g->gtpv1u_stack,
+        //                     pUlpApi->apiInfo.recvMsgInfo.hMsg);
 
-      if (rc != NW_GTPV1U_OK) {
-        LOG_E(GTPU, "nwGtpv1uMsgDelete failed: 0x%x\n", rc);
-      }
+      //if (rc != NW_GTPV1U_OK) {
+      //  LOG_E(GTPU, "nwGtpv1uMsgDelete failed: 0x%x\n", rc);
+      //}
 
-      hash_rc = hashtable_get(RC.gtpv1u_data_g->teid_mapping, teid, (void **)&gtpv1u_teid_data_p);
-
+      //hash_rc = hashtable_get(RC.gtpv1u_data_g->teid_mapping, teid, (void **)&gtpv1u_teid_data_p);
+      hash_rc = HASH_TABLE_OK;
+      gtpv1u_teid_data_p=(char *)malloc(1024);
+      gtpv1u_teid_data_p->enb_id=0xe00,
+      gtpv1u_teid_data_p->ue_id=0,
+      gtpv1u_teid_data_p->eps_bearer_id=5;
       if (hash_rc == HASH_TABLE_OK) {
 #if defined(LOG_GTPU) && LOG_GTPU > 0
         LOG_D(GTPU, "Received T-PDU from gtpv1u stack teid  %u size %d -> enb module id %u ue module id %u rab id %u\n",
@@ -175,11 +180,16 @@ NwGtpv1uRcT gtpv1u_gNB_process_stack_req(
           0,0,
           (gtpv1u_teid_data_p->eps_bearer_id) ? gtpv1u_teid_data_p->eps_bearer_id - 4: 5-4,
           buffer_len);
-
+        ctxt.instance=0;
+        ctxt.module_id=0;
+        ctxt.rnti=0x1234;
+        ctxt.eNB_index=0;
+        
         result = pdcp_data_req(
                    &ctxt,
                    SRB_FLAG_NO,
-                   (gtpv1u_teid_data_p->eps_bearer_id) ? gtpv1u_teid_data_p->eps_bearer_id - 4: 5-4,
+                   //(gtpv1u_teid_data_p->eps_bearer_id) ? gtpv1u_teid_data_p->eps_bearer_id - 4: 5-4,
+                   1,
                    0, // mui
                    SDU_CONFIRM_NO, // confirm
                    buffer_len,

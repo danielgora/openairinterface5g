@@ -280,10 +280,12 @@ nwGtpv1uMsgFromBufferNew( NW_IN NwGtpv1uStackHandleT hGtpuStackHandle,
     pMsg->msgBufOffset = (uint32_t)(pBuf - pMsg->msgBuf);
     pMsg->msgBufLen = bufLen - pMsg->msgBufOffset;
     pMsg->msgLen    = bufLen;
-#if defined(LOG_GTPU) && LOG_GTPU > 0
+//#if defined(LOG_GTPU) && LOG_GTPU > 0
     GTPU_DEBUG("nwGtpv1uMsgFromBufferNew() msgLen %u msgBufLen %u msgBufOffset %u ",
                pMsg->msgLen, pMsg->msgBufLen, pMsg->msgBufOffset);
-#endif
+    printf("nwGtpv1uMsgFromBufferNew() msgLen %u msgBufLen %u msgBufOffset %u ",
+               pMsg->msgLen, pMsg->msgBufLen, pMsg->msgBufOffset);
+//#endif
     *phMsg = (NwGtpv1uMsgHandleT) pMsg;
     return NW_GTPV1U_OK;
   }

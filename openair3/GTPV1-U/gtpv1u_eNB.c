@@ -1316,6 +1316,7 @@ void *gtpv1u_eNB_process_itti_msg(void *notUsed) {
 
     // DATA TO BE SENT TO UDP
     case GTPV1U_ENB_TUNNEL_DATA_REQ: {
+      printf("-------------liuyu--welcome to GTPV1U_ENB_TUNNEL_DATA_REQ----------");
       gtpv1u_enb_tunnel_data_req_t *data_req_p           = NULL;
       NwGtpv1uUlpApiT               stack_req;
       NwGtpv1uRcT                   rc                   = NW_GTPV1U_FAILURE;
@@ -1332,15 +1333,19 @@ void *gtpv1u_eNB_process_itti_msg(void *notUsed) {
       memset(&stack_req, 0, sizeof(NwGtpv1uUlpApiT));
       hash_rc = hashtable_get(RC.gtpv1u_data_g->ue_mapping, (uint64_t)data_req_p->rnti, (void **)&gtpv1u_ue_data_p);
 
-      if (hash_rc == HASH_TABLE_KEY_NOT_EXISTS) {
-        LOG_E(GTPU, "nwGtpv1uProcessUlpReq failed: while getting ue rnti %x in hashtable ue_mapping\n", data_req_p->rnti);
+      if(0){// (hash_rc == HASH_TABLE_KEY_NOT_EXISTS) {
+     //  LOG_E(GTPU, "nwGtpv1uProcessUlpReq failed: while getting ue rnti %x in hashtable ue_mapping\n", data_req_p->rnti);
       } else {
         if ((data_req_p->rab_id >= GTPV1U_BEARER_OFFSET) && (data_req_p->rab_id < max_val_LTE_DRB_Identity)) {
-          enb_s1u_teid                        = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].teid_eNB;
-          sgw_s1u_teid                        = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].teid_sgw;
+          //enb_s1u_teid                        = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].teid_eNB;
+          enb_s1u_teid                        = 0x01;
+         // sgw_s1u_teid                        = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].teid_sgw;
+          sgw_s1u_teid                        = 0x01;
           stack_req.apiType                   = NW_GTPV1U_ULP_API_SEND_TPDU;
           stack_req.apiInfo.sendtoInfo.teid   = sgw_s1u_teid;
-          stack_req.apiInfo.sendtoInfo.ipAddr = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].sgw_ip_addr;
+          in_addr_t upf_addr=0xc0a8c7DF;
+          //stack_req.apiInfo.sendtoInfo.ipAddr = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].sgw_ip_addr;
+          stack_req.apiInfo.sendtoInfo.ipAddr = upf_addr; 
           rc = nwGtpv1uGpduMsgNew(
                  RC.gtpv1u_data_g->gtpv1u_stack,
                  sgw_s1u_teid,

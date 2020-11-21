@@ -265,10 +265,10 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->peer_port     = htons(addr.sin_port);
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
 
-#if defined(LOG_UDP) && LOG_UDP > 0
+//#if defined(LOG_UDP) && LOG_UDP > 0
       LOG_I(UDP_, "Msg of length %d received from %s:%u\n",
             n, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-#endif
+//#endif
 
       /* TODO: this is a hack. Let's accept failures and do nothing when
        * it happens. Since itti_send_msg_to_task crashes when the message
@@ -336,6 +336,7 @@ void *udp_eNB_task(void *args_p)
 #if defined(LOG_UDP) && LOG_UDP > 0
         LOG_D(UDP_, "Received UDP_DATA_REQ\n");
 #endif
+        printf("Received UDP_DATA_REQ\n");
         int     udp_sd = -1;
         ssize_t bytes_written;
 
@@ -349,8 +350,8 @@ void *udp_eNB_task(void *args_p)
 
         peer_addr.sin_family       = AF_INET;
         peer_addr.sin_port         = htons(udp_data_req_p->peer_port);
-        peer_addr.sin_addr.s_addr  = udp_data_req_p->peer_address;
-
+        //peer_addr.sin_addr.s_addr  = udp_data_req_p->peer_address;
+        peer_addr.sin_addr.s_addr  = htonl(udp_data_req_p->peer_address);
         pthread_mutex_lock(&udp_socket_list_mutex);
         udp_sock_p = udp_eNB_get_socket_desc(ITTI_MSG_ORIGIN_ID(received_message_p));
 
@@ -372,7 +373,12 @@ void *udp_eNB_task(void *args_p)
         pthread_mutex_unlock(&udp_socket_list_mutex);
 
 //#if defined(LOG_UDP) && LOG_UDP > 0
-        LOG_D(UDP_, "[%d] Sending message of size %u to "IPV4_ADDR" and port %u\n",
+        LOG_I(UDP_, "[%d] Sending message of size %u to "IPV4_ADDR" and port %u\n",
+              udp_sd,
+              udp_data_req_p->buffer_length,
+              IPV4_ADDR_FORMAT(udp_data_req_p->peer_address),
+              udp_data_req_p->peer_port);
+        printf("[%d] Sending message of size %u to "IPV4_ADDR" and port %u\n",
               udp_sd,
               udp_data_req_p->buffer_length,
               IPV4_ADDR_FORMAT(udp_data_req_p->peer_address),
@@ -387,7 +393,7 @@ void *udp_eNB_task(void *args_p)
                           sizeof(struct sockaddr_in));
 
         if (bytes_written != udp_data_req_p->buffer_length) {
-          LOG_E(UDP_, "There was an error while writing to socket %d rc %zd"
+          LOG_I(UDP_, "There was an error while writing to socket %d rc %zd"
                 "(%d:%s) May be normal if GTPU kernel module loaded on same host (may NF_DROP IP packet)\n",
                 udp_sd, bytes_written, errno, strerror(errno));
         }

@@ -106,7 +106,9 @@ nwGtpTunnelEndPointDestroy(struct NwGtpv1uStack *pStack,
   @param[in,out] pTrxn: Pointer to the trxn.
   @return NW_GTPV1U_OK on success.
  */
-
+extern NwGtpv1uRcT gtpv1u_gNB_process_stack_req(
+  NwGtpv1uUlpHandleT hUlp,
+  NwGtpv1uUlpApiT   *pUlpApi);
 NwGtpv1uRcT
 nwGtpSessionSendMsgApiToUlpEntity(NwGtpv1uTunnelEndPointT *thiz,
                                   NwGtpv1uMsgT *pMsg)
@@ -116,13 +118,16 @@ nwGtpSessionSendMsgApiToUlpEntity(NwGtpv1uTunnelEndPointT *thiz,
 
   api.apiType                         = NW_GTPV1U_ULP_API_RECV_TPDU;
   api.apiInfo.recvMsgInfo.hUlpSession = thiz->hUlpSession;
-  api.apiInfo.recvMsgInfo.teid        = thiz->teid;
+  api.apiInfo.recvMsgInfo.teid        = 0x01;
+  //api.apiInfo.recvMsgInfo.teid        = thiz->teid;
   api.apiInfo.recvMsgInfo.hMsg        = (NwGtpv1uMsgHandleT)pMsg;
+  
+  //NW_ASSERT(thiz->pStack->ulp.ulpReqCallback != NULL);
 
-  NW_ASSERT(thiz->pStack->ulp.ulpReqCallback != NULL);
-
-  thiz->pStack->ulp.ulpReqCallback(thiz->pStack->ulp.hUlp, &api);
-
+  //thiz->pStack->ulp.ulpReqCallback(thiz->pStack->ulp.hUlp, &api);
+  thiz->pStack = (char *)malloc(100);
+  thiz->pStack->ulp.hUlp=(char *)malloc(1024);
+  gtpv1u_gNB_process_stack_req(thiz->pStack->ulp.hUlp, &api);
   return rc;
 }
 

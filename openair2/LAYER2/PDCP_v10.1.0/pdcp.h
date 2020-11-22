@@ -129,8 +129,14 @@ void pdcp_update_perioidical_stats(const protocol_ctxt_t *const  ctxt_pP);
 typedef struct pdcp_enb_s {
   // used for eNB stats generation
   uint16_t uid[MAX_MOBILES_PER_ENB];
+  // flag indicating if UE sends packets 
+  uint16_t uid_tx[MAX_MOBILES_PER_ENB];
+  // flag indicating if UE receives packets
+  uint16_t uid_rx[MAX_MOBILES_PER_ENB];
+  // UE RNTI 
   rnti_t rnti[MAX_MOBILES_PER_ENB];
-  rb_id_t  rb_id[NB_RB_MAX];
+  // UE active RABs
+  rb_id_t  rb_id[MAX_MOBILES_PER_ENB][NB_RB_MAX];
   
   uint16_t num_ues;
 
@@ -364,7 +370,7 @@ boolean_t pdcp_config_req_asn1 (
 * \param[in]  ctxt_pP           Running context.
 * \return     A status about the processing, OK or error code.
 */
-void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP);
+void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP, const rb_id_t rb_idP);
 
 /*! \fn boolean_t pdcp_remove_UE(const protocol_ctxt_t* const  ctxt_pP)
 * \brief  Function for RRC to remove UE from PDCP module hashtable

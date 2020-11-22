@@ -164,15 +164,11 @@ boolean_t pdcp_data_req(
             PROTOCOL_CTXT_ARGS(ctxt_pP),
             rb_idP);
       ctxt_pP->configured=FALSE;
-      // optimize stats collections to thos RB that are configured
-      pdcp_enb[ctxt_pP->module_id].rb_id[rb_idP]=0;
       return FALSE;
     }
   } else {
     // instance for a given RB is configured
     ctxt_pP->configured=TRUE;
-    // optimize stats collections to thos RB that are configured
-    pdcp_enb[ctxt_pP->module_id].rb_id[rb_idP]=1;
   }
 
   if (ctxt_pP->enb_flag == ENB_FLAG_YES) {
@@ -481,6 +477,7 @@ boolean_t pdcp_data_req(
   }
 
   //LOG_I(PDCP,"ueid %d lcid %d tx seq num %d\n", pdcp_uid, rb_idP+rb_offset, current_sn);
+  pdcp_enb[ctxt_pP->module_id].uid_tx[pdcp_uid]=1;
   Pdcp_stats_tx[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]++;
   Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]++;
   Pdcp_stats_tx_bytes[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]+=sdu_buffer_sizeP;
@@ -1043,6 +1040,7 @@ pdcp_data_ind(
     }
   }
 
+  pdcp_enb[ctxt_pP->module_id].uid_rx[pdcp_uid]=1;
   Pdcp_stats_rx[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]++;
   Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]++;
   Pdcp_stats_rx_bytes[ctxt_pP->module_id][pdcp_uid][rb_idP+rb_offset]+=(sdu_buffer_sizeP  - payload_offset);
@@ -1067,53 +1065,61 @@ pdcp_data_ind(
 void pdcp_update_stats(const protocol_ctxt_t *const  ctxt_pP) {
   uint16_t           pdcp_uid = 0;
   uint8_t            rb_id     = 0;
- 
   
-  // these stats are measured for both eNB and UE on per seond basis
-  for (rb_id =0; rb_id < NB_RB_MAX; rb_id ++) {
-    for (pdcp_uid=0; pdcp_uid< MAX_MOBILES_PER_ENB; pdcp_uid++) {
-      //printf("frame %d and subframe %d \n", pdcp_enb[ctxt_pP->module_id].frame, pdcp_enb[ctxt_pP->module_id].subframe);
-      // tx stats
-      if ( (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] > 0) &&
-	   (pdcp_enb[ctxt_pP->module_id].rb_id[rb_id]   > 0)   ) {
-	  
-	if (Pdcp_stats_tx_window_ms[ctxt_pP->module_id][pdcp_uid] > 0 &&
-	    pdcp_enb[ctxt_pP->module_id].sfn % Pdcp_stats_tx_window_ms[ctxt_pP->module_id][pdcp_uid] == 0) {
-	  // unit: bit/s
-	  Pdcp_stats_tx_throughput_w[ctxt_pP->module_id][pdcp_uid][rb_id]=Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]*8;
-	  Pdcp_stats_tx_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
-	  Pdcp_stats_tx_bytes_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
-	  
-	  if (Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id] > 0) {
-	    Pdcp_stats_tx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=(Pdcp_stats_tx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]/Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]);
-	  } else {
-	    Pdcp_stats_tx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  }
-	  
-	  // reset the tmp vars
-	  Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  Pdcp_stats_tx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+  // these stats are measured for both eNB and UE on per seond basis 
+  for (pdcp_uid=0; pdcp_uid< pdcp_enb[ctxt_pP->module_id].num_ues; pdcp_uid++) {
+    if (pdcp_enb[ctxt_pP->module_id].rnti[pdcp_uid] <= 0) 
+      continue;
+    
+    for (rb_id =0; rb_id < NB_RB_MAX; rb_id ++) {
+      if (pdcp_enb[ctxt_pP->module_id].rb_id[pdcp_uid][rb_id] <= 0) 
+	continue;
+      
+      
+      if (pdcp_enb[ctxt_pP->module_id].uid_tx[pdcp_uid] &&
+	  Pdcp_stats_tx_window_ms[ctxt_pP->module_id][pdcp_uid] > 0 &&
+	  pdcp_enb[ctxt_pP->module_id].sfn % Pdcp_stats_tx_window_ms[ctxt_pP->module_id][pdcp_uid] == 0) {
+
+	pdcp_enb[ctxt_pP->module_id].uid_tx[pdcp_uid]=0;
+	
+	// tx stats unit: bit/s
+	Pdcp_stats_tx_throughput_w[ctxt_pP->module_id][pdcp_uid][rb_id]=Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]*8;
+	Pdcp_stats_tx_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
+	Pdcp_stats_tx_bytes_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
+	
+	if (Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id] > 0) {
+	  Pdcp_stats_tx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=(Pdcp_stats_tx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]/Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]);
+	} else {
+	  Pdcp_stats_tx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
 	}
 	
-	if (Pdcp_stats_rx_window_ms[ctxt_pP->module_id][pdcp_uid] > 0 &&
-	    pdcp_enb[ctxt_pP->module_id].sfn % Pdcp_stats_rx_window_ms[ctxt_pP->module_id][pdcp_uid] == 0) {
-	  // rx stats
-	  Pdcp_stats_rx_goodput_w[ctxt_pP->module_id][pdcp_uid][rb_id]=Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]*8;
-	  Pdcp_stats_rx_w[ctxt_pP->module_id][pdcp_uid][rb_id]=   Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
-	  Pdcp_stats_rx_bytes_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
-	  
-	  if(Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id] > 0) {
-	    Pdcp_stats_rx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]= (Pdcp_stats_rx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]/Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]);
-	  } else {
-	    Pdcp_stats_rx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  }
+	// reset the tmp vars
+	Pdcp_stats_tx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+	Pdcp_stats_tx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+	Pdcp_stats_tx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+      }
+      
+      if (pdcp_enb[ctxt_pP->module_id].uid_rx[pdcp_uid]   &&
+	  Pdcp_stats_rx_window_ms[ctxt_pP->module_id][pdcp_uid] > 0 &&
+	  pdcp_enb[ctxt_pP->module_id].sfn % Pdcp_stats_rx_window_ms[ctxt_pP->module_id][pdcp_uid] == 0) {
 
-	  // reset the tmp vars
-	  Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
-	  Pdcp_stats_rx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+	pdcp_enb[ctxt_pP->module_id].uid_rx[pdcp_uid]=0;
+	
+	// rx stats
+	Pdcp_stats_rx_goodput_w[ctxt_pP->module_id][pdcp_uid][rb_id]=Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]*8;
+	Pdcp_stats_rx_w[ctxt_pP->module_id][pdcp_uid][rb_id]=   Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
+	Pdcp_stats_rx_bytes_w[ctxt_pP->module_id][pdcp_uid][rb_id]= Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id];
+	
+	if(Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id] > 0) {
+	  Pdcp_stats_rx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]= (Pdcp_stats_rx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]/Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]);
+	} else {
+	  Pdcp_stats_rx_aiat_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
 	}
+	
+	// reset the tmp vars
+	Pdcp_stats_rx_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+	Pdcp_stats_rx_bytes_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
+	Pdcp_stats_rx_aiat_tmp_w[ctxt_pP->module_id][pdcp_uid][rb_id]=0;
       }
     }
   }
@@ -1132,11 +1138,13 @@ pdcp_run (
   } else {
     start_meas(&UE_pdcp_stats[ctxt_pP->module_id].pdcp_run);
   }
-
-  pdcp_enb[ctxt_pP->module_id].sfn++; // range: 0 to 18,446,744,073,709,551,615
-  pdcp_enb[ctxt_pP->module_id].frame=ctxt_pP->frame; // 1023
-  pdcp_enb[ctxt_pP->module_id].subframe= ctxt_pP->subframe;
-  pdcp_update_stats(ctxt_pP);
+  
+  if (ctxt_pP->enb_flag) {
+    pdcp_enb[ctxt_pP->module_id].sfn++; // range: 0 to 18,446,744,073,709,551,615
+    pdcp_enb[ctxt_pP->module_id].frame=ctxt_pP->frame; // 1023
+    pdcp_enb[ctxt_pP->module_id].subframe= ctxt_pP->subframe;
+    pdcp_update_stats(ctxt_pP);
+  }
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_PDCP_RUN, VCD_FUNCTION_IN);
   MessageDef   *msg_p;
   int           result;
@@ -1401,7 +1409,7 @@ void pdcp_init_stats_UE(module_id_t mod, uint16_t uid) {
   }
 }
 
-void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP) {
+void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP,  const rb_id_t rb_idP) {
   int i, ue_flag=1; //, ret=-1; to be decied later
 
   for (i=0; i < MAX_MOBILES_PER_ENB; i++) {
@@ -1410,12 +1418,13 @@ void pdcp_add_UE(const protocol_ctxt_t *const  ctxt_pP) {
       break;
     }
   }
-
+  // need to add rb_id
   if (ue_flag == 1 ) {
     for (i=0; i < MAX_MOBILES_PER_ENB ; i++) {
       if (pdcp_enb[ctxt_pP->module_id].rnti[i] == 0 ) {
         pdcp_enb[ctxt_pP->module_id].rnti[i]=ctxt_pP->rnti;
         pdcp_enb[ctxt_pP->module_id].uid[i]=i;
+	pdcp_enb[ctxt_pP->module_id].rb_id[i][rb_idP]=1; // this RB is active
         pdcp_enb[ctxt_pP->module_id].num_ues++;
         printf("add new uid is %d %x\n\n", i, ctxt_pP->rnti);
         pdcp_init_stats_UE(ctxt_pP->module_id, i);
@@ -1468,7 +1477,6 @@ pdcp_remove_UE(
             pdcp_enb[ctxt_pP->module_id].uid[i],
             pdcp_enb[ctxt_pP->module_id].rnti[i]);
       pdcp_enb[ctxt_pP->module_id].uid[i]=0;
-      pdcp_enb[ctxt_pP->module_id].rnti[i]=0;
       pdcp_enb[ctxt_pP->module_id].rnti[i]=0;
       pdcp_enb[ctxt_pP->module_id].num_ues--;
       break;
@@ -1788,8 +1796,6 @@ rrc_pdcp_config_asn1_req (
         kRRCenc_pP,
         kRRCint_pP,
         kUPenc_pP);
-
-      pdcp_enb[ctxt_pP->module_id].rb_id[lc_id]=0;
       
       h_rc = hashtable_remove(pdcp_coll_p, key);
 
@@ -1900,7 +1906,7 @@ pdcp_config_req_asn1 (
 
       if (ctxt_pP->enb_flag == ENB_FLAG_YES) {
         pdcp_pP->is_ue = FALSE;
-        pdcp_add_UE(ctxt_pP);
+        pdcp_add_UE(ctxt_pP, rb_idP);
 
         //pdcp_eNB_UE_instance_to_rnti[ctxtP->module_id] = ctxt_pP->rnti;
         //      pdcp_eNB_UE_instance_to_rnti[pdcp_eNB_UE_instance_to_rnti_index] = ctxt_pP->rnti;

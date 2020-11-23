@@ -44,6 +44,14 @@ nfapi_dl_config_request_t* dl_config_req = NULL;
 nfapi_ul_config_request_t* ul_config_req = NULL;
 nfapi_hi_dci0_request_t* hi_dci0_req = NULL;
 
+int cqi[MAX_MOBILES_PER_ENB] = { [0 ... MAX_MOBILES_PER_ENB-1] = 15};
+int get_ue_cqi(int mod_id) {
+  if (cqi[mod_id] >= 0 && cqi[mod_id] <= 15)
+    return cqi[mod_id];
+  else
+    return 6 + rand() % 10;
+}
+
 extern nfapi_tx_request_pdu_t* tx_request_pdu[1023][10][10];
 //extern int timer_subframe;
 //extern int timer_frame;
@@ -254,7 +262,7 @@ void fill_ulsch_cqi_indication_UE_MAC(int Mod_id,
   pdu->ul_cqi_information.channel = 1; // PUSCH
 
   // eNB_scheduler_primitives.c:4839: the upper four bits seem to be the CQI
-  const int cqi = 15;
+  const int cqi = get_ue_cqi(Mod_id);
   raw_pdu->pdu[0] = cqi << 4;
 
   UL_INFO->cqi_ind.cqi_indication_body.number_of_cqis++;

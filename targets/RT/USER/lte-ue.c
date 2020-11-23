@@ -74,8 +74,39 @@ int ue_enable_cmd(char *s, int debug, telnet_printfunc_t prnt)
   UE_mac_inst[ue].UE_mode[0] = NOT_SYNCHED;
   return 0;
 }
+extern int cqi[MAX_MOBILES_PER_ENB];
+int ue_cqi_set(char *s, int debug, telnet_printfunc_t prnt) {
+  LOG_W(MAC, "%s(): input %s\n", __func__, s);
+  const char *sue = strtok(s, " ");
+  if (!sue) {
+    LOG_E(MAC, "error: could not strtok() UE part of input!\n");
+    return -1;
+  }
+  /* try to convert: if valid number, use it, else if it might be zero, check
+   * that string was zero, otherwise give -1 (any) */
+  const int ue = atoi(sue) ? atoi(sue) : (strcmp(s, "0") == 0 ? 0 : -1);
+  const char *scqi = strtok(NULL, " ");
+  if (!scqi) {
+    LOG_E(MAC, "error: could not strtok() CQI part of input!\n");
+    return -1;
+  }
+  const int c = atoi(scqi) ? atoi(scqi) : (strcmp(s, "0") == 0 ? 0 : -1);
+  if (ue >= 0)
+    cqi[ue] = c;
+  else
+    for (int i = 0; i < MAX_MOBILES_PER_ENB; ++i)
+      cqi[i] = c;
+  LOG_W(MAC,
+        "set ue %d (%s) to cqi %d (%s)\n",
+        ue,
+        ue < 0 ? "all UEs" : "single UE",
+        c,
+        c >= 0 && c <= 15 ? "fixed CQI" : "random CQI");
+  return 0;
+}
 telnetshell_cmddef_t ue_status_cmdarray[] = {
    {"ue", "any number >=0", ue_enable_cmd},
+   {"cqi", "[UE] [CQI] -> UE=* for all, CQI=* for random", ue_cqi_set},
    {"","",NULL},
 };
 telnetshell_vardef_t ue_status_vardef[] = {

@@ -84,13 +84,13 @@ int ue_cqi_set(char *s, int debug, telnet_printfunc_t prnt) {
   }
   /* try to convert: if valid number, use it, else if it might be zero, check
    * that string was zero, otherwise give -1 (any) */
-  const int ue = atoi(sue) ? atoi(sue) : (strcmp(s, "0") == 0 ? 0 : -1);
+  const int ue = atoi(sue) ? atoi(sue) : (strcmp(sue, "0") == 0 ? 0 : -1);
   const char *scqi = strtok(NULL, " ");
   if (!scqi) {
     LOG_E(MAC, "error: could not strtok() CQI part of input!\n");
     return -1;
   }
-  const int c = atoi(scqi) ? atoi(scqi) : (strcmp(s, "0") == 0 ? 0 : -1);
+  const int c = atoi(scqi) ? atoi(scqi) : (strcmp(scqi, "0") == 0 ? 0 : -1);
   if (ue >= 0)
     cqi[ue] = c;
   else

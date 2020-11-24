@@ -96,7 +96,6 @@ uint32_t s1ap_generate_eNB_id(void) {
 
 static void s1ap_eNB_register_mme(s1ap_eNB_instance_t *instance_p,
                                   net_ip_address_t    *mme_ip_address,
-                                  uint16_t             mme_port,
                                   net_ip_address_t    *local_ip_addr,
                                   uint16_t             in_streams,
                                   uint16_t             out_streams,
@@ -110,7 +109,7 @@ static void s1ap_eNB_register_mme(s1ap_eNB_instance_t *instance_p,
   DevAssert(mme_ip_address != NULL);
   message_p = itti_alloc_new_message(TASK_S1AP, SCTP_NEW_ASSOCIATION_REQ);
   sctp_new_association_req_p = &message_p->ittiMsg.sctp_new_association_req;
-  sctp_new_association_req_p->port = mme_port;
+  sctp_new_association_req_p->port = S1AP_PORT_NUMBER;
   sctp_new_association_req_p->ppid = S1AP_SCTP_PPID;
   sctp_new_association_req_p->in_streams  = in_streams;
   sctp_new_association_req_p->out_streams = out_streams;
@@ -224,7 +223,6 @@ void s1ap_eNB_handle_register_eNB(instance_t instance, s1ap_register_enb_req_t *
   /* Trying to connect to provided list of MME ip address */
   for (index = 0; index < s1ap_register_eNB->nb_mme; index++) {
     net_ip_address_t *mme_ip = &s1ap_register_eNB->mme_ip_address[index];
-    uint16_t mme_port = s1ap_register_eNB->mme_port[index];
     struct s1ap_eNB_mme_data_s *mme = NULL;
     RB_FOREACH(mme, s1ap_mme_map, &new_instance->s1ap_mme_head) {
       /* Compare whether IPv4 and IPv6 information is already present, in which
@@ -239,7 +237,6 @@ void s1ap_eNB_handle_register_eNB(instance_t instance, s1ap_register_enb_req_t *
       continue;
     s1ap_eNB_register_mme(new_instance,
                           mme_ip,
-                          mme_port,
                           &s1ap_register_eNB->enb_ip_address,
                           s1ap_register_eNB->sctp_in_streams,
                           s1ap_register_eNB->sctp_out_streams,
@@ -411,8 +408,10 @@ void s1ap_eNB_handle_sctp_data_ind(sctp_data_ind_t *sctp_data_ind) {
   mme_test_s1_notify_sctp_data_ind(sctp_data_ind->assoc_id, sctp_data_ind->stream,
                                    sctp_data_ind->buffer, sctp_data_ind->buffer_length);
 #else
-  s1ap_eNB_handle_message(sctp_data_ind->assoc_id, sctp_data_ind->stream,
-                          sctp_data_ind->buffer, sctp_data_ind->buffer_length);
+  if (s1ap_eNB_handle_message(sctp_data_ind->assoc_id, sctp_data_ind->stream,
+                          sctp_data_ind->buffer, sctp_data_ind->buffer_length) == -1) {
+    S1AP_ERROR("Failed to handle s1ap eNB message\n");
+  }
 #endif
   result = itti_free(TASK_UNKNOWN, sctp_data_ind->buffer);
   AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);

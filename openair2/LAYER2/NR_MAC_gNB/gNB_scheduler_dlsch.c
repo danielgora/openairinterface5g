@@ -56,7 +56,7 @@
 #define HALFWORD 16
 #define WORD 32
 //#define SIZE_OF_POINTER sizeof (void *)
-
+static boolean_t loop_dcch_dtch = TRUE;
 int nr_generate_dlsch_pdu(module_id_t module_idP,
                           NR_UE_sched_ctrl_t *ue_sched_ctl,
                           unsigned char *sdus_payload,
@@ -486,7 +486,8 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
 
   /* Retrieve amount of data to send for this UE */
   sched_ctrl->num_total_bytes = 0;
-  const int lcid = DL_SCH_LCID_DTCH;
+  loop_dcch_dtch = BOOL_NOT(loop_dcch_dtch);
+  const int lcid = loop_dcch_dtch?DL_SCH_LCID_DTCH:DL_SCH_LCID_DCCH;
   const uint16_t rnti = UE_info->rnti[UE_id];
   sched_ctrl->rlc_status[lcid] = mac_rlc_status_ind(module_id,
                                                     rnti,
@@ -498,14 +499,14 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                                                     lcid,
                                                     0,
                                                     0);
-//sched_ctrl->rlc_status[lcid].bytes_in_buffer = 500;
+  sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
   LOG_I(MAC,
-        "%d.%d, DTCH%d->DLSCH, RLC status %d bytes\n",
+        "%d.%d, LCID%d:->DLSCH, RLC status %d bytes. \n",
         frame,
         slot,
         lcid,
-        sched_ctrl->rlc_status[lcid].bytes_in_buffer);  
-  sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
+        sched_ctrl->num_total_bytes);  
+
   if (sched_ctrl->num_total_bytes == 0
       && !sched_ctrl->ta_apply) /* If TA should be applied, give at least one RB */
     return;
@@ -747,7 +748,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
       uint16_t sdu_lengths[NB_RB_MAX] = {0};
       uint8_t mac_sdus[MAX_NR_DLSCH_PAYLOAD_BYTES];
       unsigned char sdu_lcids[NB_RB_MAX] = {0};
-      const int lcid = DL_SCH_LCID_DTCH;
+      const int lcid = loop_dcch_dtch?DL_SCH_LCID_DTCH:DL_SCH_LCID_DCCH;
       if (sched_ctrl->num_total_bytes > 0) {
 #if 1        
         LOG_D(MAC,

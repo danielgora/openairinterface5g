@@ -403,6 +403,7 @@ rrc_gNB_generate_RRCSetup(
   /* init timers */
   //   ue_context_pP->ue_context.ue_rrc_inactivity_timer = 0;
 
+  log_dump(NR_RRC, ue_p->Srb0.Tx_buffer.Payload, 16, LOG_DUMP_CHAR,"RRCSetup size: ");
   nr_rrc_data_req(ctxt_pP,
             DCCH,
             rrc_gNB_mui++,
@@ -955,7 +956,7 @@ rrc_gNB_decode_dcch(
                   sdu_sizeP,
                   0,
                   0);
-  // xer_fprint(stdout, &asn_DEF_NR_UL_DCCH_Message, (void *)&ul_dcch_msg);
+  xer_fprint(stdout, &asn_DEF_NR_UL_DCCH_Message, (void *)ul_dcch_msg);
 
   {
     for (i = 0; i < sdu_sizeP; i++) {

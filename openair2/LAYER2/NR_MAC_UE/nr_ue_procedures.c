@@ -3922,6 +3922,8 @@ void nr_ue_send_sdu(module_id_t module_idP,
     LOG_T(MAC, "\n");
   #endif
 
+  log_dump(MAC, pduP, 16, LOG_DUMP_CHAR, "UE DLSCH payload : ");
+
   // Processing MAC PDU
   // it parses MAC CEs subheaders, MAC CEs, SDU subheaderds and SDUs
   if (pduP != NULL)
@@ -4762,8 +4764,8 @@ void nr_ue_process_mac_pdu(module_id_t module_idP,
                     LOG_T(MAC, "\n");
                 #endif
 
-                if (IS_SOFTMODEM_NOS1){
-                  if (rx_lcid < NB_RB_MAX && rx_lcid >= DL_SCH_LCID_DTCH) {
+//                if (IS_SOFTMODEM_NOS1){
+                  if (rx_lcid < NB_RB_MAX && rx_lcid >= DL_SCH_LCID_DCCH) {
 
                     mac_rlc_data_ind(module_idP,
                                      0x1234,
@@ -4779,7 +4781,7 @@ void nr_ue_process_mac_pdu(module_id_t module_idP,
                   } else {
                     LOG_E(MAC, "[UE %d] Frame %d : unknown LCID %d (gNB %d)\n", module_idP, frameP, rx_lcid, gNB_index);
                   }
-                }
+//                }
 
             break;
         }
@@ -5009,7 +5011,7 @@ nr_ue_get_sdu(module_id_t module_idP, int CC_id, frame_t frameP,
 
         buflen_remain =
           buflen - (total_rlc_pdu_header_len + sdu_length_total + MAX_RLC_SDU_SUBHEADER_SIZE);
-        LOG_D(MAC,
+        LOG_I(MAC,
               "[UE %d] Frame %d : UL-DXCH -> ULSCH, RLC %d has %d bytes to "
               "send (Transport Block size %d SDU Length Total %d , mac header len %d, buflen_remain %d )\n", //BSR byte before Tx=%d
               module_idP, frameP, lcid, lcid_buffer_occupancy_new,

@@ -295,9 +295,9 @@ printf("\n\n\n########## nas_sock_fd read returns len %d\n", len);
 
     ctxt.rnti = rnti;
 
-    // pdcp_data_req(&ctxt, SRB_FLAG_NO, lc_id, RLC_MUI_UNDEFINED,
-    //               RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
-    //               PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
+    pdcp_data_req(&ctxt, SRB_FLAG_NO, lc_id, RLC_MUI_UNDEFINED,
+                  RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
+                  PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
   }
 
   return NULL;
@@ -339,9 +339,9 @@ printf("\n\n\n########## nas_sock_fd read returns len %d\n", len);
 
     ctxt.rnti = rnti;
 
-    // pdcp_data_req(&ctxt, SRB_FLAG_NO, lc_id, RLC_MUI_UNDEFINED,
-    //               RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
-    //               PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
+    pdcp_data_req(&ctxt, SRB_FLAG_NO, lc_id, RLC_MUI_UNDEFINED,
+                  RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf,
+                  PDCP_TRANSMISSION_MODE_DATA, NULL, NULL);
   }
 
   return NULL;
@@ -466,7 +466,7 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
   int i;
 
   if (1) { //(IS_SOFTMODEM_NOS1){
-    #if 1
+    #if 0
     log_dump(PDCP,buf,size,LOG_DUMP_CHAR,"   PDCP Received SDU:\n");
     if (size > 4700)
     {

@@ -56,7 +56,7 @@ void nr_pdcp_entity_srb_recv_sdu(nr_pdcp_entity_t *_entity, char *buffer, int si
   /* For now use padding for the MAC-I bytes (normally carrying message authentication code)
    * which come after the data payload bytes (38.323, section 6.2.2.1) */
   for (int i=size+2; i<size+6; i++)
-    buf[i] = 0x11*i;
+    buf[i] = 0x11*(i-size-1);
 
   entity->common.deliver_pdu(entity->common.deliver_pdu_data,
                              (nr_pdcp_entity_t *)entity, buf, size+6, sdu_id);

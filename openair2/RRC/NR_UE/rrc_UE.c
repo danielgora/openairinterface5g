@@ -1445,14 +1445,14 @@ int8_t nr_rrc_ue_decode_ccch( const protocol_ctxt_t *const ctxt_pP, const NR_SRB
           // Release T300 timer
           NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].T300_active = 0;
           
-          nr_rrc_ue_process_masterCellGroup(
-            ctxt_pP,
-            gNB_index,
-            &dl_ccch_msg->message.choice.c1->choice.rrcSetup->criticalExtensions.choice.rrcSetup->masterCellGroup);
-          nr_sa_rrc_ue_process_radioBearerConfig(
-            ctxt_pP,
-            gNB_index,
-            &dl_ccch_msg->message.choice.c1->choice.rrcSetup->criticalExtensions.choice.rrcSetup->radioBearerConfig);
+          // nr_rrc_ue_process_masterCellGroup(
+          //   ctxt_pP,
+          //   gNB_index,
+          //   &dl_ccch_msg->message.choice.c1->choice.rrcSetup->criticalExtensions.choice.rrcSetup->masterCellGroup);
+          // nr_sa_rrc_ue_process_radioBearerConfig(
+          //   ctxt_pP,
+          //   gNB_index,
+          //   &dl_ccch_msg->message.choice.c1->choice.rrcSetup->criticalExtensions.choice.rrcSetup->radioBearerConfig);
           nr_rrc_set_state (ctxt_pP->module_id, RRC_STATE_CONNECTED);
           nr_rrc_set_sub_state (ctxt_pP->module_id, RRC_SUB_STATE_CONNECTED);
           NR_UE_rrc_inst[ctxt_pP->module_id].Info[gNB_index].rnti = ctxt_pP->rnti;
@@ -2191,12 +2191,12 @@ rrc_ue_process_rrcReconfiguration(
     ie = rrcReconfiguration->criticalExtensions.choice.rrcReconfiguration;
     if (ie->measConfig != NULL) {
       LOG_I(NR_RRC, "Measurement Configuration is present\n");
-      nr_rrc_ue_process_measConfig(ctxt_pP, gNB_index, ie->measConfig);
+//      nr_rrc_ue_process_measConfig(ctxt_pP, gNB_index, ie->measConfig);
     }
 
     if (ie->radioBearerConfig != NULL) {
       LOG_I(NR_RRC, "radio Bearer Configuration is present\n");
-      nr_sa_rrc_ue_process_radioBearerConfig(ctxt_pP, gNB_index, ie->radioBearerConfig);
+//      nr_sa_rrc_ue_process_radioBearerConfig(ctxt_pP, gNB_index, ie->radioBearerConfig);
     }
 
     /* Check if there is dedicated NAS information to forward to NAS */

@@ -5009,7 +5009,7 @@ nr_ue_get_sdu(module_id_t module_idP, int CC_id, frame_t frameP,
 
         buflen_remain =
           buflen - (total_rlc_pdu_header_len + sdu_length_total + MAX_RLC_SDU_SUBHEADER_SIZE);
-        LOG_I(MAC,
+        LOG_D(MAC,
               "[UE %d] Frame %d : UL-DXCH -> ULSCH, RLC %d has %d bytes to "
               "send (Transport Block size %d SDU Length Total %d , mac header len %d, buflen_remain %d )\n", //BSR byte before Tx=%d
               module_idP, frameP, lcid, lcid_buffer_occupancy_new,
@@ -5083,7 +5083,7 @@ nr_ue_get_sdu(module_id_t module_idP, int CC_id, frame_t frameP,
   		  ulsch_buffer[j] = 0;
   }
 
-  log_dump(MAC, ulsch_buffer, 16, LOG_DUMP_CHAR, "UE ULSCH payload : ");
+//  log_dump(MAC, ulsch_buffer, 16, LOG_DUMP_CHAR, "UE ULSCH payload : ");
 
 #if defined(ENABLE_MAC_PAYLOAD_DEBUG)
   LOG_I(MAC, "Printing UL MAC payload UE side, payload_offset: %d \n", payload_offset);

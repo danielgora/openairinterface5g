@@ -455,12 +455,7 @@ void nr_configure_dci(gNB_MAC_INST *nr_mac,
   if (ss->searchSpaceType->choice.ue_Specific->dci_Formats==NR_SearchSpace__searchSpaceType__ue_Specific__dci_Formats_formats0_0_And_1_0)
     pdcch_pdu->dci_pdu.beta_PDCCH_1_0[pdcch_pdu->numDlDci]=0;
 
-    pdcch_pdu->dci_pdu.powerControlOffsetSS[pdcch_pdu->numDlDci]=1;
-    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].numPRGs         = 1;
-    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].prgSize         = 275;
-    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].digBFInterfaces = 1;
-    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].PMIdx[0]        = 0;
-    pdcch_pdu->dci_pdu.precodingAndBeamforming[pdcch_pdu->numDlDci].beamIdx[0]      = beam_index;
+  pdcch_pdu->dci_pdu.powerControlOffsetSS[pdcch_pdu->numDlDci]=1;
 
 }		
 void nr_fill_nfapi_dl_pdu(int Mod_idP,

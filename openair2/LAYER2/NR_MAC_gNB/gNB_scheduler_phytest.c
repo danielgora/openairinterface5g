@@ -330,7 +330,6 @@ void nr_preprocessor_phytest(module_id_t module_id,
               "%s(): could not find CCE for UE %d\n",
               __func__,
               UE_id);
-
   nr_acknack_scheduling(module_id,
                         UE_id,
                         frame,

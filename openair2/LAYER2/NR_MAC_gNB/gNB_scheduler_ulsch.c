@@ -85,6 +85,7 @@ void nr_process_mac_pdu(
         LOG_D(MAC, "LCID received at gNB side: %d \n", rx_lcid);
 
         unsigned char *ce_ptr;
+        int n_Lcg = 0;
 
         switch(rx_lcid){
             //  MAC CE
@@ -108,6 +109,8 @@ void nr_process_mac_pdu(
         	/* Extract short BSR value */
                ce_ptr = &pdu_ptr[mac_subheader_len];
                NR_BSR_SHORT *bsr_s = (NR_BSR_SHORT *) ce_ptr;
+               LOG_I(MAC, "SHORT BSR, LCG ID %d, BS Index %d\n",
+                     bsr_s->LcgID, bsr_s->Buffer_size);
         	break;
 
         case UL_SCH_LCID_L_BSR:
@@ -123,6 +126,16 @@ void nr_process_mac_pdu(
         	/* Extract long BSR value */
                ce_ptr = &pdu_ptr[mac_subheader_len];
                NR_BSR_LONG *bsr_l = (NR_BSR_LONG *) ce_ptr;
+
+               n_Lcg = bsr_l->LcgID7 + bsr_l->LcgID6 + bsr_l->LcgID5 + bsr_l->LcgID4 +
+                       bsr_l->LcgID3 + bsr_l->LcgID2 + bsr_l->LcgID1 + bsr_l->LcgID0;
+
+               if (n_Lcg > 0) {
+                 LOG_W(MAC, "LONG BSR, LCG ID(7-0) %d/%d/%d/%d/%d/%d/%d/%d, Buffer Size > 0\n",
+                       bsr_l->LcgID7, bsr_l->LcgID6, bsr_l->LcgID5, bsr_l->LcgID4,
+                       bsr_l->LcgID3, bsr_l->LcgID2, bsr_l->LcgID1, bsr_l->LcgID0);
+               }
+
         	break;
 
         case UL_SCH_LCID_C_RNTI:

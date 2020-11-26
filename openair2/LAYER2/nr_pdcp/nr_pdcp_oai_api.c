@@ -465,7 +465,7 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
   int rb_id;
   int i;
 
-  if (1) { //(IS_SOFTMODEM_NOS1){
+  if (IS_SOFTMODEM_NOS1 ||  ctxt_pP->enb_flag==ENB_FLAG_NO){
     #if 0
     log_dump(PDCP,buf,size,LOG_DUMP_CHAR,"   PDCP Received SDU:\n");
     if (size > 4700)
@@ -517,6 +517,7 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
       
     }
     #else
+    printf("----------------%d send data to tun -----------------\n",ctxt_pP->enb_flag);
     len = write(nas_sock_fd[0], buf, size);
     if (len != size) {
       LOG_E(PDCP, "%s:%d:%s: fatal\n", __FILE__, __LINE__, __FUNCTION__);
@@ -536,22 +537,22 @@ static void deliver_sdu_drb(protocol_ctxt_t *ctxt_pP,void *_ue, nr_pdcp_entity_t
             __FILE__, __LINE__, __FUNCTION__, ue->rnti);
       exit(1);
 
-    // rb_found:
-    //   gtpu_buffer_p = itti_malloc(TASK_PDCP_ENB, TASK_GTPV1_U,
-    //                               size + GTPU_HEADER_OVERHEAD_MAX);
-    //   AssertFatal(gtpu_buffer_p != NULL, "OUT OF MEMORY");
-    //   memcpy(&gtpu_buffer_p[GTPU_HEADER_OVERHEAD_MAX], buf, size);
-    //   message_p = itti_alloc_new_message(TASK_PDCP_ENB, GTPV1U_ENB_TUNNEL_DATA_REQ);
-    //   AssertFatal(message_p != NULL, "OUT OF MEMORY");
-    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).buffer       = gtpu_buffer_p;
-    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).length       = size;
-    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).offset       = GTPU_HEADER_OVERHEAD_MAX;
-    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = ue->rnti;
-    //   GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rab_id       = rb_id + 4;
-    //   LOG_D(PDCP, "%s() (drb %d) sending message to gtp size %d\n", __func__, rb_id, size);
-    //   //for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)buf[i]);
-    //   //printf("\n");
-    //   itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p);
+    rb_found:
+      gtpu_buffer_p = itti_malloc(TASK_PDCP_ENB, TASK_GTPV1_U,
+                                  size + GTPU_HEADER_OVERHEAD_MAX);
+      AssertFatal(gtpu_buffer_p != NULL, "OUT OF MEMORY");
+      memcpy(&gtpu_buffer_p[GTPU_HEADER_OVERHEAD_MAX], buf, size);
+      message_p = itti_alloc_new_message(TASK_PDCP_ENB, GTPV1U_ENB_TUNNEL_DATA_REQ);
+      AssertFatal(message_p != NULL, "OUT OF MEMORY");
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).buffer       = gtpu_buffer_p;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).length       = size;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).offset       = GTPU_HEADER_OVERHEAD_MAX;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rnti         = ue->rnti;
+      GTPV1U_ENB_TUNNEL_DATA_REQ(message_p).rab_id       = rb_id + 4;
+      LOG_D(PDCP, "%s() (drb %d) sending message to gtp size %d\n", __func__, rb_id, size);
+      for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)buf[i]);
+      printf("\n");
+      itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p);
 
   }
 }

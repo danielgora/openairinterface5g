@@ -61,13 +61,14 @@
 #include "openair1/SIMULATION/TOOLS/sim.h"
 #include "openair1/SIMULATION/NR_PHY/nr_unitary_defs.h"
 //#include "openair1/SIMULATION/NR_PHY/nr_dummy_functions.c"
-
+#include "PHY/NR_REFSIG/ptrs_nr.h"
 #include "NR_RRCReconfiguration.h"
 #define inMicroS(a) (((double)(a))/(cpu_freq_GHz*1000.0))
 #include "SIMULATION/LTE_PHY/common_sim.h"
 
+#include <openair2/LAYER2/MAC/mac_vars.h>
+#include <openair2/RRC/LTE/rrc_vars.h>
 
-unsigned char NB_eNB_INST=0;
 LCHAN_DESC DCCH_LCHAN_DESC,DTCH_DL_LCHAN_DESC,DTCH_UL_LCHAN_DESC;
 rlc_info_t Rlc_info_um,Rlc_info_am_config;
 
@@ -81,7 +82,6 @@ double cpuf;
 int sf_ahead=4 ;
 int sl_ahead=0;
 uint8_t nfapi_mode = 0;
-uint16_t NB_UE_INST = 1;
 uint64_t downlink_frequency[MAX_NUM_CCs][4];
 
 // dummy functions
@@ -148,8 +148,45 @@ int is_x2ap_enabled(void)
 
 // needed for some functions
 openair0_config_t openair0_cfg[MAX_CARDS];
+void update_ptrs_config(NR_CellGroupConfig_t *secondaryCellGroup, uint16_t *rbSize, uint8_t *mcsIndex,int8_t *ptrs_arg);
+void update_dmrs_config(NR_CellGroupConfig_t *scg,PHY_VARS_NR_UE *ue, int8_t* dmrs_arg);
 
+/* specific dlsim DL preprocessor: uses rbStart/rbSize/mcs from command line of
+   dlsim, does not search for CCE/PUCCH occasion but simply sets to 0 */
+int g_mcsIndex = -1, g_rbStart = -1, g_rbSize = -1;
+void nr_dlsim_preprocessor(module_id_t module_id,
+                           frame_t frame,
+                           sub_frame_t slot,
+                           int num_slots_per_tdd) {
+  NR_UE_info_t *UE_info = &RC.nrmac[module_id]->UE_info;
+  AssertFatal(UE_info->num_UEs == 1, "can have only a single UE\n");
+  NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[0];
 
+  /* manually set free CCE to 0 */
+  const int target_ss = NR_SearchSpace__searchSpaceType_PR_ue_Specific;
+  sched_ctrl->search_space = get_searchspace(sched_ctrl->active_bwp, target_ss);
+  uint8_t nr_of_candidates;
+  find_aggregation_candidates(&sched_ctrl->aggregation_level,
+                              &nr_of_candidates,
+                              sched_ctrl->search_space);
+  sched_ctrl->coreset = get_coreset(
+      sched_ctrl->active_bwp, sched_ctrl->search_space, 1 /* dedicated */);
+  sched_ctrl->cce_index = 0;
+
+  /* set "any" value for PUCCH (simulator evaluates PDSCH only) */
+  sched_ctrl->pucch_sched_idx = 0;
+  sched_ctrl->pucch_occ_idx = 0;
+
+  sched_ctrl->rbStart = g_rbStart;
+  sched_ctrl->rbSize = g_rbSize;
+  sched_ctrl->mcs = g_mcsIndex;
+  sched_ctrl->time_domain_allocation = 2;
+  sched_ctrl->mcsTableIdx = 0;
+  AssertFatal(sched_ctrl->rbStart >= 0, "invalid rbStart %d\n", sched_ctrl->rbStart);
+  AssertFatal(sched_ctrl->rbSize > 0, "invalid rbSize %d\n", sched_ctrl->rbSize);
+  AssertFatal(sched_ctrl->mcs >= 0, "invalid sched_ctrl->mcs %d\n", sched_ctrl->mcs);
+  sched_ctrl->numDmrsCdmGrpsNoData = 1;
+}
 
 
 int main(int argc, char **argv)
@@ -194,11 +231,10 @@ int main(int argc, char **argv)
 
   SCM_t channel_model=AWGN;//Rayleigh1_anticorr;
 
+  NB_UE_INST = 1;
   //double pbch_sinr;
   //int pbch_tx_ant;
   int N_RB_DL=106,mu=1;
-  nfapi_nr_dl_tti_pdsch_pdu_rel15_t dlsch_config;
-  NR_sched_pucch pucch_sched;
 
   //unsigned char frame_type = 0;
 
@@ -220,6 +256,19 @@ int main(int argc, char **argv)
   int css_flag=0;
 
   cpuf = get_cpu_freq_GHz();
+  int8_t enable_ptrs = 0;
+  int8_t modify_dmrs = 0;
+
+  int8_t dmrs_arg[2] = {-1,-1};// Invalid values
+  /* L_PTRS = ptrs_arg[0], K_PTRS = ptrs_arg[1] */
+  int8_t ptrs_arg[2] = {-1,-1};// Invalid values
+
+  uint16_t ptrsRePerSymb = 0;
+  uint16_t pdu_bit_map = 0x0;
+  uint16_t dlPtrsSymPos = 0;
+  uint16_t ptrsSymbPerSlot = 0;
+  uint16_t rbSize = 106;
+  uint8_t  mcsIndex = 9;
 
   if ( load_configmodule(argc,argv,CONFIG_ENABLECMDLINEONLY) == 0) {
     exit_fun("[NR_DLSIM] Error, configuration module init failed\n");
@@ -227,12 +276,11 @@ int main(int argc, char **argv)
 
   randominit(0);
 
-  int mcsIndex_set=0,rbStart_set=0,rbSize_set=0;
   int print_perf             = 0;
 
   FILE *scg_fd=NULL;
   
-  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:GR:dPIL:Ea:b:e:m:w")) != -1) {
+  while ((c = getopt (argc, argv, "f:hA:pf:g:i:j:n:s:S:t:x:y:z:M:N:F:GR:dPIL:Ea:b:e:m:w:T:U:")) != -1) {
     switch (c) {
     case 'f':
       scg_fd = fopen(optarg,"r");
@@ -393,18 +441,15 @@ int main(int argc, char **argv)
 
 
     case 'a':
-      dlsch_config.rbStart = atoi(optarg);
-      rbStart_set=1;
+      g_rbStart = atoi(optarg);
       break;
 
     case 'b':
-      dlsch_config.rbSize = atoi(optarg);
-      rbSize_set=1;
+      g_rbSize = atoi(optarg);
       break;
 
     case 'e':
-      dlsch_config.mcsIndex[0] = atoi(optarg);
-      mcsIndex_set=1;
+      g_mcsIndex = atoi(optarg);
       break;
 
     case 'm':
@@ -417,6 +462,20 @@ int main(int argc, char **argv)
 
     case 'w':
       output_fd = fopen("txdata.dat", "w+");
+      break;
+
+    case 'T':
+      enable_ptrs=1;
+      for(i=0; i < atoi(optarg); i++) {
+        ptrs_arg[i] = atoi(argv[optind++]);
+      }
+      break;
+
+    case 'U':
+      modify_dmrs = 1;
+      for(i=0; i < atoi(optarg); i++) {
+        dmrs_arg[i] = atoi(argv[optind++]);
+      }
       break;
 
     default:
@@ -449,6 +508,8 @@ int main(int argc, char **argv)
       printf("-j Number of symbols for PDSCH (fixed for now)\n");
       printf("-e MSC index\n");
       printf("-t Acceptable effective throughput (in percentage)\n");
+      printf("-T Enable PTRS, arguments list L_PTRS{0,1,2} K_PTRS{2,4}, e.g. -T 2 0 2 \n");
+      printf("-U Change DMRS Config, arguments list DMRS TYPE{0=A,1=B} DMRS AddPos{0:2}, e.g. -U 2 0 2 \n");
       printf("-P Print DLSCH performances\n");
       printf("-w Write txdata to binary file (one frame)\n");
       exit (-1);
@@ -459,6 +520,8 @@ int main(int argc, char **argv)
   logInit();
   set_glog(loglvl);
   T_stdout = 1;
+  /* initialize the sin table */
+  InitSinLUT();
 
   get_softmodem_params()->phy_test = 1;
   
@@ -483,6 +546,7 @@ int main(int argc, char **argv)
     RC.nb_nr_mac_CC[i] = 1;
   mac_top_init_gNB();
   gNB_mac = RC.nrmac[0];
+  gNB_mac->pre_processor_dl = nr_dlsim_preprocessor;
   gNB_RRC_INST rrc;
   memset((void*)&rrc,0,sizeof(rrc));
 
@@ -546,7 +610,17 @@ int main(int argc, char **argv)
 				  n_tx,
 				  0);
 
-  xer_fprint(stdout, &asn_DEF_NR_CellGroupConfig, (const void*)secondaryCellGroup);
+  /* -U option modify DMRS */
+  if(modify_dmrs) {
+    update_dmrs_config(secondaryCellGroup, NULL,dmrs_arg);
+  }
+  /* -T option enable PTRS */
+  if(enable_ptrs) {
+    update_ptrs_config(secondaryCellGroup, &rbSize, &mcsIndex, ptrs_arg);
+  }
+
+
+  //xer_fprint(stdout, &asn_DEF_NR_CellGroupConfig, (const void*)secondaryCellGroup);
 
   AssertFatal((gNB->if_inst         = NR_IF_Module_init(0))!=NULL,"Cannot register interface");
   gNB->if_inst->NR_PHY_config_req      = nr_phy_config_request;
@@ -560,6 +634,12 @@ int main(int argc, char **argv)
   //  nr_phy_config_request_sim(gNB,N_RB_DL,N_RB_DL,mu,Nid_cell,SSB_positions);
   // call MAC to configure common parameters
 
+  /* rrc_mac_config_req_gNB() has created one user, so set the scheduling
+   * parameters from command line in global variables that will be picked up by
+   * scheduling preprocessor */
+  if (g_mcsIndex < 0) g_mcsIndex = 9;
+  if (g_rbStart < 0) g_rbStart=0;
+  if (g_rbSize < 0) g_rbSize = N_RB_DL - g_rbStart;
 
   double fs,bw;
 
@@ -648,7 +728,6 @@ int main(int argc, char **argv)
   else                      {UE->is_synchronized = 1; UE->UE_mode[0]=PUSCH;}
                       
   UE->perfect_ce = 0;
-  for (i=0;i<10;i++) UE->current_thread_id[i] = 0;
 
   if (init_nr_ue_signal(UE, 1, 0) != 0)
   {
@@ -656,6 +735,9 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
+  if(modify_dmrs) {
+    update_dmrs_config( NULL,UE,dmrs_arg);
+  }
   init_nr_ue_transport(UE,0);
 
   nr_gold_pbch(UE);
@@ -687,11 +769,6 @@ int main(int argc, char **argv)
   AssertFatal(input_fd==NULL,"Not ready for input signal file\n");
   gNB->pbch_configured = 1;
   gNB->ssb_pdu.ssb_pdu_rel15.bchPayload=0x001234;
-  
-  if (mcsIndex_set==0) dlsch_config.mcsIndex[0]=9;
-  
-  if (rbStart_set==0) dlsch_config.rbStart=0;
-  if (rbSize_set==0) dlsch_config.rbSize=N_RB_DL-dlsch_config.rbStart;
 
   //Configure UE
   rrc.carrier.MIB = (uint8_t*) malloc(4);
@@ -715,7 +792,7 @@ int main(int argc, char **argv)
   scheduled_response.CC_id     = 0;
   scheduled_response.frame = frame;
   scheduled_response.slot  = slot;
-  
+  scheduled_response.thread_id = UE_proc.thread_id;
 
   nr_ue_phy_config_request(&UE_mac->phy_config);
   NR_UE_info_t *UE_info = &RC.nrmac[0]->UE_info;
@@ -754,14 +831,14 @@ int main(int argc, char **argv)
       //multipath_channel(gNB2UE,s_re,s_im,r_re,r_im,frame_length_complex_samples,0);
 
       UE->rx_offset=0;
-      UE_proc.frame_rx = frame;
-      UE_proc.nr_tti_rx= slot;
-      UE_proc.subframe_rx = slot;
+      UE_proc.thread_id  = 0;
+      UE_proc.frame_rx   = frame;
+      UE_proc.nr_slot_rx = slot;
       
       dcireq.frame     = frame;
       dcireq.slot      = slot;
 
-      NR_UE_DLSCH_t *dlsch0 = UE->dlsch[UE->current_thread_id[UE_proc.nr_tti_rx]][0][0];
+      NR_UE_DLSCH_t *dlsch0 = UE->dlsch[UE_proc.thread_id][0][0];
 
       int harq_pid = slot;
       NR_DL_UE_HARQ_t *UE_harq_process = dlsch0->harq_processes[harq_pid];
@@ -788,8 +865,14 @@ int main(int argc, char **argv)
         for (int i=0; i<MAX_NUM_CORESET; i++)
           gNB_mac->UE_info.num_pdcch_cand[0][i] = 0;
       
-        if (css_flag == 0) nr_schedule_uss_dlsch_phytest(0,frame,slot,&pucch_sched,&dlsch_config);
-        else               nr_schedule_css_dlsch_phytest(0,frame,slot);
+        if (css_flag == 0) {
+          const uint8_t slots_per_frame[5] = {10, 20, 40, 80, 160};
+          const NR_TDD_UL_DL_Pattern_t *tdd_pattern = &scc->tdd_UL_DL_ConfigurationCommon->pattern1;
+          const int num_slots_per_tdd = slots_per_frame[*scc->ssbSubcarrierSpacing] >> (7 - tdd_pattern->dl_UL_TransmissionPeriodicity);
+          nr_schedule_ue_spec(0, frame, slot, num_slots_per_tdd);
+        } else {
+          nr_schedule_css_dlsch_phytest(0,frame,slot);
+        }
         Sched_INFO.module_id = 0;
         Sched_INFO.CC_id     = 0;
         Sched_INFO.frame     = frame;
@@ -799,7 +882,22 @@ int main(int argc, char **argv)
         Sched_INFO.UL_dci_req  = NULL;
         Sched_INFO.TX_req    = &gNB_mac->TX_req[0];
         nr_schedule_response(&Sched_INFO);
-        
+
+        /* PTRS values for DLSIM calculations   */
+        nfapi_nr_dl_tti_request_body_t *dl_req = &gNB_mac->DL_req[Sched_INFO.CC_id].dl_tti_request_body;
+        nfapi_nr_dl_tti_request_pdu_t  *dl_tti_pdsch_pdu = &dl_req->dl_tti_pdu_list[1];
+        nfapi_nr_dl_tti_pdsch_pdu_rel15_t *pdsch_pdu_rel15 = &dl_tti_pdsch_pdu->pdsch_pdu.pdsch_pdu_rel15;
+        pdu_bit_map = pdsch_pdu_rel15->pduBitmap;
+        if(pdu_bit_map & 0x1) {
+          set_ptrs_symb_idx(&dlPtrsSymPos,
+                            pdsch_pdu_rel15->NrOfSymbols,
+                            pdsch_pdu_rel15->StartSymbolIndex,
+                            1<<pdsch_pdu_rel15->PTRSTimeDensity,
+                            pdsch_pdu_rel15->dlDmrsSymbPos);
+          ptrsSymbPerSlot = get_ptrs_symbols_in_slot(dlPtrsSymPos, pdsch_pdu_rel15->StartSymbolIndex, pdsch_pdu_rel15->NrOfSymbols);
+          ptrsRePerSymb = ((rel15->rbSize + rel15->PTRSFreqDensity - 1)/rel15->PTRSFreqDensity);
+          printf("[DLSIM] PTRS Symbols in a slot: %2u, RE per Symbol: %3u, RE in a slot %4d\n", ptrsSymbPerSlot,ptrsRePerSymb, ptrsSymbPerSlot*ptrsRePerSymb );
+        }
         if (run_initial_sync)
           nr_common_signal_procedures(gNB,frame,slot);
         else
@@ -825,38 +923,11 @@ int main(int argc, char **argv)
                          12,
                          frame_parms->nb_prefix_samples,
                          CYCLIC_PREFIX);
-          } else {/*
+          } else {
             nr_normal_prefix_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
                                  &txdata[aa][tx_offset],
                                  14,
                                  frame_parms);
-		  */
-	    PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset],
-			 (int*)&txdata[aa][tx_offset],
-			 frame_parms->ofdm_symbol_size,
-			 1,
-			 frame_parms->nb_prefix_samples0,
-			 CYCLIC_PREFIX);
-	    	    
-	    apply_nr_rotation(frame_parms,
-			      (int16_t*)&txdata[aa][tx_offset],
-			      slot,
-			      0,
-			      1,
-			      frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples0);
-	    PHY_ofdm_mod(&gNB->common_vars.txdataF[aa][txdataF_offset+frame_parms->ofdm_symbol_size],
-			 (int*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
-			 frame_parms->ofdm_symbol_size,
-			 13,
-			 frame_parms->nb_prefix_samples,
-			 CYCLIC_PREFIX);
-	    apply_nr_rotation(frame_parms,
-			      (int16_t*)&txdata[aa][tx_offset+frame_parms->nb_prefix_samples0+frame_parms->ofdm_symbol_size],
-			      slot,
-			      1,
-			      13,
-			      frame_parms->ofdm_symbol_size+frame_parms->nb_prefix_samples);
-	    
           }
         }
        
@@ -883,7 +954,7 @@ int main(int argc, char **argv)
             r_im[aa][i] = ((double)(((short *)txdata[aa]))[(i<<1)+1]);
           }
         }
-        
+        double ts = 1.0/(frame_parms->subcarrier_spacing * frame_parms->ofdm_symbol_size); 
         //AWGN
         sigma2_dB = 10 * log10((double)txlev * ((double)UE->frame_parms.ofdm_symbol_size/(12*rel15->rbSize))) - SNR;
         sigma2    = pow(10, sigma2_dB/10);
@@ -896,6 +967,11 @@ int main(int argc, char **argv)
           for (aa=0; aa<frame_parms->nb_antennas_rx; aa++) {
             ((short*) UE->common_vars.rxdata[aa])[2*i]   = (short) ((r_re[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
             ((short*) UE->common_vars.rxdata[aa])[2*i+1] = (short) ((r_im[aa][i] + sqrt(sigma2/2)*gaussdouble(0.0,1.0)));
+            /* Add phase noise if enabled */
+            if (pdu_bit_map & 0x1) {
+              phase_noise(ts, &((short*) UE->common_vars.rxdata[aa])[2*i],
+                          &((short*) UE->common_vars.rxdata[aa])[2*i+1]);
+            }
           }
         }
         
@@ -914,22 +990,26 @@ int main(int argc, char **argv)
       //----------------------------------------------------------
       //---------------------- count errors ----------------------
       //----------------------------------------------------------
-      
-      if (UE->dlsch[UE->current_thread_id[slot]][0][0]->last_iteration_cnt >= 
-        UE->dlsch[UE->current_thread_id[slot]][0][0]->max_ldpc_iterations+1)
+
+      if (UE->dlsch[UE_proc.thread_id][0][0]->last_iteration_cnt >=
+        UE->dlsch[UE_proc.thread_id][0][0]->max_ldpc_iterations+1)
         n_errors++;
-        
-      NR_UE_PDSCH **pdsch_vars = UE->pdsch_vars[UE->current_thread_id[UE_proc.nr_tti_rx]];
+
+      NR_UE_PDSCH **pdsch_vars = UE->pdsch_vars[UE_proc.thread_id];
       int16_t *UE_llr = pdsch_vars[0]->llr[0];
-      
+
       TBS                  = UE_harq_process->TBS;//rel15->TBSize[0];
-      uint16_t length_dmrs = 1;
+      uint16_t length_dmrs = get_num_dmrs(rel15->dlDmrsSymbPos);
       uint16_t nb_rb       = rel15->rbSize;
       uint8_t  nb_re_dmrs  = rel15->dmrsConfigType == NFAPI_NR_DMRS_TYPE1 ? 6 : 4;
       uint8_t  mod_order   = rel15->qamModOrder[0];
       uint8_t  nb_symb_sch = rel15->NrOfSymbols;
-      
+
       available_bits = nr_get_G(nb_rb, nb_symb_sch, nb_re_dmrs, length_dmrs, mod_order, rel15->nrOfLayers);
+      if(pdu_bit_map & 0x1) {
+        available_bits-= (ptrsSymbPerSlot * ptrsRePerSymb *rel15->nrOfLayers* 2);
+        printf("[DLSIM][PTRS] Available bits are: %5u, removed PTRS bits are: %5u \n",available_bits, (ptrsSymbPerSlot * ptrsRePerSymb *rel15->nrOfLayers* 2) );
+      }
       
       for (i = 0; i < available_bits; i++) {
 	
@@ -981,12 +1061,12 @@ int main(int argc, char **argv)
     printf("*****************************************\n");
     printf("\n");
     dump_pdsch_stats(gNB);
-    printf("SNR %f : n_errors (negative CRC) = %d/%d, Avg round %.2f, Channel BER %e, Eff Rate %.4f bits/slot, Eff Throughput %.2f, TBS %d bits/slot\n", SNR, n_errors, n_trials,roundStats[snrRun],(double)errors_scrambling/available_bits/n_trials,effRate,effRate/TBS*100,TBS);
+    printf("SNR %f : n_errors (negative CRC) = %d/%d, Avg round %.2f, Channel BER %e, Eff Rate %.4f bits/slot, Eff Throughput %.2f, TBS %u bits/slot\n", SNR, n_errors, n_trials,roundStats[snrRun],(double)errors_scrambling/available_bits/n_trials,effRate,effRate/TBS*100,TBS);
     printf("\n");
 
     if (print_perf==1) {
       printf("\ngNB TX function statistics (per %d us slot, NPRB %d, mcs %d, TBS %d, Kr %d (Zc %d))\n",
-	     1000>>*scc->ssbSubcarrierSpacing,dlsch_config.rbSize,dlsch_config.mcsIndex[0],
+	     1000>>*scc->ssbSubcarrierSpacing, g_rbSize, g_mcsIndex,
 	     gNB->dlsch[0][0]->harq_processes[0]->pdsch_pdu.pdsch_pdu_rel15.TBSize[0]<<3,
 	     gNB->dlsch[0][0]->harq_processes[0]->K,
 	     gNB->dlsch[0][0]->harq_processes[0]->K/((gNB->dlsch[0][0]->harq_processes[0]->pdsch_pdu.pdsch_pdu_rel15.TBSize[0]<<3)>3824?22:10));
@@ -1018,9 +1098,9 @@ int main(int argc, char **argv)
       printStatIndent(&UE->dlsch_unscrambling_stats,"DLSCH unscrambling time");
       printStatIndent(&UE->dlsch_rate_unmatching_stats,"DLSCH Rate Unmatching");
       printf("|__ DLSCH Turbo Decoding(%d bits), avg iterations: %.1f       %.2f us (%d cycles, %d trials)\n",
-	     UE->dlsch[UE->current_thread_id[subframe]][0][0]->harq_processes[0]->Cminus ?
-	     UE->dlsch[UE->current_thread_id[subframe]][0][0]->harq_processes[0]->Kminus :
-	     UE->dlsch[UE->current_thread_id[subframe]][0][0]->harq_processes[0]->Kplus,
+	     UE->dlsch[UE_proc.thread_id][0][0]->harq_processes[0]->Cminus ?
+	     UE->dlsch[UE_proc.thread_id][0][0]->harq_processes[0]->Kminus :
+	     UE->dlsch[UE_proc.thread_id][0][0]->harq_processes[0]->Kplus,
 	     UE->dlsch_tc_intl1_stats.trials/(double)UE->dlsch_tc_init_stats.trials,
 	     (double)UE->dlsch_turbo_decoding_stats.diff/UE->dlsch_turbo_decoding_stats.trials*timeBase,
 	     (int)((double)UE->dlsch_turbo_decoding_stats.diff/UE->dlsch_turbo_decoding_stats.trials),
@@ -1042,7 +1122,7 @@ int main(int argc, char **argv)
 	LOG_M("rxsig1.m","rxs1", UE->common_vars.rxdata[1], frame_length_complex_samples, 1, 1);
       LOG_M("chestF0.m","chF0",UE->pdsch_vars[0][0]->dl_ch_estimates_ext,N_RB_DL*12*14,1,1);
       write_output("rxF_comp.m","rxFc",&UE->pdsch_vars[0][0]->rxdataF_comp0[0][0],N_RB_DL*12*14,1,1);
-      LOG_M("rxF_llr.m","rxFllr",UE->pdsch_vars[UE->current_thread_id[UE_proc.nr_tti_rx]][0]->llr[0],available_bits,1,0);
+      LOG_M("rxF_llr.m","rxFllr",UE->pdsch_vars[UE_proc.thread_id][0]->llr[0],available_bits,1,0);
       break;
     }
 
@@ -1090,4 +1170,80 @@ int main(int argc, char **argv)
     fclose(scg_fd);
   return(n_errors);
   
+}
+
+
+void update_ptrs_config(NR_CellGroupConfig_t *secondaryCellGroup, uint16_t *rbSize, uint8_t *mcsIndex, int8_t *ptrs_arg)
+{
+  NR_BWP_Downlink_t *bwp=secondaryCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[0];
+  int *ptrsFreqDenst = calloc(2, sizeof(long));
+  ptrsFreqDenst[0]= 25;
+  ptrsFreqDenst[1]= 115;
+  int *ptrsTimeDenst = calloc(3, sizeof(long));
+  ptrsTimeDenst[0]= 2;
+  ptrsTimeDenst[1]= 4;
+  ptrsTimeDenst[2]= 10;
+
+  int epre_Ratio = 0;
+  int reOffset = 0;
+
+  if(ptrs_arg[0] ==0) {
+    ptrsTimeDenst[2]= *mcsIndex -1;
+  }
+  else if(ptrs_arg[0] == 1) {
+    ptrsTimeDenst[1]= *mcsIndex - 1;
+    ptrsTimeDenst[2]= *mcsIndex + 1;
+  }
+  else if(ptrs_arg[0] ==2) {
+    ptrsTimeDenst[0]= *mcsIndex - 1;
+    ptrsTimeDenst[1]= *mcsIndex + 1;
+  }
+  else {
+    printf("[DLSIM] Wrong L_PTRS value, using default values 1\n");
+  }
+  /* L = 4 if Imcs < MCS4 */
+  if(ptrs_arg[1] ==2) {
+    ptrsFreqDenst[0]= *rbSize - 1;
+    ptrsFreqDenst[1]= *rbSize + 1;
+  }
+  else if(ptrs_arg[1] == 4) {
+    ptrsFreqDenst[1]= *rbSize - 1;
+  }
+  else {
+    printf("[DLSIM] Wrong K_PTRS value, using default values 2\n");
+  }
+  printf("[DLSIM] PTRS Enabled with L %d, K %d \n", 1<<ptrs_arg[0], ptrs_arg[1] );
+  /* overwrite the values */
+  rrc_config_dl_ptrs_params(bwp, ptrsFreqDenst, ptrsTimeDenst, &epre_Ratio, &reOffset);
+}
+
+void update_dmrs_config(NR_CellGroupConfig_t *scg,PHY_VARS_NR_UE *ue, int8_t* dmrs_arg)
+{
+  int8_t  mapping_type = typeA;//default value
+  int8_t  add_pos = pdsch_dmrs_pos0;//default value
+  if(dmrs_arg[0] == 0) {
+    mapping_type = typeA;
+  }
+  else if (dmrs_arg[0] == 1) {
+    mapping_type = typeB;
+  }
+  /* Additional DMRS positions 0 ,1 and 2 */
+  if(dmrs_arg[1] >= 0 && dmrs_arg[1] <3 ) {
+    add_pos = dmrs_arg[1];
+  }
+
+  if(scg != NULL) {
+    NR_BWP_Downlink_t *bwp = scg->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[0];
+    *bwp->bwp_Dedicated->pdsch_Config->choice.setup->dmrs_DownlinkForPDSCH_MappingTypeA->choice.setup->dmrs_AdditionalPosition = add_pos;
+    for (int i=0;i<bwp->bwp_Common->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.count;i++) {
+      bwp->bwp_Common->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.array[i]->mappingType = mapping_type; 
+    }
+  }
+  if(ue != NULL) {
+    for (int i=0;i<MAX_NR_OF_DL_ALLOCATIONS;i++) {
+      ue->PDSCH_Config.pdsch_TimeDomainResourceAllocation[i]->mappingType = mapping_type;
+    }
+    ue->dmrs_DownlinkConfig.pdsch_dmrs_AdditionalPosition = add_pos;
+  }
+  printf("[DLSIM] DMRS Config is modified with Mapping Type %d, Additional Positions %d \n", dmrs_arg[0], dmrs_arg[1] );
 }

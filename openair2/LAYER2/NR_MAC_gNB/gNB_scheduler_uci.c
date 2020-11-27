@@ -100,6 +100,7 @@ void nr_schedule_pucch(int Mod_idP,
   int bwp_id=1;
   NR_BWP_Uplink_t *ubwp=secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[bwp_id-1];
   nfapi_nr_ul_tti_request_t *UL_tti_req = &RC.nrmac[Mod_idP]->UL_tti_req[0];
+
   NR_sched_pucch *curr_pucch;
 
   for (int k=0; k<nr_ulmix_slots; k++) {
@@ -439,6 +440,7 @@ uint16_t nr_get_csi_bitlen(int Mod_idP,
 
   uint16_t csi_bitlen =0;
   NR_UE_info_t *UE_info = &RC.nrmac[Mod_idP]->UE_info;
+
   L1_RSRP_bitlen_t * CSI_report_bitlen = NULL;
   CSI_Meas_bitlen_t * csi_meas_bitlen = NULL;
 
@@ -560,6 +562,7 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
       for (int harq_idx = harq_idx_s; harq_idx < NR_MAX_NB_HARQ_PROCESSES; harq_idx++) {
         // if the gNB received ack with a good confidence
         if ((UL_info->slot-1) == sched_ctrl->harq_processes[harq_idx].feedback_slot) {
+          sched_ctrl->harq_processes[harq_idx].feedback_slot = -1;
           if ((uci_01->harq->harq_list[harq_bit].harq_value == 1) &&
               (uci_01->harq->harq_confidence_level == 0)) {
             // toggle NDI and reset round
@@ -579,8 +582,10 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
           break;
         }
         // if feedback slot processing is aborted
-        else if (((UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot) &&
-                 (sched_ctrl->harq_processes[harq_idx].is_waiting)) {
+        else if (sched_ctrl->harq_processes[harq_idx].feedback_slot != -1
+                 && (UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot
+                 && sched_ctrl->harq_processes[harq_idx].is_waiting) {
+          sched_ctrl->harq_processes[harq_idx].feedback_slot = -1;
           sched_ctrl->harq_processes[harq_idx].round++;
           if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
@@ -603,6 +608,7 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
         // if the gNB received ack with a good confidence or if the max harq rounds was reached
         if ((UL_info->slot-1) == sched_ctrl->harq_processes[harq_idx].feedback_slot) {
           // TODO add some confidence level for when there is no CRC
+          sched_ctrl->harq_processes[harq_idx].feedback_slot = -1;
           if ((uci_234->harq.harq_crc != 1) && acknack) {
             // toggle NDI and reset round
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
@@ -621,8 +627,10 @@ void nr_rx_acknack(nfapi_nr_uci_pusch_pdu_t *uci_pusch,
           break;
         }
         // if feedback slot processing is aborted
-        else if (((UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot) &&
-                 (sched_ctrl->harq_processes[harq_idx].is_waiting)) {
+        else if (sched_ctrl->harq_processes[harq_idx].feedback_slot != -1
+                 && (UL_info->slot-1) > sched_ctrl->harq_processes[harq_idx].feedback_slot
+                 && sched_ctrl->harq_processes[harq_idx].is_waiting) {
+          sched_ctrl->harq_processes[harq_idx].feedback_slot = -1;
           sched_ctrl->harq_processes[harq_idx].round++;
           if (sched_ctrl->harq_processes[harq_idx].round == max_harq_rounds) {
             sched_ctrl->harq_processes[harq_idx].ndi ^= 1;
@@ -1245,5 +1253,4 @@ void extract_pucch_csi_report (NR_CSI_MeasConfig_t *csi_MeasConfig,
 
 #endif
 }
-
 

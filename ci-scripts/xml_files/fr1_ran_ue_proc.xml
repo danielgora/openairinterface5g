@@ -32,9 +32,13 @@
  000001
  050000
  050001
+ 050002
+ 050003
+ 000001
+ 010002
+ 000001
  070001
  070000
- 010002
  010003
 	</TestCaseRequestedList>
 	<TestCaseExclusionList></TestCaseExclusionList>
@@ -99,11 +103,26 @@
 		<ping_packetloss_threshold>0</ping_packetloss_threshold>
 	</testCase>
 
+	<testCase id="050002">
+		<class>Ping</class>
+		<desc>Ping: 100pings in 20sec</desc>
+		<ping_args>-c 100 -i 0.2</ping_args>
+		<ping_packetloss_threshold>0</ping_packetloss_threshold>
+	</testCase>
+
+	<testCase id="050003">$
+	<class>Ping</class>$
+	<desc>Ping: 100pings in 20sec size 1000</desc>$
+	<ping_args>-c 100 -i 0.2 -s 1000</ping_args>$
+	<ping_packetloss_threshold>0</ping_packetloss_threshold>$
+	</testCase>$
+
 	<testCase id="070000">
 		<class>Terminate_eNB</class>
 		<desc>Terminate eNB</desc>
 		<eNB_instance>0</eNB_instance>
 		<eNB_serverId>0</eNB_serverId>
+		<air_interface>lte</air_interface>
 	</testCase>
 
 	<testCase id="070001">
@@ -111,6 +130,7 @@
 		<desc>Terminate gNB</desc>
 		<eNB_instance>1</eNB_instance>
 		<eNB_serverId>1</eNB_serverId>
+		<air_interface>nr</air_interface>
 	</testCase>
 
 </testCaseList>

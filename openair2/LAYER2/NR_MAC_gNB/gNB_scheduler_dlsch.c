@@ -304,9 +304,8 @@ int nr_generate_dlsch_pdu(module_id_t module_idP,
 
   // 2) Generation of DLSCH MAC subPDUs including subheaders and MAC SDUs
   for (i = 0; i < num_sdus; i++) {
-    LOG_D(MAC, "[gNB] Generate DLSCH header num sdu %d len sdu %d\n", num_sdus, sdu_lengths[i]);
 
-    if (sdu_lengths[i] < 128) {
+    if (sdu_lengths[i] < 256) {
       ((NR_MAC_SUBHEADER_SHORT *) mac_pdu_ptr)->R = 0;
       ((NR_MAC_SUBHEADER_SHORT *) mac_pdu_ptr)->F = 0;
       ((NR_MAC_SUBHEADER_SHORT *) mac_pdu_ptr)->LCID = sdu_lcids[i];
@@ -316,7 +315,7 @@ int nr_generate_dlsch_pdu(module_id_t module_idP,
       ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->R = 0;
       ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->F = 1;
       ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->LCID = sdu_lcids[i];
-      ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->L1 = ((unsigned short) sdu_lengths[i] >> 8) & 0x7f;
+      ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->L1 = ((unsigned short) sdu_lengths[i] >> 8) & 0xff;
       ((NR_MAC_SUBHEADER_LONG *) mac_pdu_ptr)->L2 = (unsigned short) sdu_lengths[i] & 0xff;
       last_size = 3;
     }
@@ -326,6 +325,7 @@ int nr_generate_dlsch_pdu(module_id_t module_idP,
     memcpy((void *) mac_pdu_ptr, (void *) dlsch_buffer_ptr, sdu_lengths[i]);
     dlsch_buffer_ptr += sdu_lengths[i];
     mac_pdu_ptr += sdu_lengths[i];
+    LOG_D(MAC, "Generate DLSCH header num sdu %d len header %d len sdu %d -> offset %ld\n", num_sdus, last_size, sdu_lengths[i], (unsigned char *)mac_pdu_ptr - mac_pdu);
   }
 
   // 4) Compute final offset for padding
@@ -333,6 +333,7 @@ int nr_generate_dlsch_pdu(module_id_t module_idP,
     ((NR_MAC_SUBHEADER_FIXED *) mac_pdu_ptr)->R = 0;
     ((NR_MAC_SUBHEADER_FIXED *) mac_pdu_ptr)->LCID = DL_SCH_LCID_PADDING;
     mac_pdu_ptr++;
+    LOG_D(MAC, "Generate Padding -> offset %ld\n", (unsigned char *)mac_pdu_ptr - mac_pdu);
   } else {
     // no MAC subPDU with padding
   }
@@ -389,7 +390,6 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
   const int CC_id = 0;
 
   NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
-  sched_ctrl->rbSize = 0;
 
   /* Retrieve amount of data to send for this UE */
   sched_ctrl->num_total_bytes = 0;
@@ -406,14 +406,16 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                                                     0,
                                                     0);
   sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
-  if (sched_ctrl->num_total_bytes == 0 && !get_softmodem_params()->phy_test)
+  if (sched_ctrl->num_total_bytes == 0
+      && !sched_ctrl->ta_apply) /* If TA should be applied, give at least one RB */
     return;
   LOG_D(MAC,
-        "%d.%d, DTCH%d->DLSCH, RLC status %d bytes\n",
+        "%d.%d, DTCH%d->DLSCH, RLC status %d bytes TA %d\n",
         frame,
         slot,
         lcid,
-        sched_ctrl->rlc_status[lcid].bytes_in_buffer);
+        sched_ctrl->rlc_status[lcid].bytes_in_buffer,
+        sched_ctrl->ta_apply);
 
   /* Find a free CCE */
   const int target_ss = NR_SearchSpace__searchSpaceType_PR_ue_Specific;
@@ -451,7 +453,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
 
   AssertFatal(sched_ctrl->pucch_sched_idx >= 0, "no uplink slot for PUCCH found!\n");
 
-  uint8_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
+  uint16_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
   const int current_harq_pid = sched_ctrl->current_harq_pid;
   NR_UE_harq_t *harq = &sched_ctrl->harq_processes[current_harq_pid];
   NR_UE_ret_info_t *retInfo = &sched_ctrl->retInfo[current_harq_pid];
@@ -504,6 +506,8 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                                      sched_ctrl->time_domain_allocation);
 
     int rbSize = 0;
+    const int oh = 2 + (sched_ctrl->num_total_bytes >= 256)
+                 + 2 * (frame == (sched_ctrl->ta_frame + 10) % 1024);
     uint32_t TBS = 0;
     do {
       rbSize++;
@@ -517,7 +521,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                            0 /* tb_scaling */,
                            1 /* nrOfLayers */)
             >> 3;
-    } while (rbStart + rbSize < bwpSize && !vrb_map[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes);
+    } while (rbStart + rbSize < bwpSize && !vrb_map[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes + oh);
     sched_ctrl->rbSize = rbSize;
     sched_ctrl->rbStart = rbStart;
   }
@@ -531,18 +535,26 @@ void nr_schedule_ue_spec(module_id_t module_id,
                          frame_t frame,
                          sub_frame_t slot,
                          int num_slots_per_tdd) {
-  /* PREPROCESSOR */
-  nr_simple_dlsch_preprocessor(module_id, frame, slot, num_slots_per_tdd);
-
   gNB_MAC_INST *gNB_mac = RC.nrmac[module_id];
+
+  /* PREPROCESSOR */
+  gNB_mac->pre_processor_dl(module_id, frame, slot, num_slots_per_tdd);
+
   NR_UE_info_t *UE_info = &gNB_mac->UE_info;
 
   const int CC_id = 0;
-
   NR_UE_list_t *UE_list = &UE_info->list;
   for (int UE_id = UE_list->head; UE_id >= 0; UE_id = UE_list->next[UE_id]) {
     NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
-    if (sched_ctrl->rbSize <= 0 && !get_softmodem_params()->phy_test)
+
+    /* update TA and set ta_apply every 10 frames.
+     * Possible improvement: take the periodicity from input file.
+     * If such UE is not scheduled now, it will be by the preprocessor later.
+     * If we add the CE, ta_apply will be reset */
+    if (frame == (sched_ctrl->ta_frame + 10) % 1024)
+      sched_ctrl->ta_apply = true; /* the timer is reset once TA CE is scheduled */
+
+    if (sched_ctrl->rbSize <= 0)
       continue;
 
     const rnti_t rnti = UE_info->rnti[UE_id];
@@ -581,29 +593,23 @@ void nr_schedule_ue_spec(module_id_t module_id,
     harq->is_waiting = 1;
     UE_info->mac_stats[UE_id].dlsch_rounds[harq->round]++;
 
+    LOG_D(MAC, "%4d.%2d RNTI %04x start %d RBS %d MCS %d TBS %d HARQ PID %d round %d NDI %d\n",
+          frame, slot, rnti, sched_ctrl->rbStart, sched_ctrl->rbSize, sched_ctrl->mcs,
+          TBS, current_harq_pid, harq->round, harq->ndi);
+
     nfapi_nr_dl_tti_request_body_t *dl_req = &gNB_mac->DL_req[CC_id].dl_tti_request_body;
     nr_fill_nfapi_dl_pdu(module_id,
-                         UE_id,
-                         sched_ctrl->active_bwp->bwp_Id,
-                         sched_ctrl->search_space,
-                         sched_ctrl->coreset,
                          dl_req,
+                         rnti,
+                         UE_info->secondaryCellGroup[UE_id],
+                         sched_ctrl,
                          pucch,
-                         1 /* nrOfLayers */,
-                         sched_ctrl->mcs,
-                         sched_ctrl->rbSize,
-                         sched_ctrl->rbStart,
-                         sched_ctrl->numDmrsCdmGrpsNoData,
                          getDmrsConfigType(sched_ctrl->active_bwp),
-                         sched_ctrl->mcsTableIdx,
                          nr_get_code_rate_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
                          nr_get_Qm_dl(sched_ctrl->mcs, sched_ctrl->mcsTableIdx),
                          TBS,
-                         sched_ctrl->time_domain_allocation,
                          startSymbolIndex,
                          nrOfSymbols,
-                         sched_ctrl->aggregation_level,
-                         sched_ctrl->cce_index,
                          current_harq_pid,
                          harq->ndi,
                          harq->round);
@@ -640,7 +646,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
        * nr_generate_dlsch_pdu() checks for ta_apply and add TA CE if necessary */
       const int ta_len = (sched_ctrl->ta_apply) ? 2 : 0;
 
-      /* Get RLC data TODO: remove random data retrieval */
+      /* Get RLC data */
       int header_length_total = 0;
       int header_length_last = 0;
       int sdu_length_total = 0;
@@ -650,12 +656,17 @@ void nr_schedule_ue_spec(module_id_t module_id,
       unsigned char sdu_lcids[NB_RB_MAX] = {0};
       const int lcid = DL_SCH_LCID_DTCH;
       if (sched_ctrl->num_total_bytes > 0) {
+        /* this is the data from the RLC we would like to request (e.g., only
+         * some bytes for first LC and some more from a second one */
+        const rlc_buffer_occupancy_t ndata = sched_ctrl->rlc_status[lcid].bytes_in_buffer;
+        /* this is the maximum data we can transport based on TBS minus headers */
+        const int mindata = min(ndata, TBS - ta_len - header_length_total - sdu_length_total -  2 - (ndata >= 256));
         LOG_D(MAC,
               "[gNB %d][USER-PLANE DEFAULT DRB] Frame %d : DTCH->DLSCH, Requesting "
               "%d bytes from RLC (lcid %d total hdr len %d), TBS: %d \n \n",
               module_id,
               frame,
-              TBS - ta_len - header_length_total - sdu_length_total - 3,
+              mindata,
               lcid,
               header_length_total,
               TBS);
@@ -667,7 +678,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
             ENB_FLAG_YES,
             MBMS_FLAG_NO,
             lcid,
-            TBS - ta_len - header_length_total - sdu_length_total - 3,
+            mindata,
             (char *)&mac_sdus[sdu_length_total],
             0,
             0);
@@ -682,10 +693,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
         sdu_length_total += sdu_lengths[num_sdus];
         header_length_last = 1 + 1 + (sdu_lengths[num_sdus] >= 128);
         header_length_total += header_length_last;
-
         num_sdus++;
-
-        //ue_sched_ctl->uplane_inactivity_timer = 0;
       }
       else if (get_softmodem_params()->phy_test) {
         LOG_D(MAC, "Configuring DL_TX in %d.%d: random data\n", frame, slot);
@@ -694,7 +702,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
           mac_sdus[i] = (unsigned char) (lrand48()&0xff);
         sdu_lcids[0] = 0x3f; // DRB
         sdu_lengths[0] = TBS - ta_len - 3;
-        header_length_total += 2 + (sdu_lengths[0] >= 128);
+        header_length_total += 2 + (sdu_lengths[0] >= 256);
         sdu_length_total += sdu_lengths[0];
         num_sdus +=1;
       }
@@ -702,10 +710,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
       UE_info->mac_stats[UE_id].dlsch_total_bytes += TBS;
       UE_info->mac_stats[UE_id].lc_bytes_tx[lcid] += sdu_length_total;
 
-      // Check if there is data from RLC or CE
-      const int post_padding = TBS >= 2 + header_length_total + sdu_length_total + ta_len;
-      // padding param currently not in use
-      //padding = TBS - header_length_total - sdu_length_total - ta_len - 1;
+      const int post_padding = TBS > header_length_total + sdu_length_total + ta_len;
 
       const int ntx_req = gNB_mac->TX_req[CC_id].Number_of_PDUs;
       nfapi_nr_pdu_t *tx_req = &gNB_mac->TX_req[CC_id].pdu_list[ntx_req];
@@ -746,6 +751,17 @@ void nr_schedule_ue_spec(module_id_t module_id,
       retInfo->mcs = sched_ctrl->mcs;
       retInfo->numDmrsCdmGrpsNoData = sched_ctrl->numDmrsCdmGrpsNoData;
 
+      // ta command is sent, values are reset
+      if (sched_ctrl->ta_apply) {
+        sched_ctrl->ta_apply = false;
+        sched_ctrl->ta_frame = frame;
+        LOG_D(MAC,
+              "%d.%2d UE %d TA scheduled, resetting TA frame\n",
+              frame,
+              slot,
+              UE_id);
+      }
+
       T(T_GNB_MAC_DL_PDU_WITH_DATA, T_INT(module_id), T_INT(CC_id), T_INT(rnti),
         T_INT(frame), T_INT(slot), T_INT(current_harq_pid), T_BUFFER(buf, TBS));
 
@@ -761,5 +777,8 @@ void nr_schedule_ue_spec(module_id_t module_id,
       }
 #endif
     }
+
+    /* mark UE as scheduled */
+    sched_ctrl->rbSize = 0;
   }
 }

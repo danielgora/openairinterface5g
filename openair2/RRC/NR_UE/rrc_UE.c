@@ -68,7 +68,7 @@
 #include "RRC/NAS/rb_config.h"
 #include "SIMULATION/TOOLS/sim.h" // for taus
 
-#if ITTI_SIM
+#if 1 //ITTI_SIM
 #include "nr_nas_msg_sim.h"
 #endif
 
@@ -1365,6 +1365,10 @@ static void rrc_ue_generate_RRCSetupComplete(
     nas_msg         = nr_nas_attach_req_imsi;
     nas_msg_length  = sizeof(nr_nas_attach_req_imsi);
   }
+  as_nas_info_t initialNasMsg;
+  generateRegistrationRequest(&initialNasMsg);
+  nas_msg = (char*)initialNasMsg.data;
+  nas_msg_length = initialNasMsg.length;
   size = do_RRCSetupComplete(ctxt_pP->module_id,buffer,Transaction_id,sel_plmn_id,nas_msg_length,nas_msg);
   LOG_I(NR_RRC,"[UE %d][RAPROC] Frame %d : Logical Channel UL-DCCH (SRB1), Generating RRCSetupComplete (bytes%d, gNB %d)\n",
    ctxt_pP->module_id,ctxt_pP->frame, size, gNB_index);
@@ -2333,7 +2337,7 @@ nr_rrc_ue_decode_dcch(
                 nr_rrc_ue_generate_RRCReconfigurationComplete(ctxt_pP,
                                             gNB_indexP,
                                             dl_dcch_msg->message.choice.c1->choice.rrcReconfiguration->rrc_TransactionIdentifier);
-#ifdef ITTI_SIM
+#if 1//def ITTI_SIM
                 as_nas_info_t initialNasMsg;
                 memset(&initialNasMsg, 0, sizeof(as_nas_info_t));
                 generateRegistrationComplete(&initialNasMsg, NULL);
@@ -2402,7 +2406,7 @@ nr_rrc_ue_decode_dcch(
                   uint8_t *pdu_buffer;
                   pdu_length = dedicatedNAS_Message->size;
                   pdu_buffer = dedicatedNAS_Message->buf;
-#ifdef ITTI_SIM
+#if 1 //def ITTI_SIM
                   LOG_I(NR_RRC, "[UE %d] Received %s: UEid %u, length %u , buffer %p\n", ctxt_pP->module_id,  messages_info[NAS_DOWNLINK_DATA_IND].name,
                         ctxt_pP->module_id, pdu_length, pdu_buffer);
                   as_nas_info_t initialNasMsg;
@@ -2590,7 +2594,7 @@ void *rrc_nrue_task( void *args_p ) {
                            PDCP_TRANSMISSION_MODE_CONTROL);
         } else {
           rrc_data_req_ue (&ctxt,
-                           DCCH1,
+                           DCCH,
                            nr_rrc_mui++,
                            SDU_CONFIRM_NO,
                            length, buffer,

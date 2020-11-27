@@ -800,7 +800,7 @@ rrc_gNB_process_NGAP_DOWNLINK_NAS(
         /* Transfer data to PDCP */
         nr_rrc_data_req (
             &ctxt,
-            ue_context_p->ue_context.Srb2.Srb_info.Srb_id,
+            DCCH,//ue_context_p->ue_context.Srb2.Srb_info.Srb_id,
             (*rrc_gNB_mui)++,
             SDU_CONFIRM_NO,
             length,

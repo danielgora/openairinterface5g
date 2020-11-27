@@ -815,11 +815,11 @@ void nr_generate_Msg2(module_id_t module_idP,
     locationAndBandwidth = scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth;
     dci10_bw = NRRIV2BW(locationAndBandwidth,275); 
   }
-
+  int bwpStart = NRRIV2PRBOFFSET(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
   uint16_t *vrb_map = cc[CC_id].vrb_map;
   int rbStart = 0;
-  while (rbStart < dci10_bw && vrb_map[rbStart]) rbStart++;
-  if(rbStart >= dci10_bw) {
+  while (((bwpStart+rbStart)< (bwpStart+dci10_bw)) && vrb_map[rbStart]) rbStart++;
+  if((rbStart + bwpStart) >= (bwpStart+dci10_bw)) {
     LOG_E(MAC, "%s(): cannot find free vrb_map for RA RNTI %04x!\n", __func__, ra->RA_rnti);
     return;
   }
@@ -852,7 +852,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->pduIndex = 0;
 
     pdsch_pdu_rel15->BWPSize  = NRRIV2BW(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
-    pdsch_pdu_rel15->BWPStart = NRRIV2PRBOFFSET(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
+    pdsch_pdu_rel15->BWPStart = bwpStart;
     pdsch_pdu_rel15->SubcarrierSpacing = bwp->bwp_Common->genericParameters.subcarrierSpacing;
     pdsch_pdu_rel15->CyclicPrefix = 0;
     pdsch_pdu_rel15->NrOfCodewords = 1;
@@ -878,7 +878,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->numDmrsCdmGrpsNoData = 2;
     pdsch_pdu_rel15->dmrsPorts = 1;
     pdsch_pdu_rel15->resourceAlloc = 1;
-    pdsch_pdu_rel15->rbStart = rbStart; //0;
+    pdsch_pdu_rel15->rbStart = rbStart;
     pdsch_pdu_rel15->rbSize = 6;
     pdsch_pdu_rel15->VRBtoPRBMapping = 0; // non interleaved
 

@@ -320,7 +320,11 @@ static void trx_usrp_end(openair0_device *device) {
     return;
   iqrecorder_end(device);
 
+  uhd::stream_cmd_t cmd(uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS);
+  s->rx_stream->issue_stream_cmd(cmd);
 
+  free(s);
+  device->priv = NULL;
 }
 
 /*! \brief Called to send samples to the USRP RF target

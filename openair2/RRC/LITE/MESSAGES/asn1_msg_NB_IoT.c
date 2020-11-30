@@ -165,6 +165,8 @@ uint8_t do_MIB_NB_IoT(
 
 }
 
+uint16_t MCC_NB_IoT = 0;
+uint16_t MNC_NB_IoT = 0;
 /*do_SIB1_NB*/
 uint8_t do_SIB1_NB_IoT(uint8_t Mod_id, int CC_id,
 				rrc_eNB_carrier_data_NB_IoT_t *carrier,
@@ -238,6 +240,8 @@ uint8_t do_SIB1_NB_IoT(uint8_t Mod_id, int CC_id,
   ASN_SEQUENCE_ADD(&PLMN_identity_info_NB_IoT.plmn_Identity_r13.mcc->list,&dummy_mcc[1]);
   ASN_SEQUENCE_ADD(&PLMN_identity_info_NB_IoT.plmn_Identity_r13.mcc->list,&dummy_mcc[2]);
 
+  MCC_NB_IoT = configuration->mcc;
+
   PLMN_identity_info_NB_IoT.plmn_Identity_r13.mnc.list.size=0;
   PLMN_identity_info_NB_IoT.plmn_Identity_r13.mnc.list.count=0;
 
@@ -271,6 +275,8 @@ uint8_t do_SIB1_NB_IoT(uint8_t Mod_id, int CC_id,
   if (dummy_mnc[2] != 0xf) {
     ASN_SEQUENCE_ADD(&PLMN_identity_info_NB_IoT.plmn_Identity_r13.mnc.list,&dummy_mnc[2]);
   }
+
+  MNC_NB_IoT = configuration -> mnc;
 
   //still set to "notReserved" as in the previous case
   PLMN_identity_info_NB_IoT.cellReservedForOperatorUse_r13=PLMN_IdentityInfo_NB_r13__cellReservedForOperatorUse_r13_notReserved;
@@ -417,6 +423,8 @@ uint8_t do_SIB1_NB_IoT_x(uint8_t Mod_id, int CC_id,
   BCCH_DL_SCH_Message_NB_t *bcch_message= &(carrier->siblock1_NB_IoT);
   SystemInformationBlockType1_NB_t **sib1_NB_IoT= &(carrier->sib1_NB_IoT);
   
+  mcc = MCC_NB_IoT;
+  mnc = MNC_NB_IoT;
 
   asn_enc_rval_t enc_rval;
 

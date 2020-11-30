@@ -1343,7 +1343,7 @@ void *gtpv1u_eNB_process_itti_msg(void *notUsed) {
           sgw_s1u_teid                        = 0x01;
           stack_req.apiType                   = NW_GTPV1U_ULP_API_SEND_TPDU;
           stack_req.apiInfo.sendtoInfo.teid   = sgw_s1u_teid;
-          in_addr_t upf_addr=0xc0a8c7DF;
+          in_addr_t upf_addr=0xc0a80a0a;//0xc0a8c7DF;
           //stack_req.apiInfo.sendtoInfo.ipAddr = gtpv1u_ue_data_p->bearers[data_req_p->rab_id - GTPV1U_BEARER_OFFSET].sgw_ip_addr;
           stack_req.apiInfo.sendtoInfo.ipAddr = upf_addr; 
           rc = nwGtpv1uGpduMsgNew(

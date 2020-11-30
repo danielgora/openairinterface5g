@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h> 
 
 #include <pthread.h>
 
@@ -166,7 +167,11 @@ int udp_eNB_create_socket(int port, char *ip_addr, task_id_t task_id)
   } else {
     sin.sin_addr.s_addr = inet_addr(ip_addr);
   }
-
+  struct ifreq interface;
+  strncpy(interface.ifr_ifrn.ifrn_name, "enx000ec6c0a3ac", sizeof("enx000ec6c0a3ac"));
+  if (setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (char *)&interface, sizeof(interface))  < 0) {
+         perror("SO_BINDTODEVICE failed");
+  }
   if ((rc = bind(sd, (struct sockaddr *)&sin, sizeof(struct sockaddr_in))) < 0) {
     close(sd);
     AssertFatal(rc >= 0, "UDP: Failed to bind socket: (%s:%d) address %s port %d\n",

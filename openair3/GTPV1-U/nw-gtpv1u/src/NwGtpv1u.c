@@ -543,7 +543,7 @@ nwGtpv1uProcessGpdu( NwGtpv1uStackT *thiz,
   //pTunnelEndPoint = RB_FIND(NwGtpv1uTunnelEndPointIdentifierMap,
   //                          &(thiz->teidMap), &tunnelEndPointKey);
   pTunnelEndPoint=(char*)malloc(1024);
-  pTunnelEndPoint->teid=0x01;
+  pTunnelEndPoint->teid=0x02;
   pTunnelEndPoint->peerAddr=peerIp; 
   pTunnelEndPoint->hUlpSession = 0x12;
   //pTunnelEndPoint->pStack->ulp.hUlp = 0x34;
@@ -868,8 +868,8 @@ nwGtpv1uProcessUdpReq( NW_IN NwGtpv1uStackHandleT hGtpuStackHandle,
 #endif
   thiz = (NwGtpv1uStackT *) hGtpuStackHandle;
 
-
   NW_ASSERT(thiz);
+
   msgType = *((uint8_t *)(udpData + 1));
 
   switch(msgType) {

@@ -1369,6 +1369,7 @@ int ngap_gNB_handle_pdusession_setup_request(uint32_t         assoc_id,
               		gTPTunnel_p->transportLayerAddress.size * 8 - gTPTunnel_p->transportLayerAddress.bits_unused;
               memcpy(NGAP_PDUSESSION_SETUP_REQ(message_p).pdusession_setup_params[i].upf_addr.buffer ,
               		gTPTunnel_p->transportLayerAddress.buf, gTPTunnel_p->transportLayerAddress.size);
+              printf("---liuyu-reveive teid ====%x\n ",NGAP_PDUSESSION_SETUP_REQ(message_p).pdusession_setup_params[i].gtp_teid);
           }
             break;
 

@@ -319,6 +319,7 @@ void *gtpv1u_gNB_task(void *args) {
 
   return NULL;
 }
+
 int nr_gtpv1u_gNB_init(void) {
   NwGtpv1uRcT             rc = NW_GTPV1U_FAILURE;
   NwGtpv1uUlpEntityT      ulp;

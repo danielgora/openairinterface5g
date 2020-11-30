@@ -1176,16 +1176,17 @@ int ngap_gNB_pdusession_setup_resp(instance_t instance,
       /* Encode procedure has failed... */
       return -1;
   }
+  printf("----liuyu-----assoc_id-----------%d\n",ue_context_p->amf_ref->assoc_id);
 
-  MSC_LOG_TX_MESSAGE(
-      MSC_NGAP_GNB,
-      MSC_NGAP_AMF,
-      (const char *)buffer,
-      length,
-      MSC_AS_TIME_FMT" PduSession Setup successfulOutcome gNB_ue_ngap_id %u amf_ue_ngap_id %u",
-      0,0,//MSC_AS_TIME_ARGS(ctxt_pP),
-      pdusession_setup_resp_p->gNB_ue_ngap_id,
-      ue_context_p->amf_ue_ngap_id);
+  // MSC_LOG_TX_MESSAGE(
+  //     MSC_NGAP_GNB,
+  //     MSC_NGAP_AMF,
+  //     (const char *)buffer,
+  //     length,
+  //     MSC_AS_TIME_FMT" PduSession Setup successfulOutcome gNB_ue_ngap_id %u amf_ue_ngap_id %u",
+  //     0,0,//MSC_AS_TIME_ARGS(ctxt_pP),
+  //     pdusession_setup_resp_p->gNB_ue_ngap_id,
+  //     ue_context_p->amf_ue_ngap_id);
   /* UE associated signalling -> use the allocated stream */
   ngap_gNB_itti_send_sctp_data_req(ngap_gNB_instance_p->instance,
                                    ue_context_p->amf_ref->assoc_id, buffer,

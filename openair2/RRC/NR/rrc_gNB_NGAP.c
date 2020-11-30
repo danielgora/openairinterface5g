@@ -972,6 +972,7 @@ rrc_gNB_process_NGAP_PDUSESSION_SETUP_REQ(
       ue_context_p->ue_context.pdusession[i].param       = NGAP_PDUSESSION_SETUP_REQ(msg_p).pdusession_setup_params[pdu_sessions_done];
       create_tunnel_req.pdusession_id[pdu_sessions_done] = NGAP_PDUSESSION_SETUP_REQ(msg_p).pdusession_setup_params[pdu_sessions_done].pdusession_id;
       create_tunnel_req.upf_NGu_teid[pdu_sessions_done]  = NGAP_PDUSESSION_SETUP_REQ(msg_p).pdusession_setup_params[pdu_sessions_done].gtp_teid;
+      printf("----------------liuyu--------------teid from amf %x\n----------",NGAP_PDUSESSION_SETUP_REQ(msg_p).pdusession_setup_params[pdu_sessions_done].gtp_teid);
       memcpy(create_tunnel_req.upf_addr[pdu_sessions_done].buffer,
               NGAP_PDUSESSION_SETUP_REQ(msg_p).pdusession_setup_params[i].upf_addr.buffer,
               sizeof(uint8_t)*20);
@@ -994,10 +995,11 @@ rrc_gNB_process_NGAP_PDUSESSION_SETUP_REQ(
     create_tunnel_req.rnti                     = ue_context_p->ue_context.rnti;
     create_tunnel_req.num_tunnels              = pdu_sessions_done;
 
-    ret = gtpv1u_create_ngu_tunnel(
-            instance,
-            &create_tunnel_req,
-            &create_tunnel_resp);
+    //ret = gtpv1u_create_ngu_tunnel(
+     //       instance,
+    //        &create_tunnel_req,
+    //        &create_tunnel_resp);
+    ret = 0;
     if (ret != 0) {
       LOG_E(NR_RRC,"rrc_gNB_process_NGAP_PDUSESSION_SETUP_REQ : gtpv1u_create_ngu_tunnel failed,start to release UE %x\n",ue_context_p->ue_context.rnti);
       ue_context_p->ue_context.ue_release_timer_ng = 1;
@@ -1009,10 +1011,10 @@ rrc_gNB_process_NGAP_PDUSESSION_SETUP_REQ(
       ue_context_p->ue_context.ul_failure_timer = 0;
       return (0);
     }
-    nr_rrc_gNB_process_GTPV1U_CREATE_TUNNEL_RESP(
-      &ctxt,
-      &create_tunnel_resp,
-      &inde_list[0]);
+    //nr_rrc_gNB_process_GTPV1U_CREATE_TUNNEL_RESP(
+    //  &ctxt,
+    //  &create_tunnel_resp,
+    //  &inde_list[0]);
     ue_context_p->ue_context.setup_pdu_sessions += nb_pdusessions_tosetup;
 
     // TEST 

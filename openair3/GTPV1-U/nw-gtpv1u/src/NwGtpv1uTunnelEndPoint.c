@@ -118,7 +118,7 @@ nwGtpSessionSendMsgApiToUlpEntity(NwGtpv1uTunnelEndPointT *thiz,
 
   api.apiType                         = NW_GTPV1U_ULP_API_RECV_TPDU;
   api.apiInfo.recvMsgInfo.hUlpSession = thiz->hUlpSession;
-  api.apiInfo.recvMsgInfo.teid        = 0x01;
+  api.apiInfo.recvMsgInfo.teid        = 0x02;
   //api.apiInfo.recvMsgInfo.teid        = thiz->teid;
   api.apiInfo.recvMsgInfo.hMsg        = (NwGtpv1uMsgHandleT)pMsg;
   

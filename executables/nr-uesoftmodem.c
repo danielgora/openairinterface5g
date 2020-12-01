@@ -84,6 +84,7 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include <executables/nr-uesoftmodem.h>
 #include "executables/softmodem-common.h"
 #include "executables/thread-common.h"
+#include "nas_nrue_task.h"
 
 // Raphael : missing
 pthread_cond_t nfapi_sync_cond;
@@ -232,6 +233,10 @@ int create_tasks_nrue(uint32_t ue_nb) {
     LOG_I(NR_RRC,"create TASK_RRC_NRUE \n");
     if (itti_create_task (TASK_RRC_NRUE, rrc_nrue_task, NULL) < 0) {
       LOG_E(NR_RRC, "Create task for RRC UE failed\n");
+      return -1;
+    }
+    if (itti_create_task (TASK_NAS_NRUE, nas_nrue_task, NULL) < 0) {
+      LOG_E(NR_RRC, "Create task for NAS UE failed\n");
       return -1;
     }
   }
@@ -791,14 +796,25 @@ int main( int argc, char **argv ) {
   
   // wait for end of program
   printf("TYPE <CTRL-C> TO TERMINATE\n");
-  protocol_ctxt_t ctxt_pP = {0};
-  ctxt_pP.enb_flag = ENB_FLAG_NO;
-  ctxt_pP.rnti = 0x1234;
-  rrc_ue_generate_RRCSetupRequest(&ctxt_pP, 0);
+  // protocol_ctxt_t ctxt_pP = {0};
+  // ctxt_pP.enb_flag = ENB_FLAG_NO;
+  // ctxt_pP.rnti = 0x1234;
+  // rrc_ue_generate_RRCSetupRequest(&ctxt_pP, 0);
   if (create_tasks_nrue(1) < 0) {
     printf("cannot create ITTI tasks\n");
     exit(-1); // need a softer mode
   }
+  
+  MessageDef  *msg_p;
+  msg_p = itti_alloc_new_message(TASK_RRC_UE, NAS_CELL_SELECTION_CNF);
+  NAS_CELL_SELECTION_CNF (msg_p).errCode = AS_SUCCESS;
+  NAS_CELL_SELECTION_CNF (msg_p).cellID = 0;
+  NAS_CELL_SELECTION_CNF (msg_p).tac = 0;
+  NAS_CELL_SELECTION_CNF (msg_p).rat = 0xFF;
+  NAS_CELL_SELECTION_CNF (msg_p).rsrq = 0;
+  NAS_CELL_SELECTION_CNF (msg_p).rsrp = 0;
+  itti_send_msg_to_task(TASK_NAS_NRUE, 0, msg_p);
+
   while(true)
     sleep(3600);
 

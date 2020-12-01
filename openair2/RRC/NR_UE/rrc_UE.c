@@ -1169,7 +1169,7 @@ int nr_decode_SIB1( const protocol_ctxt_t *const ctxt_pP, const uint8_t gNB_inde
           NAS_CELL_SELECTION_CNF (msg_p).rat = 0xFF;
           NAS_CELL_SELECTION_CNF (msg_p).rsrq = rsrq;
           NAS_CELL_SELECTION_CNF (msg_p).rsrp = rsrp;
-          itti_send_msg_to_task(TASK_NAS_UE, ctxt_pP->instance, msg_p);
+          itti_send_msg_to_task(TASK_NAS_NRUE, ctxt_pP->instance, msg_p);
           cell_valid = 1;
           NR_UE_rrc_inst[ctxt_pP->module_id].selected_plmn_identity = plmn + 1;
           break;
@@ -2235,7 +2235,7 @@ rrc_ue_process_rrcReconfiguration(
                 NAS_CONN_ESTABLI_CNF(msg_p).errCode = AS_SUCCESS;
                 NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.length = pdu_length;
                 NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.data = pdu_buffer;
-                itti_send_msg_to_task(TASK_NAS_UE, ctxt_pP->instance, msg_p);
+                itti_send_msg_to_task(TASK_NAS_NRUE, ctxt_pP->instance, msg_p);
             }
 
       free (ie->nonCriticalExtension->dedicatedNAS_MessageList);
@@ -2381,7 +2381,7 @@ nr_rrc_ue_decode_dcch(
                     NR_RRCRelease_IEs__deprioritisationReq__deprioritisationType_frequency;
                 }
 
-                 itti_send_msg_to_task(TASK_NAS_UE, ctxt_pP->instance, msg_p);
+                 itti_send_msg_to_task(TASK_NAS_NRUE, ctxt_pP->instance, msg_p);
                  break;
             case NR_DL_DCCH_MessageType__c1_PR_ueCapabilityEnquiry:
             	LOG_I(NR_RRC, "[UE %d] Received Capability Enquiry (gNB %d)\n",
@@ -2406,7 +2406,7 @@ nr_rrc_ue_decode_dcch(
                   uint8_t *pdu_buffer;
                   pdu_length = dedicatedNAS_Message->size;
                   pdu_buffer = dedicatedNAS_Message->buf;
-#if 1 //def ITTI_SIM
+#if 0 //def ITTI_SIM
                   LOG_I(NR_RRC, "[UE %d] Received %s: UEid %u, length %u , buffer %p\n", ctxt_pP->module_id,  messages_info[NAS_DOWNLINK_DATA_IND].name,
                         ctxt_pP->module_id, pdu_length, pdu_buffer);
                   as_nas_info_t initialNasMsg;
@@ -2453,7 +2453,7 @@ nr_rrc_ue_decode_dcch(
                   NAS_DOWNLINK_DATA_IND(msg_p).UEid = ctxt_pP->module_id; // TODO set the UEid to something else ?
                   NAS_DOWNLINK_DATA_IND(msg_p).nasMsg.length = pdu_length;
                   NAS_DOWNLINK_DATA_IND(msg_p).nasMsg.data = pdu_buffer;
-                  itti_send_msg_to_task(TASK_NAS_UE, ctxt_pP->instance, msg_p);
+                  itti_send_msg_to_task(TASK_NAS_NRUE, ctxt_pP->instance, msg_p);
 #endif
               }
             }
@@ -2558,6 +2558,27 @@ void *rrc_nrue_task( void *args_p ) {
           NR_RRC_DCCH_DATA_IND (msg_p).dcch_index,
           NR_RRC_DCCH_DATA_IND (msg_p).sdu_p,
           NR_RRC_DCCH_DATA_IND (msg_p).gNB_index);
+        break;
+
+      case NAS_CONN_ESTABLI_REQ:
+        LOG_I(RRC, "[UE %d] Received %s: cause %d, type %d, s_tmsi (mme code %"PRIu8", m-tmsi %"PRIu32"), plmnID (%d%d%d.%d%d%d)\n", ue_mod_id, ITTI_MSG_NAME (msg_p), NAS_CONN_ESTABLI_REQ (msg_p).cause,
+              NAS_CONN_ESTABLI_REQ (msg_p).type,
+              NAS_CONN_ESTABLI_REQ (msg_p).s_tmsi.MMEcode,
+              NAS_CONN_ESTABLI_REQ (msg_p).s_tmsi.m_tmsi,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MCCdigit1,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MCCdigit2,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MCCdigit3,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MNCdigit1,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MNCdigit2,
+              NAS_CONN_ESTABLI_REQ (msg_p).plmnID.MNCdigit3);
+        PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt, ue_mod_id, ENB_FLAG_NO, NOT_A_RNTI, 0, 0, 0);
+        NR_UE_rrc_inst[ue_mod_id].initialNasMsg = NAS_CONN_ESTABLI_REQ (msg_p).initialNasMsg;
+
+        ctxt.enb_flag = ENB_FLAG_NO;
+        ctxt.rnti = 0x1234;
+        rrc_ue_generate_RRCSetupRequest(&ctxt, 0);
+//        rrc_set_sub_state (ue_mod_id, RRC_SUB_STATE_IDLE_CONNECTING);
+
         break;
 
       case NAS_UPLINK_DATA_REQ: {

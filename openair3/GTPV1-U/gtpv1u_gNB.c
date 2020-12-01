@@ -190,7 +190,7 @@ NwGtpv1uRcT gtpv1u_gNB_process_stack_req(
                    &ctxt,
                    SRB_FLAG_NO,
                    //(gtpv1u_teid_data_p->eps_bearer_id) ? gtpv1u_teid_data_p->eps_bearer_id - 4: 5-4,
-                   1,
+                   4,
                    0, // mui
                    SDU_CONFIRM_NO, // confirm
                    buffer_len,

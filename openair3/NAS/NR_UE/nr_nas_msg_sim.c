@@ -273,7 +273,7 @@ void generateRegistrationRequest(as_nas_info_t *initialNasMsg) {
   mm_msg->registration_request.fgsregistrationtype = INITIAL_REGISTRATION;
   mm_msg->registration_request.naskeysetidentifier.naskeysetidentifier = 1;
   size += 1;
-  if(1){
+  if(0){
     mm_msg->registration_request.fgsmobileidentity.guti.typeofidentity = FGS_MOBILE_IDENTITY_5G_GUTI;
     mm_msg->registration_request.fgsmobileidentity.guti.amfregionid = 0xca;
     mm_msg->registration_request.fgsmobileidentity.guti.amfpointer = 0;
@@ -441,11 +441,11 @@ void generateAuthenticationResp(as_nas_info_t *initialNasMsg, uint8_t *buf){
   mm_msg->header.message_type = FGS_AUTHENTICATION_RESPONSE;
 
   // set authentication response
-  mm_msg->fgs_identity_response.protocoldiscriminator = FGS_MOBILITY_MANAGEMENT_MESSAGE;
+  mm_msg->fgs_auth_response.protocoldiscriminator = FGS_MOBILITY_MANAGEMENT_MESSAGE;
   size += 1;
-  mm_msg->fgs_identity_response.securityheadertype = PLAIN_5GS_MSG;
+  mm_msg->fgs_auth_response.securityheadertype = PLAIN_5GS_MSG;
   size += 1;
-  mm_msg->fgs_identity_response.messagetype = FGS_AUTHENTICATION_RESPONSE;
+  mm_msg->fgs_auth_response.messagetype = FGS_AUTHENTICATION_RESPONSE;
   size += 1;
 
   //set response parameter

@@ -514,9 +514,9 @@ void generateSecurityModeComplete(as_nas_info_t *initialNasMsg)
   stream_cipher.blength    = (initialNasMsg->length - 6) << 3;
 
   // only for Type of integrity protection algorithm: 128-5G-IA2 (2)
-  nas_stream_encrypt_eia2(
-    &stream_cipher,
-    mac);
+  // nas_stream_encrypt_eia2(
+  //   &stream_cipher,
+  //   mac);
 
   printf("mac %x %x %x %x \n", mac[0], mac[1], mac[2], mac[3]);
   for(int i = 0; i < 4; i++){
@@ -592,9 +592,9 @@ void generateRegistrationComplete(as_nas_info_t *initialNasMsg, SORTransparentCo
   stream_cipher.blength    = (initialNasMsg->length - 6) << 3;
 
   // only for Type of integrity protection algorithm: 128-5G-IA2 (2)
-  nas_stream_encrypt_eia2(
-    &stream_cipher,
-    mac);
+  // nas_stream_encrypt_eia2(
+  //   &stream_cipher,
+  //   mac);
 
   printf("mac %x %x %x %x \n", mac[0], mac[1], mac[2], mac[3]);
   for(int i = 0; i < 4; i++){
@@ -677,9 +677,9 @@ void generatePduSessionEstablishRequest(as_nas_info_t *initialNasMsg){
   stream_cipher.blength    = (initialNasMsg->length - 6) << 3;
 
   // only for Type of integrity protection algorithm: 128-5G-IA2 (2)
-  nas_stream_encrypt_eia2(
-    &stream_cipher,
-    mac);
+  // nas_stream_encrypt_eia2(
+  //   &stream_cipher,
+  //   mac);
 
   printf("mac %x %x %x %x \n", mac[0], mac[1], mac[2], mac[3]);
   for(int i = 0; i < 4; i++){

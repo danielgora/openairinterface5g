@@ -366,7 +366,7 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
 
     NR_UE_info_t *UE_info = &RC.nrmac[Mod_idP]->UE_info;
     if (add_ue == 1 && get_softmodem_params()->phy_test) {
-      const int UE_id = add_new_nr_ue(Mod_idP,rnti);
+      const int UE_id = add_new_nr_ue(Mod_idP,rnti,1);
       UE_info->secondaryCellGroup[UE_id] = secondaryCellGroup;
       compute_csi_bitlen (secondaryCellGroup, UE_info, UE_id);
       struct NR_ServingCellConfig__downlinkBWP_ToAddModList *bwpList =

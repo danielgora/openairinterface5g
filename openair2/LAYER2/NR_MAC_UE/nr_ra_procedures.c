@@ -561,7 +561,7 @@ uint8_t nr_ue_get_rach(NR_PRACH_RESOURCES_t *prach_resources,
         // TbD Msg3 Retransmissions to be scheduled by DCI 0_0
         //mac->RA_active = 0;
         mac->RA_window_cnt = -1;
-        mac->ra_state = RA_SUCCEEDED;
+        mac->ra_state = WAIT_CONTENTION_RESOLUTION;
         mac->generate_nr_prach = 2;
         LOG_I(MAC, "[MAC][UE %d][RAPROC]: RAR successfully received \n", mod_id);
 

@@ -141,6 +141,14 @@ void config_dci_pdu(NR_UE_MAC_INST_t *mac, fapi_nr_dl_config_dci_dl_pdu_rel15_t 
     case NR_RNTI_CS:
     break;
     case NR_RNTI_TC:
+    // we use the initial DL BWP
+    sps = initialDownlinkBWP->genericParameters.cyclicPrefix == NULL ? 14 : 12;
+    monitoringSymbolsWithinSlot = (ss->monitoringSymbolsWithinSlot->buf[0]<<(sps-8)) | (ss->monitoringSymbolsWithinSlot->buf[1]>>(16-sps));
+    rel15->rnti = mac->t_crnti;
+    rel15->BWPSize = NRRIV2BW(initialDownlinkBWP->genericParameters.locationAndBandwidth, 275);
+    rel15->BWPStart = NRRIV2PRBOFFSET(bwp_Common->genericParameters.locationAndBandwidth, 275);
+    rel15->SubcarrierSpacing = initialDownlinkBWP->genericParameters.subcarrierSpacing;
+    rel15->dci_length_options[0] = nr_dci_size(scc, mac->scg, def_dci_pdu_rel15, rel15->dci_format_options[0], NR_RNTI_TC, rel15->BWPSize, bwp_id);
     break;
     case NR_RNTI_SP_CSI:
     break;
@@ -223,6 +231,10 @@ void ue_dci_configuration(NR_UE_MAC_INST_t *mac, fapi_nr_dl_config_request_t *dl
               break;
               case WAIT_CONTENTION_RESOLUTION:
               rel15->rnti = mac->t_crnti;
+              rel15->num_dci_options = 1;
+              rel15->dci_format_options[0] = NR_DL_DCI_FORMAT_1_0;
+              config_dci_pdu(mac, rel15, dl_config, NR_RNTI_TC, ss_id);
+              fill_dci_search_candidates(ss, rel15);
               break;
               default:
               break;

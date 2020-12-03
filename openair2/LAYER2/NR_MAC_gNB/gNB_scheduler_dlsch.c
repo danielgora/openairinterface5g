@@ -549,7 +549,8 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                         slot,
                         num_slots_per_tdd,
                         &sched_ctrl->pucch_sched_idx,
-                        &sched_ctrl->pucch_occ_idx);
+                        &sched_ctrl->pucch_occ_idx,
+                        1);
 
   AssertFatal(sched_ctrl->pucch_sched_idx >= 0, "no uplink slot for PUCCH found!\n");
 
@@ -620,6 +621,7 @@ void nr_simple_dlsch_preprocessor(module_id_t module_id,
                            1 /* nrOfLayers */)
             >> 3;
     } while (rbStart + rbSize < bwpSize && !vrb_map[rbStart + rbSize] && TBS < sched_ctrl->num_total_bytes);
+
     sched_ctrl->rbSize = rbSize;
     sched_ctrl->rbStart = rbStart;
   }

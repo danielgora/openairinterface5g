@@ -387,7 +387,7 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
               current_rnti);
         continue;
       }
-      const int UE_id = add_new_nr_ue(gnb_mod_idP, ra->rnti);
+      const int UE_id = add_new_nr_ue(gnb_mod_idP, ra->rnti, 0);
       UE_info->secondaryCellGroup[UE_id] = ra->secondaryCellGroup;
       compute_csi_bitlen(ra->secondaryCellGroup, UE_info, UE_id);
       UE_info->UE_beam_index[UE_id] = ra->beam_id;
@@ -408,11 +408,16 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
       UE_info->UE_sched_ctrl[UE_id].ta_frame = frameP;
 
       free(ra->preambles.preamble_list);
-      ra->state = RA_IDLE;
-      LOG_I(MAC,
-            "reset RA state information for RA-RNTI %04x/index %d\n",
-            ra->rnti,
-            i);
+      //ra->state = RA_IDLE;
+      // LOG_I(MAC,
+      //       "reset RA state information for RA-RNTI %04x/index %d\n",
+      //      ra->rnti,
+      //      i);
+            //ra->state = RA_IDLE;
+      ra->state = Msg4;
+      ra->Msg4_frame = ( frameP +2 ) % 1024;
+      ra->Msg4_slot = 1;
+      LOG_I(MAC, "set RA state to Msg4 for RA-RNTI %04x, msg4 frame %d %d\n", ra->rnti, ra->Msg4_frame, ra->Msg4_slot);
       return;
     }
   }

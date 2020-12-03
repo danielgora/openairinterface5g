@@ -90,7 +90,7 @@ void schedule_nr_mib(module_id_t module_idP, frame_t frameP, sub_frame_t subfram
 
 /////// Random Access MAC-PHY interface functions and primitives ///////
 
-void nr_schedule_RA(module_id_t module_idP, frame_t frameP, sub_frame_t slotP);
+void nr_schedule_RA(module_id_t module_idP, frame_t frameP, sub_frame_t slotP, int num_slots_per_tdds);
 
 /* \brief Function to indicate a received preamble on PRACH.  It initiates the RA procedure.
 @param module_idP Instance ID of gNB
@@ -140,6 +140,33 @@ void nr_preprocessor_phytest(module_id_t module_id,
 void nr_schedule_css_dlsch_phytest(module_id_t   module_idP,
                                    frame_t       frameP,
                                    sub_frame_t   subframeP);
+
+
+void nr_fill_nfapi_dl_pdu_common(int Mod_idP,
+                          int UE_id,
+                          int bwp_id,
+                          NR_SearchSpace_t *ss,
+                          NR_ControlResourceSet_t *coreset,
+                          nfapi_nr_dl_tti_request_body_t *dl_req,
+                          NR_sched_pucch *pucch_sched,
+                          int nrOfLayers,
+                          uint8_t mcs,
+                          uint16_t rbSize,
+                          uint16_t rbStart,
+                          uint8_t numDmrsCdmGrpsNoData,
+                          nfapi_nr_dmrs_type_e dmrsConfigType,
+                          uint8_t table_idx,
+                          uint16_t R,
+                          uint8_t Qm,
+                          uint32_t TBS,
+                          int time_domain_assignment,
+                          int StartSymbolIndex,
+                          int NrOfSymbols,
+                          uint8_t aggregation_level,
+                          int CCEIndex,
+                          int harq_pid,
+                          int ndi,
+                          int round);
 
 void nr_fill_nfapi_dl_pdu(int Mod_id,
                           nfapi_nr_dl_tti_request_body_t *dl_req,
@@ -197,7 +224,8 @@ void nr_acknack_scheduling(int Mod_idP,
                            sub_frame_t slotP,
                            int slots_per_tdd,
                            int *pucch_id,
-                           int *pucch_occ);
+                           int *pucch_occ,
+                           int isUEspec);
 
 int get_pucch_resource(NR_UE_info_t *UE_info,int UE_id,int k,int l);
 
@@ -303,9 +331,11 @@ void add_nr_ue_list(NR_UE_list_t *listP, int UE_id);
 
 int find_nr_UE_id(module_id_t mod_idP, rnti_t rntiP);
 
+int find_nr_UE_id_msg4(module_id_t mod_idP, rnti_t rntiP);
+
 int find_nr_RA_id(module_id_t mod_idP, int CC_idP, rnti_t rntiP);
 
-int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP);
+int add_new_nr_ue(module_id_t mod_idP, rnti_t rntiP, int isActive);
 
 void mac_remove_nr_ue(module_id_t mod_id, rnti_t rnti);
 

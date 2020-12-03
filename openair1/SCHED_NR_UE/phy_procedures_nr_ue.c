@@ -341,6 +341,11 @@ void nr_ue_pbch_procedures(uint8_t gNB_id,
       ue->UE_mode[gNB_id] = PRACH;
       ue->prach_resources[gNB_id]->sync_frame = frame_rx;
       ue->prach_resources[gNB_id]->init_msg1 = 0;
+    LOG_I(PHY,"[UE %d] frame %d, nr_tti_rx %d, outofsync, return to PRACH\n",
+    ue->Mod_id,
+    frame_rx,
+    nr_tti_rx
+    );  
     }
 
 #ifdef DEBUG_PHY_PROC
@@ -782,8 +787,8 @@ int nr_ue_pdsch_procedures(PHY_VARS_NR_UE *ue, UE_nr_rxtx_proc_t *proc, int eNB_
                       return -1;
       }
       else { // This is to adjust the llr offset in the case of skipping over a dmrs symbol (i.e. in case of no PDSCH REs in DMRS)
-	if      (pdsch == RA_PDSCH) ue->pdsch_vars[ue->current_thread_id[nr_tti_rx]][eNB_id]->llr_offset[m]=ue->pdsch_vars[ue->current_thread_id[nr_tti_rx]][eNB_id]->llr_offset[m-1];
-	else if (pdsch == PDSCH) {
+	if      (dlsch0->harq_processes[harq_pid]->n_dmrs_cdm_groups == 2) ue->pdsch_vars[ue->current_thread_id[nr_tti_rx]][eNB_id]->llr_offset[m]=ue->pdsch_vars[ue->current_thread_id[nr_tti_rx]][eNB_id]->llr_offset[m-1];
+	else if (dlsch0->harq_processes[harq_pid]->n_dmrs_cdm_groups == 1) {
           if (nr_rx_pdsch(ue,
                     pdsch,
                     eNB_id,
@@ -814,6 +819,7 @@ int nr_ue_pdsch_procedures(PHY_VARS_NR_UE *ue, UE_nr_rxtx_proc_t *proc, int eNB_
           proc->first_symbol_available = 1;
 	}
     } // CRNTI active
+
   }
   return 0;
 }

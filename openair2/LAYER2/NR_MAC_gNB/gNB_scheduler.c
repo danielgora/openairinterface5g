@@ -506,7 +506,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
   // Otherwise already consider 5G already connected
   RC.nrmac[module_idP]->current_slot=slot;
   if (get_softmodem_params()->phy_test == 0) {
-    nr_schedule_RA(module_idP, frame, slot);
+    nr_schedule_RA(module_idP, frame, slot, num_slots_per_tdd);
     nr_schedule_reception_msg3(module_idP, 0, frame, slot);
 
   }
@@ -525,7 +525,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
 
   if (UE_info->active[UE_id]
       && (is_xlsch_in_slot(dlsch_in_slot_bitmap, slot % num_slots_per_tdd))
-      && slot < 10 && slot == 2) {
+      && slot < 10 && slot == 1) {
 
     ue_sched_ctl->current_harq_pid = slot % num_slots_per_tdd;
     nr_schedule_ue_spec(module_idP, frame, slot, num_slots_per_tdd);

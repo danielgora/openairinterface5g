@@ -817,9 +817,15 @@ void nr_generate_Msg2(module_id_t module_idP,
   }
   int bwpStart = NRRIV2PRBOFFSET(bwp->bwp_Common->genericParameters.locationAndBandwidth,275);
   uint16_t *vrb_map = cc[CC_id].vrb_map;
-  int rbStart = 0;
+  int rbStart = 0,rbSize = 6;
   while (((bwpStart+rbStart)< (bwpStart+dci10_bw)) && vrb_map[rbStart]) rbStart++;
-  if((rbStart + bwpStart) >= (bwpStart+dci10_bw)) {
+  for (int i=0;i < rbSize ; i++) {
+    if(vrb_map[rbStart + i]) {
+      rbStart += i;
+      i = 0;
+    }	
+  }	
+  if(((rbStart + bwpStart) >= (bwpStart+dci10_bw)) || ((rbStart + bwpStart + rbSize - 1) > (bwpStart+dci10_bw))) {
     LOG_E(MAC, "%s(): cannot find free vrb_map for RA RNTI %04x!\n", __func__, ra->RA_rnti);
     return;
   }
@@ -879,7 +885,7 @@ void nr_generate_Msg2(module_id_t module_idP,
     pdsch_pdu_rel15->dmrsPorts = 1;
     pdsch_pdu_rel15->resourceAlloc = 1;
     pdsch_pdu_rel15->rbStart = rbStart;
-    pdsch_pdu_rel15->rbSize = 6;
+    pdsch_pdu_rel15->rbSize = rbSize;
     pdsch_pdu_rel15->VRBtoPRBMapping = 0; // non interleaved
 
     for (int i=0; i<bwp->bwp_Common->pdsch_ConfigCommon->choice.setup->pdsch_TimeDomainAllocationList->list.count; i++) {
@@ -974,8 +980,8 @@ void nr_generate_Msg2(module_id_t module_idP,
       T_INT(RA_rnti), T_INT(frameP), T_INT(slotP), T_INT(0) /* harq pid, meaningful? */,
       T_BUFFER(&tx_req->TLVs[0].value.direct[0], tx_req->TLVs[0].length));
     /* mark the corresponding RBs as used */
-    for (int rb = 0; rb < pdsch_pdu_rel15->rbSize; rb++)
-      vrb_map[rb + pdsch_pdu_rel15->rbStart] = 1;
+    for (int rb = 0; rb < rbSize; rb++)
+      vrb_map[rb + rbStart] = 1;
 
     dci_pdu_index+=1;
     dl_req->nPDUs+=1; //Adding PDSCH pdu count

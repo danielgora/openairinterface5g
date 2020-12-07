@@ -378,7 +378,10 @@ int rrc_mac_config_req_gNB(module_id_t Mod_idP,
       for(; ra_index < NR_NB_RA_PROC_MAX; ra_index++) {
         if(cc->ra[ra_index].state == RA_IDLE) break;
       }
-      if (ra_index == NR_NB_RA_PROC_MAX) LOG_E(MAC, "%s() %s:%d RA processes are not available for CFRA RNTI :%x\n", __FUNCTION__, __FILE__, __LINE__, rnti);
+      if (ra_index == NR_NB_RA_PROC_MAX) {
+        LOG_E(MAC, "%s() %s:%d RA processes are not available for CFRA RNTI :%x\n", __FUNCTION__, __FILE__, __LINE__, rnti);
+        return -1;
+      }	
       NR_RA_t *ra = &cc->ra[ra_index];
       ra->secondaryCellGroup = secondaryCellGroup;
       if (secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated!=NULL) {

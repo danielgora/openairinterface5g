@@ -705,11 +705,33 @@ void nr_simple_ulsch_preprocessor(module_id_t module_id,
   const uint16_t bwpSize = NRRIV2BW(sched_ctrl->active_ubwp->bwp_Common->genericParameters.locationAndBandwidth,275);
   uint8_t rballoc_mask[bwpSize];
   int n_rb_sched = 0;
+  int st = 0, e = 0, rb_block = 1;
   for (int i = 0; i < bwpSize; i++) {
     // calculate mask: init with "NOT" vrb_map_UL:
     // if any RB in vrb_map_UL is blocked (1), the current RB will be 0
     rballoc_mask[i] = !vrb_map_UL[i];
-    n_rb_sched += rballoc_mask[i];
+
+    /* Find the largest contiguous region */
+    if (rballoc_mask[i] == 1 && rb_block == 1) {
+      rb_block = 0;
+      st = i;
+    }
+    if (rballoc_mask[i] == 1 && rb_block == 0 && (i - st + 1) > n_rb_sched) {
+      e = i;
+      n_rb_sched = e - st + 1;
+    }
+    if (rballoc_mask[i] == 0 && rb_block == 0) {
+      rb_block = 1;
+      n_rb_sched = cmax(i - st, n_rb_sched);
+    }
+  }
+  st = e - n_rb_sched + 1;
+
+  for (int i = 0; i < bwpSize; i++) {
+    if (i >= st && i <= e)
+      rballoc_mask[i] = 1;
+    else
+      rballoc_mask[i] = 0;
   }
 
   /* proportional fair scheduling algorithm */

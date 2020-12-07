@@ -671,10 +671,10 @@ void nr_simple_ulsch_preprocessor(module_id_t module_id,
   if (UE_info->num_UEs == 0)
     return;
 
-  const int UE_id = 0;
   const int CC_id = 0;
-  NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
 
+  /* NOT support different K2 in here, Get the K2 for first UE */
+  NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[0];
   const int tda = 1;
   const struct NR_PUSCH_TimeDomainResourceAllocationList *tdaList =
     sched_ctrl->active_ubwp->bwp_Common->pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList;
@@ -691,6 +691,13 @@ void nr_simple_ulsch_preprocessor(module_id_t module_id,
 
   sched_ctrl->sched_pusch.slot = sched_slot;
   sched_ctrl->sched_pusch.frame = sched_frame;
+
+  /* Confirm all the UE have same K2 as the first UE */
+  for (int UE_id = UE_info->list.next[UE_id]; UE_id > 0; UE_id = UE_info->list.next[UE_id]){
+    NR_UE_sched_ctrl_t *sched_ctrl = &UE_info->UE_sched_ctrl[UE_id];
+    AssertFatal(K2 == get_K2(sched_ctrl->active_ubwp, tda, mu),
+                "Different K2, %d(UE%d) != %ld(UE%d)\n", K2, 0, get_K2(sched_ctrl->active_ubwp, tda, mu), UE_id);
+  }
 
   /* Change vrb_map_UL to rballoc_mask */
   uint16_t *vrb_map_UL =

@@ -273,7 +273,7 @@ in_addr_t ipv4_address (int thirdOctet, int fourthOctet)
 
   struct in_addr saddr_ipv4;
   char ipAddress[20];
-  sprintf(ipAddress, "10.0.%d.%d",thirdOctet,fourthOctet);
+  sprintf(ipAddress, "%s.%d.%d",getBaseNetAddress(),thirdOctet,fourthOctet);
   inet_aton(ipAddress,&saddr_ipv4);
   return saddr_ipv4.s_addr;
 

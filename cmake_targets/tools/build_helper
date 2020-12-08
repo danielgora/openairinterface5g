@@ -684,6 +684,7 @@ check_install_oai_software() {
 	texlive-latex-base \
 	ethtool \
 	flex  \
+	gcc  \
 	gdb  \
 	git \
 	graphviz \
@@ -754,6 +755,8 @@ check_install_oai_software() {
       doxygen \
       ethtool \
       flex \
+      gcc \
+      gcc-c++ \
       gdb \
       git \
       graphviz \
@@ -795,6 +798,7 @@ check_install_oai_software() {
       subversion \
       xmlstarlet \
       python-pip \
+      vim \
       wget \
       kernel-headers \
       kernel-devel \

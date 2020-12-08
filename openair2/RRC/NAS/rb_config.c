@@ -270,11 +270,12 @@ int rb_stats_req(int inst)
 
 in_addr_t ipv4_address (int thirdOctet, int fourthOctet)
 {
-
   struct in_addr saddr_ipv4;
-  char ipAddress[20];
-  sprintf(ipAddress, "10.0.%d.%d",thirdOctet,fourthOctet);
+  char ipAddress[64];
+  if (getBaseNetAddress())
+	  snprintf(ipAddress, sizeof(ipAddress), "%s.%d.%d",getBaseNetAddress(),thirdOctet,fourthOctet);
+  else
+	  snprintf(ipAddress, sizeof(ipAddress), "10.0.%d.%d", thirdOctet,fourthOctet);
   inet_aton(ipAddress,&saddr_ipv4);
   return saddr_ipv4.s_addr;
-
 }

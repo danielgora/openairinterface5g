@@ -1,0 +1,157 @@
+# -*- mode: ruby -*- # vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  #config.vm.box = "centos/7"
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   apt-get update
+  #   apt-get install -y apache2
+  # SHELL
+  config.vm.provider "virtualbox" do |vb|
+    # Set this to a reasonable number of CPUs based on your host system.
+    vb.cpus = "4"
+    vb.memory = "4096"
+  end
+
+  # Select the openairinterface5g repo and branch to use...
+  #oairepo = "https://gitlab.eurecom.fr/oai/openairinterface5g.git"
+  #branch = "develop"
+  oairepo = "https://github.com/danielgora/openairinterface5g.git"
+  oaibranch = "develop"
+  oaiclonecmd = "git clone " + oairepo + " -b " + oaibranch + " --single-branch"
+
+  # Select the OAI-EPC (cn5g) repo and branch to use...
+  #epcrepo = "https://github.com/OPENAIRINTERFACE/openair-epc-fed.git"
+  #branch = "master"
+  epcrepo = "https://github.com/danielgora/openair-epc-fed.git"
+  epcbranch = "develop"
+  epcclonecmd = "git clone " + epcrepo + " -b " + epcbranch + " --single-branch"
+
+  config.vm.provision "shell", inline: "yum --assumeyes --disableplugin=fastestmirror install git vim gcc gcc-c++ kernel-headers kernel-devel"
+  config.vm.provision "shell", inline: "yum --assumeyes --disableplugin=fastestmirror update", reboot: true
+
+  # Update ldconfig configuration.
+  # This is necessary for the binaries to find the installed shared libraries
+  # See "https://gitlab.eurecom.fr/oai/openairinterface5g/-/wikis/OpenAirKernelMainSetup#kernel-requirements-for-cent-os-7-experimental"
+  config.vm.provision "shell", inline: "echo -e \"/usr/local/lib\n/usr/local/lib64\" > /etc/ld.so.conf.d/enable_usr_local_lib.conf;ldconfig"
+
+  # Create a VM for the UE
+  config.vm.define "OAI-UE" do |ue|
+    ue.vm.box = "centos/7"
+    # Set the name of the vagrant box
+    ue.vm.define "OAI-UE"
+    # Set the name of the VM in the virtual box console
+    ue.vm.provider :virtualbox do |vb|
+      vb.name = "OAI-UE_Centos7"
+    end
+    # Set the hostname inside the VM
+    ue.vm.hostname = "UE"
+    # assign a static IP
+    ue.vm.network "private_network", ip: "10.20.0.130"
+    # Clone OAI
+    ue.vm.provision "shell", inline: oaiclonecmd, privileged: false
+    # Build OAI for UE
+    ue.vm.provision "shell", inline: "pushd openairinterface5g;source oaienv;pushd cmake_targets;./build_oai -I --UE", privileged: false
+  end
+
+  # Create a VM for the eNB
+  config.vm.define "OAI-eNB" do |enb|
+    enb.vm.box = "centos/7"
+    # Set the name of the vagrant box
+    enb.vm.define "OAI-eNB"
+    # Set the name of the VM in the virtual box console
+    enb.vm.provider :virtualbox do |vb|
+      vb.name = "OAI-eNB_Centos7"
+    end
+    # Set the hostname inside the VM
+    enb.vm.hostname = "eNB"
+    # assign a static IP
+    enb.vm.network "private_network", ip: "10.20.0.131"
+    # Clone OAI
+    enb.vm.provision "shell", inline: oaiclonecmd, privileged: false
+    # Build OAI for eNB
+    enb.vm.provision "shell", inline: "pushd openairinterface5g;source oaienv;pushd cmake_targets;./build_oai -I --eNB", privileged: false
+  end
+
+  # Create a VM for the EPC (OAI-cn5g)
+  # See https://github.com/OPENAIRINTERFACE/openair-epc-fed.
+  # This will not start automatically with 'vagrant up',
+  # you need to explicitly run 'vagrant up OAI-EPC'
+  config.vm.define "OAI-EPC", autostart: false do |epc|
+    epc.vm.box = "centos/8"
+    # Set the name of the vagrant box
+    epc.vm.define "OAI-EPC"
+    # Set the name of the VM in the virtual box console
+    epc.vm.provider :virtualbox do |vb|
+      vb.name = "OAI-EPC_Centos8"
+    end
+    # Set the hostname inside the VM
+    epc.vm.hostname = "EPC"
+    # assign a static IP
+    epc.vm.network "private_network", ip: "10.20.0.132"
+    # Install docker...
+    epc.vm.provision "shell", inline: "yum install -y yum-utils && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo && yum --assumeyes install docker-ce docker-ce-cli containerd.io && systemctl enable docker.service && usermod -a -G docker vagrant"
+    # Install openair-epc-fed and clone git submodules
+    epc.vm.provision "shell", inline: epcclonecmd, privileged: false
+    epc.vm.provision "shell", inline: "pushd openair-epc-fed;./scripts/syncComponents.sh", privileged: false
+  end
+end

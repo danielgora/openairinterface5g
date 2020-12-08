@@ -208,22 +208,23 @@ int bringInterfaceUp(char *interfaceName, int up) {
   close( sock_fd );
   return 0;
 }
+
 // non blocking full configuration of the interface (address, net mask, and broadcast mask)
-int NAS_config(char *interfaceName, char *ipAddress, char *networkMask, char *broadcastAddress) {
+int nas_config_helper(char *interfaceName, char *ipAddress, char *networkMask, char *broadcastAddress) {
+
   bringInterfaceUp(interfaceName, 0);
+
   // sets the machine address
-  int returnValue= setInterfaceParameter(interfaceName, ipAddress,SIOCSIFADDR);
+  int returnValue = setInterfaceParameter(interfaceName, ipAddress, SIOCSIFADDR);
 
   // sets the machine network mask
   if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, networkMask,SIOCSIFNETMASK);
+    returnValue = setInterfaceParameter(interfaceName, networkMask, SIOCSIFNETMASK);
 
   // sets the machine broadcast address
   if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, broadcastAddress,SIOCSIFBRDADDR);
+    returnValue = setInterfaceParameter(interfaceName, broadcastAddress, SIOCSIFBRDADDR);
 
-  //  if(!returnValue)
-  //  returnValue=set_gateway(interfaceName, broadcastAddress);
   if(!returnValue)
     returnValue = bringInterfaceUp(interfaceName, 1);
 
@@ -231,124 +232,73 @@ int NAS_config(char *interfaceName, char *ipAddress, char *networkMask, char *br
 }
 
 int nas_config_mbms(int interface_id, int thirdOctet, int fourthOctet, char *ifname) {
-  //char buf[5];
   char ipAddress[20];
-  char broadcastAddress[20];
   char interfaceName[20];
   int returnValue;
-  //if(strcmp(ifname,"ue") == 0)
-       //sprintf(ipAddress, "%s.%d.%d", "20.0",thirdOctet,fourthOctet);
-  ////else
-       sprintf(ipAddress, "%s.%d.%d",baseNetAddress,thirdOctet,fourthOctet);
 
-  sprintf(broadcastAddress, "%s.%d.255",baseNetAddress, thirdOctet);
-  sprintf(interfaceName, "%s%s%d", (UE_NAS_USE_TUN || ENB_NAS_USE_TUN)?"oaitun_":ifname,
-          UE_NAS_USE_TUN?ifname/*"ue"*/: (ENB_NAS_USE_TUN?ifname/*"enb"*/:""),interface_id);
-  bringInterfaceUp(interfaceName, 0);
-  // sets the machine address
-  returnValue= setInterfaceParameter(interfaceName, ipAddress,SIOCSIFADDR);
+  sprintf(ipAddress, "%s.%d.%d", baseNetAddress, thirdOctet, fourthOctet);
+  sprintf(interfaceName, "%s%s%d",
+          (UE_NAS_USE_TUN || ENB_NAS_USE_TUN) ? "oaitun_" : ifname,
+          UE_NAS_USE_TUN ? ifname/*"ue"*/ : (ENB_NAS_USE_TUN ? ifname/*"enb"*/ : ""), interface_id);
 
-  // sets the machine network mask
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, netMask,SIOCSIFNETMASK);
+  returnValue = nas_config_helper(interfaceName, ipAddress, netMask, broadcastAddr);
 
-  // sets the machine broadcast address
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, broadcastAddress,SIOCSIFBRDADDR);
-
-  if(!returnValue)
-    bringInterfaceUp(interfaceName, 1);
-
-  if(!returnValue)
+  if (!returnValue)
     LOG_I(OIP,"Interface %s successfully configured, ip address %s, mask %s broadcast address %s\n",
-          interfaceName, ipAddress, netMask, broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
   else
     LOG_E(OIP,"Interface %s couldn't be configured (ip address %s, mask %s broadcast address %s)\n",
-          interfaceName, ipAddress, netMask, broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
 
   return returnValue;
 }
 
 int nas_config_mbms_s1(int interface_id, int thirdOctet, int fourthOctet, char *ifname) {
-  //char buf[5];
   char ipAddress[20];
-  char broadcastAddress[20];
   char interfaceName[20];
   int returnValue;
-  //if(strcmp(ifname,"ue") == 0)
-       //sprintf(ipAddress, "%s.%d.%d", "20.0",thirdOctet,fourthOctet);
-  ////else
-       sprintf(ipAddress, "%s.%d.%d","10.0",thirdOctet,fourthOctet);
 
-  sprintf(broadcastAddress, "%s.%d.255","10.0", thirdOctet);
-  sprintf(interfaceName, "%s%s%d", "oaitun_",ifname,interface_id);
-  bringInterfaceUp(interfaceName, 0);
-  // sets the machine address
-  returnValue= setInterfaceParameter(interfaceName, ipAddress,SIOCSIFADDR);
+  sprintf(ipAddress, "%s.%d.%d", baseNetAddress, thirdOctet, fourthOctet);
+  sprintf(interfaceName, "%s%s%d", "oaitun_", ifname, interface_id);
 
-  // sets the machine network mask
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, "255.255.255.0",SIOCSIFNETMASK);
-  printf("returnValue %d\n",returnValue);
-
-  // sets the machine broadcast address
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, broadcastAddress,SIOCSIFBRDADDR);
-  printf("returnValue %d\n",returnValue);
-
-  if(!returnValue)
-    bringInterfaceUp(interfaceName, 1);
-  printf("returnValue %d\n",returnValue);
+  returnValue = nas_config_helper(interfaceName, ipAddress, netMask, broadcastAddr);
 
   if(!returnValue)
     LOG_I(OIP,"Interface %s successfully configured, ip address %s, mask %s broadcast address %s\n",
-          interfaceName, ipAddress, "255.255.255.0", broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
   else
     LOG_E(OIP,"Interface %s couldn't be configured (ip address %s, mask %s broadcast address %s)\n",
-          interfaceName, ipAddress, "255.255.255.0", broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
 
   return returnValue;
 }
 
-
 // non blocking full configuration of the interface (address, and the two lest octets of the address)
 int nas_config(int interface_id, int thirdOctet, int fourthOctet, char *ifname) {
-  //char buf[5];
   char ipAddress[20];
-  char broadcastAddress[20];
   char interfaceName[20];
   int returnValue;
-  sprintf(ipAddress, "%s.%d.%d", baseNetAddress,thirdOctet,fourthOctet);
-  sprintf(broadcastAddress, "%s.%d.255",baseNetAddress, thirdOctet);
-  sprintf(interfaceName, "%s%s%d", (UE_NAS_USE_TUN || ENB_NAS_USE_TUN)?"oaitun_":ifname,
-          UE_NAS_USE_TUN?"ue": (ENB_NAS_USE_TUN?"enb":""),interface_id);
-  bringInterfaceUp(interfaceName, 0);
-  // sets the machine address
-  returnValue= setInterfaceParameter(interfaceName, ipAddress,SIOCSIFADDR);
 
-  // sets the machine network mask
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, netMask,SIOCSIFNETMASK);
+  sprintf(ipAddress, "%s.%d.%d", baseNetAddress, thirdOctet, fourthOctet);
 
-  // sets the machine broadcast address
-  if(!returnValue)
-    returnValue= setInterfaceParameter(interfaceName, broadcastAddress,SIOCSIFBRDADDR);
+  sprintf(interfaceName, "%s%s%d",
+          (UE_NAS_USE_TUN || ENB_NAS_USE_TUN) ? "oaitun_" : ifname,
+          UE_NAS_USE_TUN ? "ue" : (ENB_NAS_USE_TUN ? "enb" : ""), interface_id);
 
-  if(!returnValue)
-	  returnValue=bringInterfaceUp(interfaceName, 1);
+  returnValue = nas_config_helper(interfaceName, ipAddress, netMask, broadcastAddr);
 
   if(!returnValue)
     LOG_I(OIP,"Interface %s successfully configured, ip address %s, mask %s broadcast address %s\n",
-          interfaceName, ipAddress, netMask, broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
   else
     LOG_E(OIP,"Interface %s couldn't be configured (ip address %s, mask %s broadcast address %s)\n",
-          interfaceName, ipAddress, netMask, broadcastAddress);
+          interfaceName, ipAddress, netMask, broadcastAddr);
 
   return returnValue;
 }
 
 // Blocking full configuration of the interface (address, net mask, and broadcast mask)
-int blocking_NAS_config(char *interfaceName, char *ipAddress, char *networkMask, char *broadcastAddress) {
+int blocking_nas_config_helper(char *interfaceName, char *ipAddress, char *networkMask, char *broadcastAddress) {
   char command[200];
   command[0]='\0';
   strcat(command, "ifconfig ");

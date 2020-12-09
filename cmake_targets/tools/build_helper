@@ -31,11 +31,11 @@ fi
 OS_DISTRO=$(grep "^ID=" /etc/os-release | sed "s/ID=//" | sed "s/\"//g")
 OS_RELEASE=$(grep "^VERSION_ID=" /etc/os-release | sed "s/VERSION_ID=//" | sed "s/\"//g")
 case "$OS_DISTRO" in
-  fedora) OS_BASEDISTRO="fedora"; INSTALLER="dnf"; CMAKE="cmake" ;;
-  rhel)   OS_BASEDISTRO="fedora"; INSTALLER="yum --skip-broken"; CMAKE="cmake3" ;;
-  centos) OS_BASEDISTRO="fedora"; INSTALLER="yum --skip-broken"; CMAKE="cmake3" ;;
-  debian) OS_BASEDISTRO="debian"; INSTALLER="apt-get"; CMAKE="cmake" ;;
-  ubuntu) OS_BASEDISTRO="debian"; INSTALLER="apt-get"; CMAKE="cmake" ;;
+  fedora) OS_BASEDISTRO="fedora"; INSTALLER="dnf --assumeyes"; CMAKE="cmake" ;;
+  rhel)   OS_BASEDISTRO="fedora"; INSTALLER="yum --skip-broken --disableplugin=fastestmirror --assumeyes"; CMAKE="cmake3" ;;
+  centos) OS_BASEDISTRO="fedora"; INSTALLER="yum --skip-broken --disableplugin=fastestmirror --assumeyes"; CMAKE="cmake3" ;;
+  debian) OS_BASEDISTRO="debian"; INSTALLER="apt-get --yes"; CMAKE="cmake" ;;
+  ubuntu) OS_BASEDISTRO="debian"; INSTALLER="apt-get --yes"; CMAKE="cmake" ;;
 esac
 KERNEL_VERSION=$(uname -r | cut -d '.' -f1)
 KERNEL_MAJOR=$(uname -r | cut -d '.' -f2)
@@ -322,8 +322,8 @@ install_usrp_uhd_driver_from_source(){
 check_install_usrp_uhd_driver(){
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
         #first we remove old installation
-        $SUDO apt-get remove -y uhd || true
-        $SUDO apt-get remove libuhd-dev libuhd003 uhd-host -y || true
+        $SUDO $INSTALLER remove uhd || true
+        $SUDO $INSTALLER remove libuhd-dev libuhd003 uhd-host || true
         v=$(lsb_release -cs)
         $SUDO apt-add-repository --remove "deb http://files.ettus.com/binaries/uhd/repo/uhd/ubuntu/$v $v main"
         # The new USRP repository
@@ -343,27 +343,27 @@ check_install_usrp_uhd_driver(){
             fi
             x=$((x + 1))
         done
-        $SUDO apt-get update
-        $SUDO apt-get -y install  python python-tk libboost-all-dev libusb-1.0-0-dev
-        $SUDO apt-get -y install libuhd-dev libuhd003 uhd-host
+        $SUDO $INSTALLER update
+        $SUDO $INSTALLER install  python python-tk libboost-all-dev libusb-1.0-0-dev
+        $SUDO $INSTALLER install libuhd-dev libuhd003 uhd-host
     elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
         if [ $IS_CONTAINER -eq 0 ]
         then
-            $SUDO $INSTALLER -y install python boost libusb-devel libusbx-devel boost-devel python-mako python-docutils cmake
+            $SUDO $INSTALLER install python boost libusb-devel libusbx-devel boost-devel python-mako python-docutils cmake
             $SUDO -H pip install requests
         else
-            $SUDO $INSTALLER -y install boost boost-devel cmake3
+            $SUDO $INSTALLER install boost boost-devel cmake3
             $SUDO pip3 install mako requests
         fi
         if [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
             if [ $IS_CONTAINER -eq 0 ]
             then
                 # until EPEL repo hasn't bumped UHD driver to >=3.10 in EPEL, build driver from source
-                $SUDO $INSTALLER -y remove uhd uhd-devel uhd-firmware
+                $SUDO $INSTALLER remove uhd uhd-devel uhd-firmware
             fi
             install_usrp_uhd_driver_from_source
         else
-            $SUDO $INSTALLER -y install uhd uhd-devel uhd-firmware
+            $SUDO $INSTALLER install uhd uhd-devel uhd-firmware
         fi
     fi
 }
@@ -372,7 +372,7 @@ install_usrp_uhd_driver() {
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
         # We move uhd-host apart because it depends on linux kernel version
         # On newer kernels, it fails to install
-        $SUDO apt-get -y install uhd-host
+        $SUDO $INSTALLER install uhd-host
     fi
     # quick workaround for RHE7.6
     local distribution=$(get_distribution_release)
@@ -422,11 +422,11 @@ check_install_bladerf_driver(){
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
         if [ "$(get_distribution_release)" == "ubuntu14.04" ] ; then
             $SUDO add-apt-repository -y ppa:bladerf/bladerf
-            $SUDO apt-get update
+            $SUDO $INSTALLER update
         fi
-        $SUDO apt-get install -y  bladerf libbladerf-dev
-        $SUDO apt-get install -y bladerf-firmware-fx3
-        $SUDO apt-get install -y bladerf-fpga-hostedx40
+        $SUDO $INSTALLER install bladerf libbladerf-dev
+        $SUDO $INSTALLER install bladerf-firmware-fx3
+        $SUDO $INSTALLER install bladerf-fpga-hostedx40
    elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
         install_bladerf_driver_from_source
    else
@@ -508,13 +508,13 @@ install_soapy_iris_from_source(){
 check_install_soapy () {
     #if [[ "$OS_DISTRO" == "ubuntu" ]]; then
         #first we remove old installation
-    $SUDO apt-get remove -y soapysdr soapysdr-server libsoapysdr-dev python-soapysdr python3-soapysdr soapysdr-module-remote || true
+    $SUDO $INSTALLER remove soapysdr soapysdr-server libsoapysdr-dev python-soapysdr python3-soapysdr soapysdr-module-remote || true
         #$SUDO add-apt-repository -y ppa:myriadrf/drivers
-        #$SUDO apt-get update
-        #$SUDO apt-get install -y soapysdr soapysdr-server libsoapysdr-dev python-soapysdr python3-soapysdr soapysdr-module-remote
+        #$SUDO $INSTALLER update
+        #$SUDO $INSTALLER install soapysdr soapysdr-server libsoapysdr-dev python-soapysdr python3-soapysdr soapysdr-module-remote
 
     #elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
-    #    $SUDO $INSTALLER -y install software-properties-common python3-software-properties python-software-properties subversion git python3 python-numpy python3-numpy cmake swig python-dev
+    #    $SUDO $INSTALLER install software-properties-common python3-software-properties python-software-properties subversion git python3 python-numpy python3-numpy cmake swig python-dev
     install_soapy_from_source
     #fi
     install_soapy_iris_from_source
@@ -522,7 +522,7 @@ check_install_soapy () {
 }
 
 check_install_additional_tools (){
-  $SUDO $INSTALLER update -y
+  $SUDO $INSTALLER update
   if [[ "$OS_DISTRO" == "ubuntu" ]]; then
     PACKAGE_LIST="\
 	check \
@@ -611,7 +611,7 @@ check_install_additional_tools (){
       python2-scipy \
       python2-matplotlib"
   fi
-    $SUDO $INSTALLER install -y $PACKAGE_LIST
+    $SUDO $INSTALLER install $PACKAGE_LIST
 
     $SUDO rm -fr /opt/ssh
     $SUDO GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/ssh.git /opt/ssh
@@ -639,17 +639,17 @@ check_install_oai_software() {
         echo_error "Your distribution $(get_distribution_release) is not supported by oai !"
         exit 1
     fi
-    $SUDO $INSTALLER update -y
+    $SUDO $INSTALLER update
   if [[ "$OS_DISTRO" == "ubuntu" ]]; then
     local LAPACK_LIBNAME="liblapack.so"
     local LAPACK_TARGET="/usr/lib/atlas-base/atlas/liblapack.so"
-    $SUDO apt install -y software-properties-common
+    $SUDO $INSTALLER install software-properties-common
     case "$(get_distribution_release)" in
         "ubuntu14.04")
             specific_packages="libtasn1-3-dev libgnutls-dev libatlas-dev iproute libconfig8-dev"
             # For iperf3
             $SUDO add-apt-repository "deb http://archive.ubuntu.com/ubuntu trusty-backports universe"
-            $SUDO apt-get update
+            $SUDO $INSTALLER update
             ;;
         "ubuntu16.04")
             specific_packages="libtasn1-6-dev libgnutls-dev libatlas-dev iproute libconfig8-dev"
@@ -668,7 +668,7 @@ check_install_oai_software() {
             LAPACK_TARGET="/usr/lib/x86_64-linux-gnu/atlas/liblapack.so"
             ;;
     esac
-    $SUDO apt-get install -y \
+    $SUDO $INSTALLER install \
     $specific_packages \
 	autoconf  \
 	automake  \
@@ -730,21 +730,21 @@ check_install_oai_software() {
 
     $SUDO update-alternatives --set "$LAPACK_LIBNAME" "$LAPACK_TARGET"
 
-    $SUDO apt-get install -y nettle-dev nettle-bin
+    $SUDO $INSTALLER install nettle-dev nettle-bin
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
     if [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
       if rpm -q epel-release > /dev/null; then
         echo "EPEL repos already present. Good."
       else
         echo "EPEL repos not present. Installing them."
-        $SUDO $INSTALLER install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+        $SUDO $INSTALLER install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
       fi
-      $SUDO $INSTALLER install -y python-epdb vim-common
+      $SUDO $INSTALLER install python-epdb vim-common
     else
-      $SUDO $INSTALLER install -y mscgen pydb
+      $SUDO $INSTALLER install mscgen pydb
     fi
 
-    $SUDO $INSTALLER install -y \
+    $SUDO $INSTALLER install \
       autoconf \
       automake \
       bc \

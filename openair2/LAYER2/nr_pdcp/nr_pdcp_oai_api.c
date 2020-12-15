@@ -370,9 +370,9 @@ uint64_t pdcp_module_init(uint64_t _pdcp_optmask)
         ((LINK_ENB_PDCP_TO_GTPV1U)?"usegtp":""),
         ((PDCP_USE_NETLINK)?"usenetlink":""));
 
-  if (PDCP_USE_NETLINK) {
-    nas_getparams();
+  nas_getparams();
 
+  if (PDCP_USE_NETLINK) {
     if(UE_NAS_USE_TUN) {
       int num_if = (NFAPI_MODE == NFAPI_UE_STUB_PNF || IS_SOFTMODEM_SIML1 )? MAX_MOBILES_PER_ENB : 1;
       netlink_init_tun("ue",num_if);

@@ -49,9 +49,9 @@
 
 //default values according to the examples,
 
-char *baseNetAddress = "10.0";
-char *netMask = "255.255.255.0";
-char *broadcastAddr = "10.0.255.255";
+char *baseNetAddress;
+char *netMask;
+char *broadcastAddr;
 #define NASHLP_NETPREFIX "<NAS network prefix, two first bytes of network addresses>\n"
 #define NASHLP_NETMASK   "<NAS network mask>\n"
 #define NASHLP_BROADCASTADDR   "<NAS network broadcast address>\n"

@@ -1,5 +1,11 @@
 # -*- mode: ruby -*- # vi: set ft=ruby :
 
+##############################
+# THIS VAGRANTFILE REQUIRES THAT VAGRANT_EXPERIMENTAL="1" be set in the
+# shell where 'vagrant up' is performed!
+##############################
+
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -11,7 +17,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "centos/7"
+  #config.vm.box = "centos/7"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -76,12 +82,21 @@ Vagrant.configure("2") do |config|
   #oairepo = "https://gitlab.eurecom.fr/oai/openairinterface5g.git"
   #branch = "develop"
   oairepo = "https://github.com/danielgora/openairinterface5g.git"
-  branch = "develop_nas_nos1_fixes"
+  oaibranch = "develop_nas_nos1_fixes"
+  oaiclonecmd = "git clone " + oairepo + " -b " + oaibranch + " --single-branch"
+
+  # Select the OAI-EPC (cn5g) repo and branch to use...
+  epcrepo = "https://github.com/danielgora/openair-epc-fed.git"
+  epcbranch = "dan_devel"
+  epcclonecmd = "git clone " + epcrepo + " -b " + epcbranch + " --single-branch"
 
   config.vm.provision "shell", inline: "yum --assumeyes --disableplugin=fastestmirror install git vim gcc gcc-c++ kernel-headers kernel-devel"
   config.vm.provision "shell", inline: "yum --assumeyes --disableplugin=fastestmirror update", reboot: true
-  clonecmd = "git clone " + oairepo + " -b " + branch + " --single-branch"
-  config.vm.provision "shell", inline: clonecmd, privileged: false
+
+  # Update ldconfig configuration.
+  # This is necessary for the binaries to find the installed shared libraries
+  # See "https://gitlab.eurecom.fr/oai/openairinterface5g/-/wikis/OpenAirKernelMainSetup#kernel-requirements-for-cent-os-7-experimental"
+  config.vm.provision "shell", inline: "echo -e \"/usr/local/lib\n/usr/local/lib64\" > /etc/ld.so.conf.d/enable_usr_local_lib.conf;ldconfig"
 
   # Create a VM for the UE
   config.vm.define "OAI-UE" do |ue|
@@ -96,6 +111,9 @@ Vagrant.configure("2") do |config|
     ue.vm.hostname = "UE"
     # assign a static IP
     ue.vm.network "private_network", ip: "10.20.0.130"
+    # Clone OAI
+    ue.vm.provision "shell", inline: oaiclonecmd, privileged: false
+    # Build OAI for UE
     ue.vm.provision "shell", inline: "pushd openairinterface5g;source oaienv;pushd cmake_targets;./build_oai -I --UE", privileged: false
   end
 
@@ -112,6 +130,9 @@ Vagrant.configure("2") do |config|
     enb.vm.hostname = "eNB"
     # assign a static IP
     enb.vm.network "private_network", ip: "10.20.0.131"
+    # Clone OAI
+    enb.vm.provision "shell", inline: oaiclonecmd, privileged: false
+    # Build OAI for eNB
     enb.vm.provision "shell", inline: "pushd openairinterface5g;source oaienv;pushd cmake_targets;./build_oai -I --eNB", privileged: false
   end
 
@@ -120,16 +141,27 @@ Vagrant.configure("2") do |config|
   # This will not start automatically with 'vagrant up',
   # you need to explicitly run 'vagrant up OAI-EPC'
   config.vm.define "OAI-EPC", autostart: false do |epc|
-    epc.vm.box = "centos/7"
+    epc.vm.box = "centos/8"
     # Set the name of the vagrant box
     epc.vm.define "OAI-EPC"
     # Set the name of the VM in the virtual box console
     epc.vm.provider :virtualbox do |vb|
-      vb.name = "OAI-EPC_Centos7"
+      vb.name = "OAI-EPC_Centos8"
     end
     # Set the hostname inside the VM
     epc.vm.hostname = "EPC"
     # assign a static IP
     epc.vm.network "private_network", ip: "10.20.0.132"
+    # Resize the disk so that everything fits..
+    epc.vm.disk :disk, size: "40GB", primary: true
+    # Resize the partition.
+    epc.vm.provision "shell", inline: "echo -e \"Yes\n100%\n\" | parted ---pretend-input-tty /dev/sda resizepart 1"
+    # Resize the filesystem
+    epc.vm.provision "shell", inline: "xfs_growfs /dev/sda1"
+    # Install docker...
+    epc.vm.provision "shell", inline: "yum install -y yum-utils && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo && yum --assumeyes install docker-ce docker-ce-cli containerd.io && systemctl enable docker.service && usermod -a -G docker vagrant"
+    # Install openair-epc-fed and clone git submodules
+    epc.vm.provision "shell", inline: epcclonecmd, privileged: false
+    epc.vm.provision "shell", inline: "pushd openair-epc-fed;./scripts/syncComponents.sh", privileged: false
   end
 end

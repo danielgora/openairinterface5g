@@ -119,7 +119,7 @@ $ ./build_oai -I --eNB --UE
 ```
 
 Both the eNB simulator `lte-softmodem` and UE simulator `lte-uesoftmodem`
-are present in the `cmake_targets/lte_build_oai/build` folder.
+are present in the `cmake_targets/ran_build/build` folder.
 
 More details are available on the [build page](BUILD.md).
 
@@ -149,7 +149,7 @@ All of the configuration parameters are specified on the command line.
 
 ```bash
 $ source oaienv
-$ cd cmake_targets/lte_build_oai/build
+$ cd cmake_targets/ran_build/build
 
 $ # Test the eNB with FDD radio traffic...
 $ ENODEB=1 sudo -E ./lte-softmodem -O $OPENAIR_HOME/ci-scripts/conf_files/lte-fdd-basic-sim.conf \
@@ -196,8 +196,9 @@ All of the configuration parameters are specified on the command line.
 ```bash
 $ source oaienv
 # Edit openair3/NAS/TOOLS/ue_eurecom_test_sfr.conf
-$ cd cmake_targets/lte_build_oai/build
-$ TCPBRIDGE=10.20.0.131 sudo -E ./lte-uesoftmodem -C 2680000000 -r 25 --ue-rxgain 140 --basicsim --noS1
+$ cd cmake_targets/ran_build/build
+$ TCPBRIDGE=10.20.0.131 sudo -E ./lte-uesoftmodem -C 2680000000 -r 25 --ue-rxgain 140 \
+    --basicsim --noS1 --nas.noS1.NetworkPrefix "11.0"
 ```
 
 The `TCPBRIDGE=<eNB IP address>` environment variable specifies the IP

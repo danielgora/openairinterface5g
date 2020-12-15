@@ -61,7 +61,7 @@ on each machine and automatically assign IP addresses to these interfaces.
 On the **eNodeB** it will create `oaitun_enb1` and `oaitun_enm1` interfaces.
 On the **UE** it will create `oaitun_ue1` and `oaitun_uem1` interfaces.
 
-The `--nas.noS1.NetworkPrefix` flag can be specified to the simulators to
+The `--nas.NetworkPrefix` flag can be specified to the simulators to
 specify the IP network prefix to be used for these interfaces.  This will
 be described in more detail below.
 
@@ -157,11 +157,11 @@ $ cd cmake_targets/ran_build/build
 
 $ # Test the eNB with FDD radio traffic...
 $ ENODEB=1 sudo -E ./lte-softmodem -O $OPENAIR_HOME/ci-scripts/conf_files/lte-fdd-basic-sim.conf \
-    --basicsim --noS1 --nas.noS1.NetworkPrefix "11.0"
+    --basicsim --noS1 --nas.NetworkPrefix "11.0"
 
 $ # or test the eNB with TDD radio traffic.
 $ ENODEB=1 sudo -E ./lte-softmodem -O $OPENAIR_HOME/ci-scripts/conf_files/lte-tdd-basic-sim.conf \
-    --basicsim --noS1 --nas.noS1.NetworkPrefix "11.0"
+    --basicsim --noS1 --nas.NetworkPrefix "11.0"
 ```
 
 The `ENODEB=1` environment variable informs the `tcp_bridge_oai` library,
@@ -178,7 +178,7 @@ in **Basic Simulator** mode.
 The `--noS1` flag configures the `lte-softmodem` eNB simulator to run in
 **noS1** mode.
 
-The `--nas.noS1.NetworkPrefix <IP prefix>` flag configures the IP address
+The `--nas.NetworkPrefix <IP prefix>` flag configures the IP address
 prefix for the `oaitun_enb1` and `oaitun_enm1` virtual IP interfaces which
 are created when `lte-softmodem` is run.  The default value is `"10.0"`,
 which causes the `oaitun_enb1` interface to be assigned the IP address
@@ -202,7 +202,7 @@ $ source oaienv
 # Edit openair3/NAS/TOOLS/ue_eurecom_test_sfr.conf
 $ cd cmake_targets/ran_build/build
 $ TCPBRIDGE=10.20.0.131 sudo -E ./lte-uesoftmodem -C 2680000000 -r 25 --ue-rxgain 140 \
-    --basicsim --noS1 --nas.noS1.NetworkPrefix "11.0"
+    --basicsim --noS1 --nas.NetworkPrefix "11.0"
 ```
 
 The `TCPBRIDGE=<eNB IP address>` environment variable specifies the IP
@@ -224,7 +224,7 @@ is used on the eNB side, the default value is 2350000000.
 The `--noS1` flag configures the `lte-uesoftmodem` UE simulator to run in
 **noS1** mode.
 
-The `--nas.noS1.NetworkPrefix <IP prefix>` flag configures the IP address
+The `--nas.NetworkPrefix <IP prefix>` flag configures the IP address
 prefix for the `oaitun_ue1` and `oaitun_uem1` virtual IP interfaces which
 are created when `lte-uesoftmodem` is run.  The default value is `"10.0"`,
 which causes the `oaitun_ue1` interface to be assigned the IP address
@@ -242,7 +242,7 @@ and the `oaitun_uem1` interface to be assigned the IP address `11.0.2.2/24`.
 
 When the simulators are run in **noS1** mode, the IP addresses assigned
 to the eNB and UE interfaces are fixed according to the network prefix
-specified with the `--nas.noS1.NetworkPrefix` flag.
+specified with the `--nas.NetworkPrefix` flag.
 
 The IP interface addresses can be shown using the `ip` command:
 

@@ -65,7 +65,7 @@ void nas_getparams(void) {
     {"NetworkMask",      NASHLP_NETMASK,         0,              strptr:&netMask,               defstrval:"255.255.255.0",   TYPE_STRING,  0 },
     {"BroadcastAddr",    NASHLP_BROADCASTADDR,   0,              strptr:&broadcastAddr,         defstrval:"10.0.255.255",    TYPE_STRING,  0 },
   };
-  config_get( nasoptions,sizeof(nasoptions)/sizeof(paramdef_t),"nas.noS1");
+  config_get( nasoptions,sizeof(nasoptions)/sizeof(paramdef_t),"nas");
 }
 
 void setBaseNetAddress (char *baseAddr) {

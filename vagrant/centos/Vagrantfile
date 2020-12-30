@@ -1,11 +1,5 @@
 # -*- mode: ruby -*- # vi: set ft=ruby :
 
-##############################
-# THIS VAGRANTFILE REQUIRES THAT VAGRANT_EXPERIMENTAL="1" be set in the
-# shell where 'vagrant up' is performed!
-##############################
-
-
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -152,12 +146,6 @@ Vagrant.configure("2") do |config|
     epc.vm.hostname = "EPC"
     # assign a static IP
     epc.vm.network "private_network", ip: "10.20.0.132"
-    # Resize the disk so that everything fits..
-    epc.vm.disk :disk, size: "40GB", primary: true
-    # Resize the partition.
-    epc.vm.provision "shell", inline: "echo -e \"Yes\n100%\n\" | parted ---pretend-input-tty /dev/sda resizepart 1"
-    # Resize the filesystem
-    epc.vm.provision "shell", inline: "xfs_growfs /dev/sda1"
     # Install docker...
     epc.vm.provision "shell", inline: "yum install -y yum-utils && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo && yum --assumeyes install docker-ce docker-ce-cli containerd.io && systemctl enable docker.service && usermod -a -G docker vagrant"
     # Install openair-epc-fed and clone git submodules

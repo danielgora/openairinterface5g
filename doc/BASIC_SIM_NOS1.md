@@ -61,8 +61,6 @@ on each machine and automatically assign IP addresses to these interfaces.
 On the **eNodeB** it will create `oaitun_enb1` and `oaitun_enm1` interfaces.
 On the **UE** it will create `oaitun_ue1` and `oaitun_uem1` interfaces.
 
-(ZZZ: What are the other interfaces for?)
-
 The `--nas.NetworkPrefix` flag can be specified to the simulators to
 specify the IP network prefix to be used for these interfaces.  This will
 be described in more detail below.
@@ -71,6 +69,8 @@ After the eNodeB and UE simulators are running, the user can test the
 communication using normal IP communication utilities (`ping`, `scp`,
 `iperf`) in order to run user traffic over the simulated radio channel
 between the `oaitun_enb1` and `oaitun_ue1` interfaces on the eNB and UE.
+
+(ZZZ: What are the other interfaces for?)
 
 ## Provisioning test VMs with Vagrant
 
@@ -89,13 +89,13 @@ After the virtual machines are created, the machines can be accessed using
 the commands `vagrant ssh OAI-eNB` to access the eNodeB and `vagrant ssh
 OAI-UE` to access the UE.
 
-VM1: **eNodeB**
+VM1: **OAI-eNB**
 
 **eth0** - 10.0.2.15/24 - Vagrant NAT interface to physical host.
 
 **eth1** - 10.20.0.131/24 - host-only local network to **UE** and physical host.
 
-VM2: **UE**
+VM2: **OAI-UE**
 
 **eth0** - 10.0.2.15/24 - Vagrant NAT interface to physical host.
 
@@ -122,6 +122,10 @@ Both the eNB simulator `lte-softmodem` and UE simulator `lte-uesoftmodem`
 are present in the `cmake_targets/ran_build/build` folder.
 
 More details are available on the [build page](BUILD.md).
+
+When using the virtual machines specified in the Vagrantfile, this step
+is not necessary as Vagrant will automatically download and compile the
+source code when creating the virtual machine.
 
 # Testing the simulators in noS1 mode.
 
@@ -222,7 +226,7 @@ The `--noS1` flag configures the `lte-uesoftmodem` UE simulator to run in
 
 The `--nas.NetworkPrefix <IP prefix>` flag configures the IP address
 prefix for the `oaitun_ue1` and `oaitun_uem1` virtual IP interfaces which
-are created when `lte-softmodem` is run.  The default value is `"10.0"`,
+are created when `lte-uesoftmodem` is run.  The default value is `"10.0"`,
 which causes the `oaitun_ue1` interface to be assigned the IP address
 `10.0.1.2/24` and the `oaitun_uem1` interface to be assigned the IP address
 `10.0.2.2/24`.  Only the first two bytes of the IP network prefix can be
